@@ -15,6 +15,9 @@ If a user is specified, then the basename of file_or_dir is searched in the user
 must be owned by the user to take effect.
 """
 
+import logging
+logging.basicConfig()
+
 import sys
 import os
 from docopt import docopt
@@ -22,6 +25,9 @@ from docopt import docopt
 # Assure that packages in the same directory as ours (bin) can be used without concern for where
 # we are installed
 sys.path[0] = os.path.dirname(sys.path[0])
+
+from cutil.logging import warn, info, set_log_level
+set_log_level(logging.DEBUG)
 
 options = docopt(__doc__, options_first=True)
 print(options)
