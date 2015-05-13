@@ -3,11 +3,11 @@
 """
 Lightweight process and service manager
 
-Usage: chaperone [-v] [-- <command> [<args> ...]]
+Usage: chaperone [--user=<name>] [-- <command> [<args> ...]]
 
 Options:
 	-v                       Provide verbose messages
-	-o file, --output=file   Direct output to given filename
+	--user user              Start first process as user (else root)
 """
 
 import sys
@@ -28,5 +28,4 @@ tlp = TopLevelProcess.sharedInstance()
 cmd = options['<command>']
 
 if cmd:
-   sproc = tlp.run([cmd] + options['<args>'])
-   print(sproc)
+   sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')))

@@ -1,4 +1,7 @@
 import os
+import pwd
+import errno
+from subprocess import Popen
 from time import time, sleep
 
 from cutil.logging import warn, info
@@ -54,7 +57,7 @@ class ProcStatus(int):
             return int.__format__(self, spec)
         msg = "<ProcStatus"
         if self.exited:
-            msg += " exit_status={0} \"{1}\"".format(self.exit_status, self.exit_message)
+            msg += " exit_status={0}".format(self.exit_status)
         if self.signaled:
             msg += " signal=%d" % self.signal
         if self.stopped:
@@ -66,6 +69,7 @@ class Reaper(threading.Thread):
 
     # Adjustable constants
     KILL_ALL_PROCESSES_TIMEOUT = 5
+    #KILL_HUP_TIMEOUT = 2
     FORCED_KILL_TIMEOUT = 2
     REAPER_SLEEP_TIMEOUT = 0.5
 
@@ -92,16 +96,21 @@ class Reaper(threading.Thread):
         self.daemon = True
 
     def run(self):
+        lastpid = -1
         while True:
-            self._trigger.acquire(timeout=self.REAPER_SLEEP_TIMEOUT)
-            pid, status = os.waitpid(-1, os.WNOHANG)
-            if pid:
-                self._reap(pid, status)
+            if lastpid == 0:
+                self._trigger.acquire(timeout=self.REAPER_SLEEP_TIMEOUT)
+            try:
+                lastpid, status = os.waitpid(-1, os.WNOHANG)
+            except ChildProcessError:
+                lastpid = 0
+            if lastpid:
+                self._reap(lastpid, status)
             if self._reaper_die:
                 return
 
     def tickle(self, delay = 0.1):
-        self._trigger.notify()
+        self._trigger.release()
         if delay is not None:
             sleep(delay)
 
@@ -134,7 +143,7 @@ class Reaper(threading.Thread):
         self.join()
 
     @staticmethod
-    def _terminate_world(timeout, signum):
+    def _terminate_world(signum, timeout):
         """
         Attempts to terminate all our children (real or adopted) using the given signal.
         Returns True if all were successfully terminated within the timeout period,
@@ -150,11 +159,19 @@ class Reaper(threading.Thread):
 
         while True:
             try:
-                os.waitpid(-1, timeout=0.10)
+                stat = os.waitpid(-1, os.WNOHANG)
+            except ChildProcessError:
+                return True
             except OSError as e:
                 if e.errno == errno.ECHILD:
                     return True
                     break
+
+            if stat[0] == 0:    # if waiting on processes, delay slightly
+                sleep(0.10)
+            else:
+                info("GOT stat: " + str(stat))
+
             if time() - start_time > timeout:
                 return False
 
@@ -168,8 +185,9 @@ class Reaper(threading.Thread):
 
         if self._terminate_world(signal.SIGTERM, self.KILL_ALL_PROCESSES_TIMEOUT):
             return
-        
-        warn("Not all processes have exited in {0}secs. Forcing exit.".format(self.KILL_ALL_PROCESSES_TIMEOUT))
+
+        warn("Not all processes have exited in {0}secs. Force quit.".format(self.KILL_ALL_PROCESSES_TIMEOUT))
+
         if self._terminate_world(signal.SIGKILL, self.FORCED_KILL_TIMEOUT):
             return
 
@@ -180,21 +198,47 @@ class SubProcess(threading.Thread):
 
     pid = None
 
+    _user_uid = None
+    _user_gid = None
+    _user_env = None
+
     @classmethod
-    def spawn(cls, args):
-        sp = cls(args)
+    def spawn(cls, args, user=None):
+        sp = cls(args, user)
         sp.start()
         return sp
 
-    def __init__(self, args):
-        self.__args = args
+    def __init__(self, args, user=None):
         super(SubProcess, self).__init__()
+        self._prog_args = args
+        if user:
+            self._setup_user(user)
 
+    def _setup_subprocess(self):
+        if self._user_uid:
+            os.setgid(self._user_gid)
+            os.setuid(self._user_uid)
+            os.environ.update(self._user_env)
+
+    def _setup_user(self, user):
+        """
+        Execute set-up for the new process.  NOTE that the absolute minimum here is important, otherwise
+        the thread state may lock-up.  See warning about preexec_fn at https://docs.python.org/3.4/library/subprocess.html.
+        """
+        pwrec = pwd.getpwnam(user)
+        self._user_uid = pwrec.pw_uid
+        self._user_gid = pwrec.pw_gid
+        self._user_env = {
+            'HOME':       pwrec.pw_dir,
+            'LOGNAME':    user,
+            'USER':       user,
+        }
+            
     def run(self):
-        args = self.__args
+        args = self._prog_args
         info("Running %s... " % " ".join(args))
-        self.pid = os.spawnvp(os.P_NOWAIT, args[0], self.__args)
-        status = Reaper.sharedInstance().waitForProcess(self.pid)
+        self._popen = Popen(self._prog_args, preexec_fn=self._setup_subprocess)
+        status = Reaper.sharedInstance().waitForProcess(self._popen.pid)
         info("Process status for pid={0} is '{1}'".format(self.pid, status))
 
 class TopLevelProcess(object):
@@ -203,9 +247,18 @@ class TopLevelProcess(object):
 
     kill_all_on_exit = True
     
+    _ignore_signals = False
+
+    def _got_SIGTERM(self, signum, frame):
+        info("SIGTERM received")
+        if self._ignore_signals:
+            return
+        self._ignore_signals = True
+        Reaper.sharedInstance().killAllProcesses()
+        os._exit(0)
+
     def __init__(self):
-        signal.signal(signal.SIGTERM, lambda signum, frame: _ignore_signals_and_raise_keyboard_interrupt('SIGTERM'))
-        signal.signal(signal.SIGINT, lambda signum, frame: _ignore_signals_and_raise_keyboard_interrupt('SIGINT'))
+        signal.signal(signal.SIGTERM, self._got_SIGTERM)
 
     @classmethod
     def sharedInstance(cls):
@@ -214,15 +267,5 @@ class TopLevelProcess(object):
             cls._cls_singleton = TopLevelProcess()
         return cls._cls_singleton
 
-    def mainloop(self):
-        try:
-            self.mainloop_internal()
-        except KeyboardInterrupt:
-            warn("Init system aborted by KB interrupt.")
-            exit(2)
-        finally:
-            if self.kill_all_on_exit:
-                Reaper.sharedInstance().killAllProcesses()
-
-    def run(self, args):
-        return SubProcess.spawn(args)
+    def run(self, args, user=None):
+        return SubProcess.spawn(args, user)

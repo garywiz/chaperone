@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint=/home/garyw/chaperone/bin/chaperone bst/devbase -- /bin/tcsh -i
+docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint=/home/garyw/chaperone/bin/chaperone bst/devbase --user garyw -- /bin/bash -i
