@@ -1,0 +1,32 @@
+#!/usr/bin/python3
+
+"""
+Lightweight process and service manager
+
+Usage: chaperone [-v] [-- <command> [<args> ...]]
+
+Options:
+	-v                       Provide verbose messages
+	-o file, --output=file   Direct output to given filename
+"""
+
+import sys
+import os
+from docopt import docopt
+
+# Assure that packages in the same directory as ours (bin) can be used without concern for where
+# we are installed
+sys.path[0] = os.path.dirname(sys.path[0])
+
+options = docopt(__doc__)
+print(options)
+
+from cproc import TopLevelProcess
+
+tlp = TopLevelProcess.sharedInstance()
+
+cmd = options['<command>']
+
+if cmd:
+   sproc = tlp.run([cmd] + options['<args>'])
+   print(sproc)
