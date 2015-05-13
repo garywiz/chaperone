@@ -1,200 +1,17 @@
 import os
 import pwd
 import errno
-from subprocess import Popen
+import asyncio
+from functools import partial
+
 from time import time, sleep
 
 from cutil.logging import warn, info
-import threading
+from cproc.watcher import InitChildWatcher
+
 import signal
 
-def _ignore_signals_and_raise_keyboard_interrupt(signame):
-    signal.signal(signal.SIGTERM, signal.SIG_IGN)
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    raise KeyboardInterrupt(signame)
-
-class ProcStatus(int):
-    def __new__(cls, val):
-        return int.__new__(cls, val)
-
-    @property
-    def exited(self):
-        return os.WIFEXITED(self)
-
-    @property
-    def signaled(self):
-        return os.WIFSIGNALED(self)
-
-    @property
-    def stopped(self):
-        return os.WIFSTOPPED(self)
-
-    @property
-    def continued(self):
-        return os.WIFCONTINUED(self)
-
-    @property
-    def exit_status(self):
-        return (os.WIFEXITED(self) or None) and os.WEXITSTATUS(self)
-
-    @property
-    def exit_message(self):
-        es = self.exit_status
-        if es is not None:
-            return os.strerror(es)
-        return None
-        
-    @property
-    def signal(self):
-        if os.WIFSTOPPED(self):
-            return os.WSTOPSIG(self)
-        if os.WIFSIGNALED(self):
-            return os.WTERMSIG(self)
-        return None
-
-    def __format__(self, spec):
-        if spec:
-            return int.__format__(self, spec)
-        msg = "<ProcStatus"
-        if self.exited:
-            msg += " exit_status={0}".format(self.exit_status)
-        if self.signaled:
-            msg += " signal=%d" % self.signal
-        if self.stopped:
-            msg += " stoppped=%d" % self.signal
-        return msg + ">"
-
-
-class Reaper(threading.Thread):
-
-    # Adjustable constants
-    KILL_ALL_PROCESSES_TIMEOUT = 5
-    #KILL_HUP_TIMEOUT = 2
-    FORCED_KILL_TIMEOUT = 2
-    REAPER_SLEEP_TIMEOUT = 0.5
-
-    # Class variables
-    _cls_singleton = None
-
-    # Instance variables
-    _reaper_die = False
-    _waiters = None
-    _deadlist = None
-
-    @classmethod
-    def sharedInstance(cls):
-        if not cls._cls_singleton:
-            cls._cls_singleton = s = Reaper()
-            s.start()
-        return cls._cls_singleton
-
-    def __init__(self):
-        super(Reaper, self).__init__()
-        self._deadlist = dict()
-        self._waiters = dict()
-        self._trigger = threading.Semaphore()
-        self.daemon = True
-
-    def run(self):
-        lastpid = -1
-        while True:
-            if lastpid == 0:
-                self._trigger.acquire(timeout=self.REAPER_SLEEP_TIMEOUT)
-            try:
-                lastpid, status = os.waitpid(-1, os.WNOHANG)
-            except ChildProcessError:
-                lastpid = 0
-            if lastpid:
-                self._reap(lastpid, status)
-            if self._reaper_die:
-                return
-
-    def tickle(self, delay = 0.1):
-        self._trigger.release()
-        if delay is not None:
-            sleep(delay)
-
-    def _reap(self, pid, status):
-        info("reaping pid={0} status={1}".format(pid, ProcStatus(status)))
-        self._deadlist[pid] = (status, time())
-        waiter = self._waiters.get(pid)
-        if waiter:
-            del self._waiters[pid]  # No new waiters will appear because the deadlist will prevent this.  the GIL is our friend here.
-            waiter.acquire()
-            waiter.notify_all()
-            waiter.release()
-
-    def waitForProcess(self, pid):
-        "Called by any thread which wants to wait until a particular child PID is reaped"
-        if pid not in self._deadlist:
-            waiter = self._waiters.get(pid)
-            if not waiter:
-                waiter = self._waiters[pid] = threading.Condition()
-                waiter.acquire()
-                waiter.wait()
-                waiter.release()
-        return ProcStatus(self._deadlist[pid][0])
-
-    def terminate(self):
-        assert not self._reaper_die
-        assert threading.get_ident() != self.ident
-        self._reaper_die = True
-        self.tickle()
-        self.join()
-
-    @staticmethod
-    def _terminate_world(signum, timeout):
-        """
-        Attempts to terminate all our children (real or adopted) using the given signal.
-        Returns True if all were successfully terminated within the timeout period,
-        False otherwise.
-        """
-
-        try:
-            os.kill(-1, signum)
-        except OSError:
-            pass
-
-        start_time = time()
-
-        while True:
-            try:
-                stat = os.waitpid(-1, os.WNOHANG)
-            except ChildProcessError:
-                return True
-            except OSError as e:
-                if e.errno == errno.ECHILD:
-                    return True
-                    break
-
-            if stat[0] == 0:    # if waiting on processes, delay slightly
-                sleep(0.10)
-            else:
-                info("GOT stat: " + str(stat))
-
-            if time() - start_time > timeout:
-                return False
-
-
-    def killAllProcesses(self):
-        "Terminate the reaper, then kill all processes."
-
-        self.terminate()
-
-        info("Killing all processes...")
-
-        if self._terminate_world(signal.SIGTERM, self.KILL_ALL_PROCESSES_TIMEOUT):
-            return
-
-        warn("Not all processes have exited in {0}secs. Force quit.".format(self.KILL_ALL_PROCESSES_TIMEOUT))
-
-        if self._terminate_world(signal.SIGKILL, self.FORCED_KILL_TIMEOUT):
-            return
-
-        warn("Processes remain even after forced kill!")
-
-
-class SubProcess(threading.Thread):
+class SubProcess(object):
 
     pid = None
 
@@ -205,8 +22,12 @@ class SubProcess(threading.Thread):
     @classmethod
     def spawn(cls, args, user=None):
         sp = cls(args, user)
-        sp.start()
-        return sp
+        f = asyncio.async(sp.run())
+        f.add_done_callback(sp._spawn_done)
+        return f
+
+    def _spawn_done(self, future):
+        print("spawn_done! future={0} returncode={1}".format(future, self._proc.returncode))
 
     def __init__(self, args, user=None):
         super(SubProcess, self).__init__()
@@ -222,8 +43,7 @@ class SubProcess(threading.Thread):
 
     def _setup_user(self, user):
         """
-        Execute set-up for the new process.  NOTE that the absolute minimum here is important, otherwise
-        the thread state may lock-up.  See warning about preexec_fn at https://docs.python.org/3.4/library/subprocess.html.
+        Execute set-up for the new process.
         """
         pwrec = pwd.getpwnam(user)
         self._user_uid = pwrec.pw_uid
@@ -234,12 +54,15 @@ class SubProcess(threading.Thread):
             'USER':       user,
         }
             
+    @asyncio.coroutine
     def run(self):
         args = self._prog_args
         info("Running %s... " % " ".join(args))
-        self._popen = Popen(self._prog_args, preexec_fn=self._setup_subprocess)
-        status = Reaper.sharedInstance().waitForProcess(self._popen.pid)
-        info("Process status for pid={0} is '{1}'".format(self.pid, status))
+        create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess)
+        proc = self._proc = yield from create
+        yield from proc.wait()
+        info("Process status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
+
 
 class TopLevelProcess(object):
              
@@ -249,6 +72,12 @@ class TopLevelProcess(object):
     
     _ignore_signals = False
 
+    def __init__(self):
+        policy = asyncio.get_event_loop_policy()
+        w = self._watcher = InitChildWatcher()
+        policy.set_child_watcher(w)
+        w.add_no_processes_handler(self._no_processes)
+
     def _got_SIGTERM(self, signum, frame):
         info("SIGTERM received")
         if self._ignore_signals:
@@ -257,9 +86,6 @@ class TopLevelProcess(object):
         Reaper.sharedInstance().killAllProcesses()
         os._exit(0)
 
-    def __init__(self):
-        signal.signal(signal.SIGTERM, self._got_SIGTERM)
-
     @classmethod
     def sharedInstance(cls):
         "Return a singleton object for this class."
@@ -267,5 +93,29 @@ class TopLevelProcess(object):
             cls._cls_singleton = TopLevelProcess()
         return cls._cls_singleton
 
+    @property
+    def debug(self):
+        return asyncio.get_event_loop().get_debug()
+    @debug.setter
+    def debug(self, val):
+        asyncio.get_event_loop().set_debug(val)
+
+    @property
+    def loop(self):
+        return asyncio.get_event_loop()
+
+    def _no_processes(self):
+        print("NO PROCESSES!")
+        loop = asyncio.get_event_loop()
+        loop.call_later(0.5, loop.stop)
+
     def run(self, args, user=None):
+        info("IN RUN")
         return SubProcess.spawn(args, user)
+
+    def run_event_loop(self):
+        "Sets up the event loop and runs it."
+
+        loop = asyncio.get_event_loop()
+        loop.run_forever()
+        loop.close()

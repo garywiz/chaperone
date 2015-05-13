@@ -1,6 +1,7 @@
+from asyncio.log import logger
 
-def warn(msg):
-    print("WARNING: " + msg)
+def warn(*args):
+    logger.warning(*args)
 
-def info(msg):
-    print("INFO: " + msg)
+def info(*args):
+    logger.info(*args)

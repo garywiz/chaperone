@@ -30,6 +30,7 @@ from cproc import TopLevelProcess
 from cutil.config import Configuration
 
 tlp = TopLevelProcess.sharedInstance()
+tlp.debug = True
 
 cmd = options['<command>']
 
@@ -37,3 +38,6 @@ config = Configuration.configFromCommandSpec(options['--config'], user=options['
 
 if cmd:
    sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')))
+   print(sproc)
+
+tlp.run_event_loop()
