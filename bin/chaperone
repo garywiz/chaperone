@@ -3,11 +3,16 @@
 """
 Lightweight process and service manager
 
-Usage: chaperone [--user=<name>] [-- <command> [<args> ...]]
+Usage:
+    chaperone [--user=<name>] [--config=<file_or_dir>] [<command> [<args> ...]]
 
 Options:
-	-v                       Provide verbose messages
-	--user user              Start first process as user (else root)
+    -v                       Provide verbose messages
+    --user=<name>            Start first process as user (else root)
+    --config=<file_or_dir>   Specifies file or directory for configuration [default: /etc/chaperone.d]
+
+If a user is specified, then the basename of file_or_dir is searched in the user's directory, and it
+must be owned by the user to take effect.
 """
 
 import sys
@@ -18,14 +23,17 @@ from docopt import docopt
 # we are installed
 sys.path[0] = os.path.dirname(sys.path[0])
 
-options = docopt(__doc__)
+options = docopt(__doc__, options_first=True)
 print(options)
 
 from cproc import TopLevelProcess
+from cutil.config import Configuration
 
 tlp = TopLevelProcess.sharedInstance()
 
 cmd = options['<command>']
+
+config = Configuration.configFromCommandSpec(options['--config'], user=options['--user'])
 
 if cmd:
    sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')))
