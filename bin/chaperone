@@ -7,7 +7,7 @@ Lightweight process and service manager
 Usage:
     chaperone [--user=<name>]
               [--config=<file_or_dir>] 
-              [--shutdown_on_exit]
+              [--shutdown_on_exit] [--nodelay]
               [<command> [<args> ...]]
 
 Options:
@@ -16,6 +16,7 @@ Options:
     --config=<file_or_dir>   Specifies file or directory for configuration [default: /etc/chaperone.d]
     --shutdown_on_exit       If set, then the entire system will be shutdown when the given command (if any)
                              terminates.
+    --nodelay                Eliminates delay before initial command prompt when there are services.
 
 If a user is specified, then the basename of file_or_dir is searched in the user's directory, and it
 must be owned by the user to take effect.
@@ -33,6 +34,8 @@ from docopt import docopt
 sys.path[0] = os.path.dirname(sys.path[0])
 
 from cutil.logging import warn, info, set_log_level
+from cutil.syslog import SyslogServer
+
 set_log_level(logging.DEBUG)
 
 options = docopt(__doc__, options_first=True)
@@ -48,11 +51,23 @@ cmd = options['<command>']
 
 config = Configuration.configFromCommandSpec(options['--config'], user=options['--user'])
 
-if cmd:
+def run_command():
    sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')))
    print(sproc)
    if options['--shutdown_on_exit']:
       sproc.add_done_callback(lambda f: tlp.kill_system())
 
-tlp.run_services(config)
+syslog = SyslogServer().run()
+print(syslog)
+syslog.add_done_callback(lambda f: print("syslog DONE callback!", f))
+
+services = tlp.run_services(config) 
+print(services)
+
+if cmd:
+   if services and not options['--nodelay']:
+      tlp.loop.call_later(1, run_command)
+   else:
+      tlp.loop.call_soon(run_command)
+ 
 tlp.run_event_loop()

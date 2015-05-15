@@ -9,3 +9,9 @@ def warn(*args):
 
 def info(*args):
     logger.info(*args)
+
+def debug(*args):
+    logger.debug(*args)
+
+def error(*args):
+    logger.error(*args)
