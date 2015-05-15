@@ -2,6 +2,7 @@ import os
 import pwd
 import errno
 import asyncio
+import shlex
 from functools import partial
 
 from time import time, sleep
@@ -14,26 +15,43 @@ import signal
 class SubProcess(object):
 
     pid = None
+    name = None
 
     _user_uid = None
     _user_gid = None
     _user_env = None
+    _proc = None
 
     @classmethod
-    def spawn(cls, args, user=None):
+    def spawn(cls, args=None, user=None, config=None, name=None):
+        print("spawn: {0}".format((args, user, config, name)))
         sp = cls(args, user)
+        sp.name = name
+        if config:
+            sp.configure(config)
         f = asyncio.async(sp.run())
         f.add_done_callback(sp._spawn_done)
         return f
 
     def _spawn_done(self, future):
-        print("spawn_done! future={0} returncode={1}".format(future, self._proc.returncode))
+        print("spawn_done! future={0} returncode={1}".format(future, self._proc and self._proc.returncode))
 
-    def __init__(self, args, user=None):
+    def __init__(self, args=None, user=None):
         super(SubProcess, self).__init__()
         self._prog_args = args
         if user:
             self._setup_user(user)
+
+    def configure(self, config):
+        args = None
+        if 'command' in config:
+            assert 'bin' not in config and 'args' not in config, "bin/args and command config are mutually-exclusive"
+            args = shlex.split(config['command'])
+        elif 'bin' in config:
+            args = [config['bin']] + shlex.split(config.get('args', ''))
+        else:
+            raise Exception("No command or arguments provided for service")
+        self._prog_args = args
 
     def _setup_subprocess(self):
         if self._user_uid:
@@ -57,6 +75,7 @@ class SubProcess(object):
     @asyncio.coroutine
     def run(self):
         args = self._prog_args
+        assert args, "No arguments provided to SubProcess.run()"
         info("Running %s... " % " ".join(args))
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess)
         proc = self._proc = yield from create
@@ -140,7 +159,6 @@ class TopLevelProcess(object):
             return
 
     def run(self, args, user=None):
-        info("IN RUN")
         return SubProcess.spawn(args, user)
 
     def run_event_loop(self):
@@ -148,3 +166,8 @@ class TopLevelProcess(object):
 
         self.loop.run_forever()
         self.loop.close()
+
+    def run_services(self, config):
+        "Run services from the speicified config (an instance of cutil.config.Configuration)"
+        info("RUN SERVICES: {0}".format(config.get_services()))
+        return asyncio.gather( (SubProcess.spawn(config=v, name=k) for k,v in config.get_services().items()), return_exceptions=True )

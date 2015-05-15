@@ -2,6 +2,8 @@ import yaml
 import os
 import pwd
 
+from cutil.logging import info, warn
+
 class Configuration(object):
 
     _conf = None
@@ -41,7 +43,7 @@ class Configuration(object):
 
         trypath = os.path.join(frombase, spec)
 
-        print("TRYPATH: {0}".format(trypath))
+        info("TRYPATH: {0}".format(trypath))
 
         if not os.path.exists(trypath):
             return cls(default = default)
@@ -58,7 +60,7 @@ class Configuration(object):
         Given one or more files, load our configuration.  If no configuration is provided,
         then use the configuration specified by the default.
         """
-        print("ATTEMPTING CONFIG: '{0}'".format(args))
+        info("ATTEMPTING CONFIG: '{0}'".format(args))
 
         self._conf = dict()
 
@@ -72,7 +74,7 @@ class Configuration(object):
     def _merge(self, items):
         if type(items) == list:
             items = {k:dict() for k in items}
-        print("ITEMS: {0}".format(items))
+        info("ITEMS: {0}".format(items))
         conf = self._conf
         for k,v in items.items():
             if k in conf and not k.startswith('service.'):
@@ -80,8 +82,8 @@ class Configuration(object):
             else:
                 conf[k] = v
 
-    def services(self):
-        return {k:v for k,v in self._conf if k.endswith('.service')}
+    def get_services(self):
+        return {k:v for k,v in self._conf.items() if k.endswith('.service')}
 
     def dump(self):
         return 'configuration: {0}'.format(self._conf)
