@@ -3,7 +3,33 @@ import os
 import pwd
 
 from cutil.logging import info, warn
+import voluptuous as V
 
+@V.message('not an executable file', cls=V.FileInvalid)
+@V.truth
+def IsExecutable(v):
+    return os.path.isfile(v) and os.access(v, os.X_OK)
+    
+_config_service = { V.Required('bin'): str }
+
+_config_schema = V.Any(
+    { V.Match('^.+\.service$'): {
+        'command': str,
+        'bin': str,
+        'args': str,
+        'restart': bool,
+      }
+    },
+)
+    
+validator = V.Schema(_config_schema)
+
+class ServiceConfig(object):
+
+    name = None
+    group = "default"
+    restart = True
+    
 class Configuration(object):
 
     _conf = None
@@ -70,6 +96,8 @@ class Configuration(object):
         
         if not self._conf and default:
             self._conf = yaml.load(default)
+
+        validator(self._conf)
 
     def _merge(self, items):
         if type(items) == list:

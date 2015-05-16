@@ -29,9 +29,7 @@ class SubProcess(object):
         sp.name = name
         if config:
             sp.configure(config)
-        f = asyncio.async(sp.run())
-        f.add_done_callback(sp._spawn_done)
-        return f
+        return sp.run()
 
     def _spawn_done(self, future):
         print("spawn_done! future={0} returncode={1}".format(future, self._proc and self._proc.returncode))
@@ -79,6 +77,7 @@ class SubProcess(object):
         info("Running %s... " % " ".join(args))
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess)
         proc = self._proc = yield from create
+        print("CREATED PROCESS", proc)
         yield from proc.wait()
         info("Process status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
 
@@ -94,6 +93,7 @@ class TopLevelProcess(object):
     _ignore_signals = False
     _all_killed = False
     _killing_system = False
+    _enable_exit = False
 
     def __init__(self):
         policy = asyncio.get_event_loop_policy()
@@ -123,8 +123,9 @@ class TopLevelProcess(object):
     def _no_processes(self):
         print("NO PROCESSES!", self)
         self._all_killed = True
-        if self.exit_when_no_processes:
-            self.exit_when_no_processes = False # don't do this twice
+        if self._enable_exit and self.exit_when_no_processes:
+            print("FORCING EXIT")
+            self._enable_exit = False
             self.loop.call_later(0.5, self.loop.stop)
 
     def kill_system(self):
@@ -167,7 +168,15 @@ class TopLevelProcess(object):
         self.loop.run_forever()
         self.loop.close()
 
+    @asyncio.coroutine
     def run_services(self, config):
         "Run services from the speicified config (an instance of cutil.config.Configuration)"
         info("RUN SERVICES: {0}".format(config.get_services()))
-        return asyncio.gather( (SubProcess.spawn(config=v, name=k) for k,v in config.get_services().items()), return_exceptions=True )
+        for k,v in config.get_services().items():
+            info("RUNNING SERVICE: " + k)
+            try:
+                yield from SubProcess.spawn(config=v, name=k)
+            except Exception as ex:
+                print("PROCESS COULD NOT BE STARTED", str(ex))
+
+        self._enable_exit = True

@@ -27,6 +27,7 @@ logging.basicConfig()
 
 import sys
 import os
+import asyncio
 from docopt import docopt
 
 # Assure that packages in the same directory as ours (bin) can be used without concern for where
@@ -51,18 +52,27 @@ cmd = options['<command>']
 
 config = Configuration.configFromCommandSpec(options['--config'], user=options['--user'])
 
+def dispatch_result(future):
+   print("DISPATCH RESULT", future)
+
+def dispatch(cr):
+   future = asyncio.async(cr)
+   future.add_done_callback(dispatch_result)
+   return future
+
 def run_command():
    sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')))
    print(sproc)
+   sprocf = dispatch(sproc)
    if options['--shutdown_on_exit']:
-      sproc.add_done_callback(lambda f: tlp.kill_system())
+      sprocf.add_done_callback(lambda f: tlp.kill_system())
 
 syslog = SyslogServer().run()
 print(syslog)
-syslog.add_done_callback(lambda f: print("syslog DONE callback!", f))
+dispatch(syslog)
 
 services = tlp.run_services(config) 
-print(services)
+dispatch(services)
 
 if cmd:
    if services and not options['--nodelay']:
