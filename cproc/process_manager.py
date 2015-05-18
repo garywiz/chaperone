@@ -5,13 +5,30 @@ import asyncio
 import shlex
 from functools import partial
 
+from fnmatch import fnmatch
+
 from time import time, sleep
 
-from cutil.logging import warn, info, set_log_level
+from cutil.logging import warn, info, debug, set_log_level, enable_syslog_handler
 from cproc.watcher import InitChildWatcher
 from cutil.syslog import SyslogServer
+from cutil.misc import lazydict
 
 import signal
+
+class Environment(lazydict):
+
+    def __init__(self, config, from_env = os.environ):
+        super().__init__()
+        if not config:
+            self.update(from_env)
+        else:
+            inherit = config.get('env_inherit')
+            if inherit:
+                self.update({k:v for k,v in from_env.items() if any([fnmatch(k,pat) for pat in inherit])})
+            add = config.get('env_add')
+            if add:
+                self.update(add)
 
 class SubProcess(object):
 
@@ -25,17 +42,17 @@ class SubProcess(object):
 
     @classmethod
     @asyncio.coroutine
-    def spawn(cls, args=None, user=None, service=None, wait=False):
-        print("spawn: {0}".format((args, user, service)))
+    def spawn(cls, args=None, user=None, service=None, wait=False, env=None):
+        debug("spawn: {0}".format((args, user, service)))
         sp = cls(args, user)
         if service:
             sp.configure(service)
-        yield from sp.run()
+        yield from sp.run(env=env)
         if wait:
             yield from sp.wait()
 
     def __init__(self, args=None, user=None):
-        super(SubProcess, self).__init__()
+        super().__init__()
         self._prog_args = args
         if user:
             self._setup_user(user)
@@ -72,13 +89,14 @@ class SubProcess(object):
         }
             
     @asyncio.coroutine
-    def run(self):
+    def run(self, env=None):
         args = self._prog_args
         assert args, "No arguments provided to SubProcess.run()"
         info("Running %s... " % " ".join(args))
-        create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess)
+        create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess,
+                                                env=env)
         proc = self._proc = yield from create
-        print("CREATED PROCESS", proc)
+        debug("CREATED PROCESS: {0}", proc)
 
     @asyncio.coroutine
     def wait(self):
@@ -129,10 +147,10 @@ class TopLevelProcess(object):
         return asyncio.get_event_loop()
 
     def _no_processes(self):
-        print("NO PROCESSES!", self)
+        debug("NO PROCESSES!", self)
         self._all_killed = True
         if self._enable_exit and self.exit_when_no_processes:
-            print("FORCING EXIT")
+            debug("FORCING EXIT")
             self._enable_exit = False
             self.loop.call_later(0.5, self.loop.stop)
 
@@ -168,20 +186,25 @@ class TopLevelProcess(object):
             return
 
     def activate_result(self, future):
-        print("DISPATCH RESULT", future)
+        debug("DISPATCH RESULT", future)
 
     def activate(self, cr):
        future = asyncio.async(cr)
        future.add_done_callback(self.activate_result)
        return future
 
-    def run(self, args, user=None, wait=False):
-        return SubProcess.spawn(args, user, wait=wait)
+    def run(self, args, user=None, wait=False, config=None):
+        return SubProcess.spawn(args, user, wait=wait, env=Environment(config.get_globals()))
+
+    def _syslog_started(self, f):
+        enable_syslog_handler()
+        info("Switching all chaperone logging to /dev/log")
 
     def run_event_loop(self):
         "Sets up the event loop and runs it."
 
         self._syslog = SyslogServer().run()
+        self._syslog.add_done_callback(self._syslog_started)
         self.activate(self._syslog)
 
         self.loop.run_forever()
@@ -190,20 +213,26 @@ class TopLevelProcess(object):
     @asyncio.coroutine
     def run_services(self, config):
         "Run services from the speicified config (an instance of cutil.config.Configuration)"
+
+        # First, determine our overall configuration for the services environment.
+
+        masterenv = Environment(config.get_globals())
+
         slist = config.get_services().get_startup_list()
         info("RUN SERVICES: {0}".format(slist))
         for s in slist:
             if not s.enabled:
                 continue
             info("RUNNING SERVICE: " + str(s))
+            subenv = Environment(s, masterenv)
             try:
-                yield from SubProcess.spawn(service=s)
+                yield from SubProcess.spawn(service=s, env=subenv)
             except Exception as ex:
-                print("PROCESS COULD NOT BE STARTED", str(ex), type(ex))
+                debug("PROCESS COULD NOT BE STARTED", str(ex), type(ex))
                 if isinstance(ex, FileNotFoundError) and s.optional:
-                    print("OPTIONAL SERVICE BINARY MISSING, WE IGNORE IT")
+                    debug("OPTIONAL SERVICE BINARY MISSING, WE IGNORE IT")
                 elif s.ignore_failures:
-                    print("IGNORING FAILURE AND CONTINUING")
+                    debug("IGNORING FAILURE AND CONTINUING")
                 else:
                     raise
 

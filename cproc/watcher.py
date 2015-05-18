@@ -4,7 +4,7 @@ import threading
 from functools import partial
 from asyncio.unix_events import BaseChildWatcher
 
-from cutil.logging import warn, info
+from cutil.logging import warn, info, debug
 
 class ProcStatus(int):
     def __new__(cls, val):
@@ -130,7 +130,7 @@ class InitChildWatcher(BaseChildWatcher):
         while True:
             try:
                 pid, status = os.waitpid(-1, os.WNOHANG)
-                print("pid={0},status={1}".format(pid,status))
+                debug("REAP pid={0},status={1}".format(pid,status))
             except ChildProcessError:
                 # No more child processes exist.
                 if self._had_children and self._no_processes:

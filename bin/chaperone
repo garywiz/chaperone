@@ -8,6 +8,7 @@ Usage:
     chaperone [--user=<name>]
               [--config=<file_or_dir>] 
               [--shutdown_on_exit] [--nodelay] [--debug]
+              [--log-level=<level>]
               [<command> [<args> ...]]
 
 Options:
@@ -18,17 +19,16 @@ Options:
                              terminates.
     --nodelay                Eliminates delay before initial command prompt when there are services.
     --debug                  Turn on debugging features
+    --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
 
 If a user is specified, then the basename of file_or_dir is searched in the user's directory, and it
 must be owned by the user to take effect.
 """
 
-import logging
-logging.basicConfig()
-
 import sys
 import os
 import asyncio
+import logging
 from functools import partial
 from docopt import docopt
 
@@ -36,14 +36,22 @@ from docopt import docopt
 # we are installed
 sys.path[0] = os.path.dirname(sys.path[0])
 
-from cutil.logging import warn, info, set_log_level
 from cproc import TopLevelProcess
 from cutil.config import Configuration
+from cutil.logging import warn, info, debug, set_log_level
 
 options = docopt(__doc__, options_first=True)
 if options['--debug']:
-   set_log_level(logging.DEBUG)
-   print('OPTIONS', options)
+   options['--log-level'] = "DEBUG"
+   debug('OPTIONS', options)
+
+lev = options.get('--log-level')
+if lev:
+   levid = getattr(logging, lev.upper())
+   if not levid:
+      print("Invalid log level: {0}".format(lev))
+   else:
+      set_log_level(levid)
 
 tlp = TopLevelProcess.sharedInstance()
 if options['--debug']:
@@ -55,7 +63,7 @@ config = Configuration.configFromCommandSpec(options['--config'], user=options['
 
 @asyncio.coroutine
 def run_command():
-   sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')), wait=True)
+   sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')), wait=True, config=config)
    yield from sproc
    if options['--shutdown_on_exit']:
       tlp.kill_system()

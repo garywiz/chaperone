@@ -2,7 +2,7 @@ import yaml
 import os
 import pwd
 
-from cutil.logging import info, warn
+from cutil.logging import info, warn, debug
 from cutil.misc import lazydict
 import voluptuous as V
 
@@ -24,6 +24,12 @@ _config_schema = V.Any(
         'optional': bool,
         'ignore_failures': bool,
         'enabled': bool,
+        'env_inherit': [ str ],
+        'env_add': { str: str },
+      },
+      V.Match('^config$'): {
+        'env_inherit': [ str ],
+        'env_add': { str: str },
       }
     },
 )
@@ -42,6 +48,9 @@ class ServiceConfig(object):
     command = None
     args = None
     enabled = True
+    env_add = None
+    env_inherit = ['*']
+
     bin = None
 
     def __init__(self, name, initdict):
@@ -51,6 +60,9 @@ class ServiceConfig(object):
         self.before = set(self.before.split()) if self.before is not None else set()
         self.after = set(self.after.split()) if self.after is not None else set()
 
+    def get(self, attr, default = None):
+        return getattr(self, attr, default)
+        
     def __repr__(self):
         return "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})".format(self)
 
@@ -171,7 +183,7 @@ class Configuration(object):
 
         trypath = os.path.join(frombase, spec)
 
-        info("TRYPATH: {0}".format(trypath))
+        debug("TRYPATH: {0}".format(trypath))
 
         if not os.path.exists(trypath):
             return cls(default = default)
@@ -188,7 +200,7 @@ class Configuration(object):
         Given one or more files, load our configuration.  If no configuration is provided,
         then use the configuration specified by the default.
         """
-        info("ATTEMPTING CONFIG: '{0}'".format(args))
+        debug("ATTEMPTING CONFIG: '{0}'".format(args))
 
         self._conf = dict()
 
@@ -204,7 +216,7 @@ class Configuration(object):
     def _merge(self, items):
         if type(items) == list:
             items = {k:dict() for k in items}
-        info("ITEMS: {0}".format(items))
+        debug("ITEMS: {0}".format(items))
         conf = self._conf
         for k,v in items.items():
             if k in conf and not k.startswith('service.'):
@@ -216,6 +228,9 @@ class Configuration(object):
         return ServiceDict( 
             ((k,v) for k,v in self._conf.items() if k.endswith('.service'))
         )
+
+    def get_globals(self):
+        return self._conf.get('config')
 
     def dump(self):
         return 'configuration: {0}'.format(self._conf)
