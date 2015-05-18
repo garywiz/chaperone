@@ -7,7 +7,7 @@ Lightweight process and service manager
 Usage:
     chaperone [--user=<name>]
               [--config=<file_or_dir>] 
-              [--shutdown_on_exit] [--nodelay]
+              [--shutdown_on_exit] [--nodelay] [--debug]
               [<command> [<args> ...]]
 
 Options:
@@ -17,6 +17,7 @@ Options:
     --shutdown_on_exit       If set, then the entire system will be shutdown when the given command (if any)
                              terminates.
     --nodelay                Eliminates delay before initial command prompt when there are services.
+    --debug                  Turn on debugging features
 
 If a user is specified, then the basename of file_or_dir is searched in the user's directory, and it
 must be owned by the user to take effect.
@@ -28,6 +29,7 @@ logging.basicConfig()
 import sys
 import os
 import asyncio
+from functools import partial
 from docopt import docopt
 
 # Assure that packages in the same directory as ours (bin) can be used without concern for where
@@ -35,49 +37,36 @@ from docopt import docopt
 sys.path[0] = os.path.dirname(sys.path[0])
 
 from cutil.logging import warn, info, set_log_level
-from cutil.syslog import SyslogServer
-
-set_log_level(logging.DEBUG)
-
-options = docopt(__doc__, options_first=True)
-print(options)
-
 from cproc import TopLevelProcess
 from cutil.config import Configuration
 
+options = docopt(__doc__, options_first=True)
+if options['--debug']:
+   set_log_level(logging.DEBUG)
+   print('OPTIONS', options)
+
 tlp = TopLevelProcess.sharedInstance()
-tlp.debug = True
+if options['--debug']:
+   tlp.debug = True
 
 cmd = options['<command>']
 
 config = Configuration.configFromCommandSpec(options['--config'], user=options['--user'])
 
-def dispatch_result(future):
-   print("DISPATCH RESULT", future)
-
-def dispatch(cr):
-   future = asyncio.async(cr)
-   future.add_done_callback(dispatch_result)
-   return future
-
+@asyncio.coroutine
 def run_command():
-   sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')))
-   print(sproc)
-   sprocf = dispatch(sproc)
+   sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')), wait=True)
+   yield from sproc
    if options['--shutdown_on_exit']:
-      sprocf.add_done_callback(lambda f: tlp.kill_system())
+      tlp.kill_system()
 
-syslog = SyslogServer().run()
-print(syslog)
-dispatch(syslog)
-
-services = tlp.run_services(config) 
-dispatch(services)
+services = tlp.run_services(config)
+tlp.activate(services)
 
 if cmd:
    if services and not options['--nodelay']:
-      tlp.loop.call_later(1, run_command)
+      tlp.loop.call_later(1, lambda: tlp.activate(run_command()))
    else:
-      tlp.loop.call_soon(run_command)
+      tlp.loop.call_soon(lambda: tlp.activate(run_command()))
  
 tlp.run_event_loop()

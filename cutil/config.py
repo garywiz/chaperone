@@ -3,6 +3,7 @@ import os
 import pwd
 
 from cutil.logging import info, warn
+from cutil.misc import lazydict
 import voluptuous as V
 
 @V.message('not an executable file', cls=V.FileInvalid)
@@ -18,6 +19,11 @@ _config_schema = V.Any(
         'bin': str,
         'args': str,
         'restart': bool,
+        'before': V.Match('^[^\.]+$'), # disallow periods
+        'after': V.Match('^[^\.]+$'),
+        'optional': bool,
+        'ignore_failures': bool,
+        'enabled': bool,
       }
     },
 )
@@ -29,7 +35,103 @@ class ServiceConfig(object):
     name = None
     group = "default"
     restart = True
-    
+    before = None
+    after = None
+    ignore_failures = False
+    optional = False
+    command = None
+    args = None
+    enabled = True
+    bin = None
+
+    def __init__(self, name, initdict):
+        self.name = name
+        for k,v in initdict.items():
+            setattr(self, k, v)
+        self.before = set(self.before.split()) if self.before is not None else set()
+        self.after = set(self.after.split()) if self.after is not None else set()
+
+    def __repr__(self):
+        return "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})".format(self)
+
+
+class ServiceDict(lazydict):
+
+    _ordered_startup = None
+
+    def __init__(self, servdict):
+        """
+        Accepts a dictionary of values to be turned into services.
+        """
+        super().__init__(
+            ((k,ServiceConfig(k,v)) for (k,v) in servdict)
+        )
+
+    def get_startup_list(self):
+        """
+        Returns the list of start-up items in priority order by examining before: and after: 
+        attributes.
+        """
+        if self._ordered_startup is not None:
+            return self._ordered_startup
+
+        services = self.deepcopy()
+        groups = lazydict()
+        for k,v in services.items():
+            groups.setdefault(v.group, lambda: lazydict())[k] = v
+
+        # We want to only look at the "after:" attribute, so we will eliminate the relevance
+        # of befores...
+
+        for k,v in services.items():
+            for bef in v.before:
+                if bef in groups:
+                    for g in groups[bef].values():
+                        g.after.add(v.name)
+                elif bef in services:
+                    services[bef].after.add(v.name)
+            v.before = None
+
+        # Before is now gone, make sure that all "after... groups" are translated into "after.... service"
+
+        for group in groups.values():
+            #print(*[iter(item.after) for item in group.values()])
+            afters = set()
+            for item in group.values():
+                afters.update(item.after)
+            for a in afters:
+                if a in groups:
+                    names = groups[a].keys()
+                    for item in group.values():
+                        item.after.update(names)
+                
+        # Now remove any undefined services or groups and turn the 'after' attribute into a definitive
+        # graph.
+
+        afters = set(services.keys())
+        for v in services.values():
+            v.refs = map(lambda n: services[n], v.after.intersection(afters))
+
+        svlist = list()         # this will be our final list, containing original items
+        svseen = set()
+
+        def add_nodes(items):
+            for item in items:
+                if hasattr(item, 'active'):
+                    raise Exception("Circular dependency in service declaration")
+                item.active = True
+                add_nodes(item.refs)
+                del item.active
+                if item.name not in svseen:
+                    svseen.add(item.name)
+                    svlist.append(self[item.name])
+
+        add_nodes(services.values())
+
+        self._ordered_startup = svlist
+
+        return svlist
+            
 class Configuration(object):
 
     _conf = None
@@ -111,7 +213,9 @@ class Configuration(object):
                 conf[k] = v
 
     def get_services(self):
-        return {k:v for k,v in self._conf.items() if k.endswith('.service')}
+        return ServiceDict( 
+            ((k,v) for k,v in self._conf.items() if k.endswith('.service'))
+        )
 
     def dump(self):
         return 'configuration: {0}'.format(self._conf)

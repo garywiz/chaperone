@@ -9,6 +9,7 @@ from time import time, sleep
 
 from cutil.logging import warn, info, set_log_level
 from cproc.watcher import InitChildWatcher
+from cutil.syslog import SyslogServer
 
 import signal
 
@@ -23,16 +24,15 @@ class SubProcess(object):
     _proc = None
 
     @classmethod
-    def spawn(cls, args=None, user=None, config=None, name=None):
-        print("spawn: {0}".format((args, user, config, name)))
+    @asyncio.coroutine
+    def spawn(cls, args=None, user=None, service=None, wait=False):
+        print("spawn: {0}".format((args, user, service)))
         sp = cls(args, user)
-        sp.name = name
-        if config:
-            sp.configure(config)
-        return sp.run()
-
-    def _spawn_done(self, future):
-        print("spawn_done! future={0} returncode={1}".format(future, self._proc and self._proc.returncode))
+        if service:
+            sp.configure(service)
+        yield from sp.run()
+        if wait:
+            yield from sp.wait()
 
     def __init__(self, args=None, user=None):
         super(SubProcess, self).__init__()
@@ -40,13 +40,14 @@ class SubProcess(object):
         if user:
             self._setup_user(user)
 
-    def configure(self, config):
+    def configure(self, service):
         args = None
-        if 'command' in config:
-            assert 'bin' not in config and 'args' not in config, "bin/args and command config are mutually-exclusive"
-            args = shlex.split(config['command'])
-        elif 'bin' in config:
-            args = [config['bin']] + shlex.split(config.get('args', ''))
+        self.name = service.name
+        if service.command:
+            assert not (service.command and (service.bin or service.args)), "bin/args and command config are mutually-exclusive"
+            args = shlex.split(service.command)
+        elif service.bin:
+            args = [service.bin] + shlex.split(service.args or '')
         else:
             raise Exception("No command or arguments provided for service")
         self._prog_args = args
@@ -78,9 +79,16 @@ class SubProcess(object):
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess)
         proc = self._proc = yield from create
         print("CREATED PROCESS", proc)
+
+    @asyncio.coroutine
+    def wait(self):
+        proc = self._proc
+        if not proc:
+            raise Exception("Process not started, can't wait")
         yield from proc.wait()
         info("Process status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
 
+        
 
 class TopLevelProcess(object):
              
@@ -159,11 +167,22 @@ class TopLevelProcess(object):
             self._no_processes()
             return
 
-    def run(self, args, user=None):
-        return SubProcess.spawn(args, user)
+    def activate_result(self, future):
+        print("DISPATCH RESULT", future)
+
+    def activate(self, cr):
+       future = asyncio.async(cr)
+       future.add_done_callback(self.activate_result)
+       return future
+
+    def run(self, args, user=None, wait=False):
+        return SubProcess.spawn(args, user, wait=wait)
 
     def run_event_loop(self):
         "Sets up the event loop and runs it."
+
+        self._syslog = SyslogServer().run()
+        self.activate(self._syslog)
 
         self.loop.run_forever()
         self.loop.close()
@@ -171,12 +190,21 @@ class TopLevelProcess(object):
     @asyncio.coroutine
     def run_services(self, config):
         "Run services from the speicified config (an instance of cutil.config.Configuration)"
-        info("RUN SERVICES: {0}".format(config.get_services()))
-        for k,v in config.get_services().items():
-            info("RUNNING SERVICE: " + k)
+        slist = config.get_services().get_startup_list()
+        info("RUN SERVICES: {0}".format(slist))
+        for s in slist:
+            if not s.enabled:
+                continue
+            info("RUNNING SERVICE: " + str(s))
             try:
-                yield from SubProcess.spawn(config=v, name=k)
+                yield from SubProcess.spawn(service=s)
             except Exception as ex:
-                print("PROCESS COULD NOT BE STARTED", str(ex))
+                print("PROCESS COULD NOT BE STARTED", str(ex), type(ex))
+                if isinstance(ex, FileNotFoundError) and s.optional:
+                    print("OPTIONAL SERVICE BINARY MISSING, WE IGNORE IT")
+                elif s.ignore_failures:
+                    print("IGNORING FAILURE AND CONTINUING")
+                else:
+                    raise
 
         self._enable_exit = True
