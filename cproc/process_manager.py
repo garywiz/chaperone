@@ -194,7 +194,7 @@ class TopLevelProcess(object):
        return future
 
     def run(self, args, user=None, wait=False, config=None):
-        return SubProcess.spawn(args, user, wait=wait, env=Environment(config.get_globals()))
+        return SubProcess.spawn(args, user, wait=wait, env=Environment(config.get_settings()))
 
     def _syslog_started(self, f):
         enable_syslog_handler()
@@ -216,7 +216,7 @@ class TopLevelProcess(object):
 
         # First, determine our overall configuration for the services environment.
 
-        masterenv = Environment(config.get_globals())
+        masterenv = Environment(config.get_settings())
 
         slist = config.get_services().get_startup_list()
         info("RUN SERVICES: {0}".format(slist))

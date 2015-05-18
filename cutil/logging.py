@@ -1,6 +1,9 @@
 from functools import partial
 from logging.handlers import SysLogHandler
 import logging
+import os
+import sys
+
 logger = logging.getLogger(__name__)
 
 _root_logger = logging.getLogger(None)
@@ -18,6 +21,9 @@ def set_log_level(lev):
 def enable_syslog_handler():
     global _syslog_handler
     _syslog_handler = SysLogHandler('/dev/log')
+    sf = logging.Formatter('{asctime} %s[%d]: {message}' % (sys.argv[0] or '-', os.getpid()), 
+                           datefmt="%b %d %H:%M:%S", style='{')
+    _syslog_handler.setFormatter(sf)
     _root_logger.addHandler(_syslog_handler)
     _root_logger.removeHandler(_stderr_handler)
 

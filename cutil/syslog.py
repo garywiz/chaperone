@@ -3,6 +3,9 @@ from logging.handlers import SysLogHandler
 import asyncio
 import socket
 import os
+import re
+
+_RE_SYSLOG = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?P<prog>[^ \[]+)(?P<rest>\[\d+\]: .+)$')
 
 def create_unix_datagram_server(proto, path):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -10,20 +13,30 @@ def create_unix_datagram_server(proto, path):
     return loop.create_unix_server(SyslogServerProtocol, sock=sock)
 
 class SyslogServerProtocol(asyncio.Protocol):
+
     def _output(self, msg, priority = SysLogHandler.LOG_ERR, facility = SysLogHandler.LOG_SYSLOG):
-        print ("[{0},{1}]: {2}".format(facility, priority, msg))
+        print ("<{0}>{1}".format(facility * 8 + priority, msg))
+
+    def _parse_to_output(self, msg):
+        match = _RE_SYSLOG.match(msg)
+        if not match:
+            self._output(msg)
+            return
+        pri = int(match.group('pri'))
+        self._output(match.group('date') + ' ' + os.path.basename(match.group('prog')) + ' ' + match.group('rest'),
+                     priority = pri & 7, facility = pri // 8)
 
     def data_received(self, data):
         try:
             message = data.decode()
         except Exception as ex:
-            self._output("Could not decode SYSLOG record")
+            self._output("Could not decode SYSLOG record data")
             return
 
         messages = message.split("\0")
         for m in messages:
             if m:
-                print("LOG message: " + str(m))
+                self._parse_to_output(m)
 
 class SyslogServer:
 

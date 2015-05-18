@@ -19,15 +19,15 @@ _config_schema = V.Any(
         'bin': str,
         'args': str,
         'restart': bool,
-        'before': V.Match('^[^\.]+$'), # disallow periods
-        'after': V.Match('^[^\.]+$'),
+        'before': str,
+        'after': str,
         'optional': bool,
         'ignore_failures': bool,
         'enabled': bool,
         'env_inherit': [ str ],
         'env_add': { str: str },
       },
-      V.Match('^config$'): {
+      V.Match('^settings$'): {
         'env_inherit': [ str ],
         'env_add': { str: str },
       }
@@ -229,8 +229,8 @@ class Configuration(object):
             ((k,v) for k,v in self._conf.items() if k.endswith('.service'))
         )
 
-    def get_globals(self):
-        return self._conf.get('config')
+    def get_settings(self):
+        return self._conf.get('settings')
 
     def dump(self):
         return 'configuration: {0}'.format(self._conf)

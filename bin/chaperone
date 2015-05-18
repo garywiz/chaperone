@@ -29,6 +29,7 @@ import sys
 import os
 import asyncio
 import logging
+from setproctitle import setproctitle
 from functools import partial
 from docopt import docopt
 
@@ -71,10 +72,15 @@ def run_command():
 services = tlp.run_services(config)
 tlp.activate(services)
 
+proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
+
 if cmd:
+   proctitle += " " + cmd  + " " + " ".join(options['<args>'])
    if services and not options['--nodelay']:
       tlp.loop.call_later(1, lambda: tlp.activate(run_command()))
    else:
       tlp.loop.call_soon(lambda: tlp.activate(run_command()))
  
+setproctitle(proctitle)
+
 tlp.run_event_loop()
