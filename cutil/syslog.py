@@ -7,6 +7,7 @@ import sys
 from functools import partial
 
 from cutil.logging import info, warn, debug
+from cutil.misc import lazydict
 from logging.handlers import SysLogHandler
 
 _FACILITY = ('kern', 'user', 'mail', 'daemon', 'auth', 'syslog', 'lpr', 'news', 'uucp', 'clock', 'authpriv',
@@ -156,11 +157,86 @@ class _syslog_spec_matcher:
             pos.append("(%s and %s)" % (c1, c2))
             
     def match(self, msg, prog = None, priority = SysLogHandler.LOG_ERR, facility = SysLogHandler.LOG_SYSLOG):
-        for m in self._matchlist():
-            if not m(self, priority, facility, prog, msg):
-                return False
-        return True             # empty list is true as well
+        return self._match(self, priority, facility, prog, msg)
+
         
+class LogOutput:
+    name = None
+    config_match = lambda c: False
+
+    _cls_handlers = lazydict()
+    _cls_reghandlers = list()
+
+    @classmethod
+    def register(cls, handlercls):
+        cls._cls_reghandlers.append(handlercls)
+
+    @classmethod
+    def getOutputHandlers(cls, config):
+        return [ret for ret in [h.getHandler(config) for h in cls._cls_reghandlers] if ret is not None]
+
+    @classmethod
+    def getName(cls, config):
+        return cls.name
+
+    @classmethod
+    def matchesConfig(cls, config):
+        return config.enabled and cls.config_match(config)
+
+    @classmethod
+    def getHandler(cls, config):
+        if not cls.matchesConfig(config):
+            return None
+        name = cls.getName(config)
+        if name is None:
+            return None
+        return cls._cls_handlers.setdefault(name, lambda: cls(config))
+
+    def __init__(self, config):
+        pass
+
+    def writeLog(self, msg, prog, priority, facility):
+        self.write(msg)
+
+    def write(self, data):
+        h = self.handle
+        h.write(data)
+        h.write("\n")
+        h.flush()
+                         
+
+class StdoutHandler(LogOutput):
+
+    name = "sys:stdout"
+    handle = sys.stdout
+    config_match = lambda c: c.stdout
+
+LogOutput.register(StdoutHandler)
+
+
+class StderrHandler(LogOutput):
+
+    name = "sys:stderr"
+    handle = sys.stderr
+    config_match = lambda c: c.stderr
+
+LogOutput.register(StdoutHandler)
+
+
+class FileHandler(LogOutput):
+
+    config_match = lambda c: c.file is not None
+
+    @classmethod
+    def getName(cls, config):
+        return 'file:' + config.file
+
+    def __init__(self, config):
+        self.handle = open(config.file, 'w')
+        
+LogOutput.register(FileHandler)
+
+
 def create_unix_datagram_server(proto, path):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     sock.bind(path)
@@ -172,8 +248,8 @@ class SyslogServerProtocol(asyncio.Protocol):
         self.parent = parent
         super().__init__()
 
-    def _output(self, msg, priority = SysLogHandler.LOG_ERR, facility = SysLogHandler.LOG_SYSLOG):
-        print(msg)
+    def _output(self, msg):
+        print("NOT MATCHED", msg)
 
     def _parse_to_output(self, msg):
         match = _RE_SYSLOG.match(msg)
@@ -181,8 +257,8 @@ class SyslogServerProtocol(asyncio.Protocol):
             self._output(msg)
             return
         pri = int(match.group('pri'))
-        self._output(match.group('date') + ' ' + os.path.basename(match.group('prog')) + ' ' + match.group('rest'),
-                     priority = pri & 7, facility = pri // 8)
+        msg = match.group('date') + ' ' + os.path.basename(match.group('prog')) + ' ' + match.group('rest')
+        self.parent.writeLog(msg, match.group('prog'), priority = pri & 7, facility = pri // 8)
 
     def data_received(self, data):
         try:
@@ -200,6 +276,8 @@ class SyslogServerProtocol(asyncio.Protocol):
 
 class SyslogServer:
 
+    _loglist = list()
+
     def run1(self):  # alternative additional datagram endpoint (experimental, probably not needed)
         loop = asyncio.get_event_loop()
         listen = loop.create_datagram_endpoint(SyslogServerProtocol, local_addr = ('127.0.0.1', SYSLOG_PORT))
@@ -211,3 +289,16 @@ class SyslogServer:
         future = asyncio.async(listen)
         future.add_done_callback(lambda f: os.chmod("/dev/log", 0o777))
         return future
+
+    def configure(self, config):
+        loglist = self._loglist = list()
+        lc = config.get_logconfigs()
+        for k,v in lc.items():
+            matcher = _syslog_spec_matcher(v.filter or '*.*')
+            loglist.append( (matcher, LogOutput.getOutputHandlers(v)) )
+
+    def writeLog(self, msg, prog, priority, facility):
+        for m in self._loglist:
+            if m[0].match(msg, prog, priority, facility):
+                for logger in m[1]:
+                    logger.writeLog(msg, prog, priority, facility)

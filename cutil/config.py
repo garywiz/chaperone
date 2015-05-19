@@ -35,16 +35,34 @@ _config_schema = V.Any(
         'filter': str,
         'file': str,
         'stderr': bool,
-        'stdout': bool
+        'stdout': bool,
+        'enabled': bool,
      },
    }
 )
     
 validator = V.Schema(_config_schema)
 
-class ServiceConfig(object):
+class _BaseConfig(object):
 
     name = None
+    _repr_pat = None
+
+    def __init__(self, name, initdict):
+        self.name = name
+        for k,v in initdict.items():
+            setattr(self, k, v)
+
+    def get(self, attr, default = None):
+        return getattr(self, attr, default)
+        
+    def __repr__(self):
+        if self._repr_pat:
+            return self._repr_pat.format(self)
+        return super().__repr__()
+
+class ServiceConfig(_BaseConfig):
+
     group = "default"
     restart = True
     before = None
@@ -56,23 +74,25 @@ class ServiceConfig(object):
     enabled = True
     env_add = None
     env_inherit = ['*']
-
     bin = None
 
+    _repr_pat = "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})"
+
     def __init__(self, name, initdict):
-        self.name = name
-        for k,v in initdict.items():
-            setattr(self, k, v)
+        super().__init__(name, initdict)
         self.before = set(self.before.split()) if self.before is not None else set()
         self.after = set(self.after.split()) if self.after is not None else set()
 
-    def get(self, attr, default = None):
-        return getattr(self, attr, default)
-        
-    def __repr__(self):
-        return "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})".format(self)
 
+class LogConfig(_BaseConfig):
 
+    filter = '*.*'
+    file = None
+    stderr = False
+    stdout = False
+    enabled = True
+
+    
 class ServiceDict(lazydict):
 
     _ordered_startup = None
@@ -233,6 +253,11 @@ class Configuration(object):
     def get_services(self):
         return ServiceDict( 
             ((k,v) for k,v in self._conf.items() if k.endswith('.service'))
+        )
+
+    def get_logconfigs(self):
+        return lazydict(
+            ((k,LogConfig(k,v)) for k,v in self._conf.items() if k.endswith('.logging'))
         )
 
     def get_settings(self):

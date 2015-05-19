@@ -200,10 +200,13 @@ class TopLevelProcess(object):
         enable_syslog_handler()
         info("Switching all chaperone logging to /dev/log")
 
-    def run_event_loop(self):
+    def run_event_loop(self, config):
         "Sets up the event loop and runs it."
 
-        self._syslog = SyslogServer().run()
+        syslog = SyslogServer()
+        syslog.configure(config)
+
+        self._syslog = syslog.run()
         self._syslog.add_done_callback(self._syslog_started)
         self.activate(self._syslog)
 

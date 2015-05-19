@@ -87,4 +87,4 @@ if cmd:
  
 setproctitle(proctitle)
 
-tlp.run_event_loop()
+tlp.run_event_loop(config)
