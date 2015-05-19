@@ -30,8 +30,14 @@ _config_schema = V.Any(
       V.Match('^settings$'): {
         'env_inherit': [ str ],
         'env_add': { str: str },
-      }
-    },
+      },
+      V.Match('^.+\.logging'): {
+        'filter': str,
+        'file': str,
+        'stderr': bool,
+        'stdout': bool
+     },
+   }
 )
     
 validator = V.Schema(_config_schema)
@@ -189,7 +195,7 @@ class Configuration(object):
             return cls(default = default)
 
         if os.path.isdir(trypath):
-            return cls(*[os.path.join(trypath, f) for f in os.listdir(trypath) 
+            return cls(*[os.path.join(trypath, f) for f in sorted(os.listdir(trypath))
                          if f.endswith('.yaml') or f.endswith('.conf')],
                        default = default)
 
@@ -233,4 +239,4 @@ class Configuration(object):
         return self._conf.get('settings')
 
     def dump(self):
-        return 'configuration: {0}'.format(self._conf)
+        debug('FULL CONFIGURATION: {0}'.format(self._conf))
