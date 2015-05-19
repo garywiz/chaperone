@@ -37,6 +37,7 @@ _config_schema = V.Any(
         'stderr': bool,
         'stdout': bool,
         'enabled': bool,
+        'extended': bool,
      },
    }
 )
@@ -91,7 +92,7 @@ class LogConfig(_BaseConfig):
     stderr = False
     stdout = False
     enabled = True
-
+    extended = False            # include facility/priority information
     
 class ServiceDict(lazydict):
 

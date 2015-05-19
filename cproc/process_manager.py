@@ -120,6 +120,7 @@ class TopLevelProcess(object):
     _all_killed = False
     _killing_system = False
     _enable_exit = False
+    _syslog = None
 
     def __init__(self):
         policy = asyncio.get_event_loop_policy()
@@ -152,7 +153,12 @@ class TopLevelProcess(object):
         if self._enable_exit and self.exit_when_no_processes:
             debug("FORCING EXIT")
             self._enable_exit = False
-            self.loop.call_later(0.5, self.loop.stop)
+            self.loop.call_later(0.5, self._final_stop)
+
+    def _final_stop(self):
+        if self._syslog:
+            self._syslog.close()
+        self.loop.stop()
 
     def kill_system(self):
         if self._killing_system:
@@ -198,17 +204,17 @@ class TopLevelProcess(object):
 
     def _syslog_started(self, f):
         enable_syslog_handler()
-        info("Switching all chaperone logging to /dev/log")
+        info("Switching all chaperone logging to /dev/log", str(f.result()))
 
     def run_event_loop(self, config):
         "Sets up the event loop and runs it."
 
-        syslog = SyslogServer()
-        syslog.configure(config)
+        self._syslog = SyslogServer()
+        self._syslog.configure(config)
 
-        self._syslog = syslog.run()
-        self._syslog.add_done_callback(self._syslog_started)
-        self.activate(self._syslog)
+        f = self._syslog.run()
+        f.add_done_callback(self._syslog_started)
+        self.activate(f)
 
         self.loop.run_forever()
         self.loop.close()

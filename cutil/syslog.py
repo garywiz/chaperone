@@ -8,23 +8,15 @@ from functools import partial
 
 from cutil.logging import info, warn, debug
 from cutil.misc import lazydict
+from cutil.syslog_handlers import LogOutput
+from cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
+
 from logging.handlers import SysLogHandler
-
-_FACILITY = ('kern', 'user', 'mail', 'daemon', 'auth', 'syslog', 'lpr', 'news', 'uucp', 'clock', 'authpriv',
-             'ftp', 'ntp', 'audit', 'alert', 'cron', 'local0', 'local1', 'local2', 'local3', 'local4',
-             'local5', 'local6', 'local7')
-_FACILITY_DICT = {_FACILITY[i]:i for i in range(len(_FACILITY))}
-
-_PRIORITY = ('emerg', 'alert', 'crit', 'err', 'warn', 'notice', 'info', 'debug')
-_PRIORITY_DICT = {_PRIORITY[i]:i for i in range(len(_PRIORITY))}
-
-_PRIORITY_DICT['warning'] = _PRIORITY_DICT['warn']
-_PRIORITY_DICT['error'] = _PRIORITY_DICT['err']
 
 _RE_SPEC = re.compile(r'^(?P<fpfx>!?)(?:/(?P<regex>.+)/|\[(?P<prog>.+)\]|(?P<fac>[,*a-zA-Z]+))\.(?P<pfx>!?=?)(?P<pri>[*a-zA-Z]+)$')
 _RE_SPECSEP = re.compile(r' *; *')
 
-_RE_SYSLOG = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?P<prog>[^ \[]+)(?P<rest>\[\d+\]: .+)$')
+_RE_SYSLOG = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?P<prog>[^ \[]+)(?P<rest>(?:\[\d+\])?: .+)$')
 
 class _syslog_spec_matcher:
     """
@@ -92,13 +84,13 @@ class _syslog_spec_matcher:
         elif not neg:
             self._buildex(" or ".join(pos))
         else:
-            self._buildex("(" + (" or ".join(neg)) + ") and (" + (" or ".join(pos)) + ")")
+            self._buildex("(" + (" and ".join(neg)) + ") and (" + (" or ".join(pos)) + ")")
 
     def _buildex(self, expr):
         # Perform some quick peepole optimization, then compile
         nexpr = expr.replace("True and ", "").replace(" and True", "")
-        nexpr = nexpr.replace("not True", "False").replace("and ((True))", "")
-        nexpr = nexpr.replace("False or ", "")
+        nexpr = nexpr.replace("not True", "False").replace(" and ((True))", "")
+        nexpr = nexpr.replace("False or ", "").replace(" or False", "")
         self.debugexpr = nexpr
         self._match = eval("lambda s,p,f,g,buf: " + nexpr)
 
@@ -118,7 +110,7 @@ class _syslog_spec_matcher:
         elif gdict['prog'] is not None:
             c1 = '(g and "%s" == g.lower())' % gdict['prog'].lower()
         elif gdict['fac'] != '*':
-            faclist = [_FACILITY_DICT.get(f) for f in gdict.get('fac', '').split(',')]
+            faclist = [FACILITY_DICT.get(f) for f in gdict.get('fac', '').split(',')]
             if None in faclist:
                 raise Exception("Invalid logging facility code, %s: %s" % (gdict['fac'], spec))
             c1 = '(' + ' or '.join(['f==%d' % f for f in faclist]) + ')'
@@ -131,7 +123,7 @@ class _syslog_spec_matcher:
         if pri == '*':
             c2 = 'True'
         else:
-            prival = _PRIORITY_DICT.get(pri)
+            prival = PRIORITY_DICT.get(pri)
             if prival == None:
                 raise Exception("Invalid logging priority, %s: %s" % (pri, spec))
             if '=' in pfx:
@@ -151,92 +143,17 @@ class _syslog_spec_matcher:
                 neg.append("(not %s and not %s)" % (c1, c2))
             else:
                 neg.append("not (%s and %s)" % (c1, c2))
-        elif '!' in pfx:
+        elif '!' in pfx: 
             neg.append("(not %s or not %s)" % (c1, c2))
         else:
             pos.append("(%s and %s)" % (c1, c2))
             
     def match(self, msg, prog = None, priority = SysLogHandler.LOG_ERR, facility = SysLogHandler.LOG_SYSLOG):
-        return self._match(self, priority, facility, prog, msg)
+        result = self._match(self, priority, facility, prog, msg)
+        #print('MATCH', prog, result, self.debugexpr)
+        return result
 
         
-class LogOutput:
-    name = None
-    config_match = lambda c: False
-
-    _cls_handlers = lazydict()
-    _cls_reghandlers = list()
-
-    @classmethod
-    def register(cls, handlercls):
-        cls._cls_reghandlers.append(handlercls)
-
-    @classmethod
-    def getOutputHandlers(cls, config):
-        return [ret for ret in [h.getHandler(config) for h in cls._cls_reghandlers] if ret is not None]
-
-    @classmethod
-    def getName(cls, config):
-        return cls.name
-
-    @classmethod
-    def matchesConfig(cls, config):
-        return config.enabled and cls.config_match(config)
-
-    @classmethod
-    def getHandler(cls, config):
-        if not cls.matchesConfig(config):
-            return None
-        name = cls.getName(config)
-        if name is None:
-            return None
-        return cls._cls_handlers.setdefault(name, lambda: cls(config))
-
-    def __init__(self, config):
-        pass
-
-    def writeLog(self, msg, prog, priority, facility):
-        self.write(msg)
-
-    def write(self, data):
-        h = self.handle
-        h.write(data)
-        h.write("\n")
-        h.flush()
-                         
-
-class StdoutHandler(LogOutput):
-
-    name = "sys:stdout"
-    handle = sys.stdout
-    config_match = lambda c: c.stdout
-
-LogOutput.register(StdoutHandler)
-
-
-class StderrHandler(LogOutput):
-
-    name = "sys:stderr"
-    handle = sys.stderr
-    config_match = lambda c: c.stderr
-
-LogOutput.register(StdoutHandler)
-
-
-class FileHandler(LogOutput):
-
-    config_match = lambda c: c.file is not None
-
-    @classmethod
-    def getName(cls, config):
-        return 'file:' + config.file
-
-    def __init__(self, config):
-        self.handle = open(config.file, 'w')
-        
-LogOutput.register(FileHandler)
-
-
 def create_unix_datagram_server(proto, path):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     sock.bind(path)
@@ -248,17 +165,17 @@ class SyslogServerProtocol(asyncio.Protocol):
         self.parent = parent
         super().__init__()
 
-    def _output(self, msg):
-        print("NOT MATCHED", msg)
-
     def _parse_to_output(self, msg):
         match = _RE_SYSLOG.match(msg)
         if not match:
-            self._output(msg)
-            return
-        pri = int(match.group('pri'))
-        msg = match.group('date') + ' ' + os.path.basename(match.group('prog')) + ' ' + match.group('rest')
-        self.parent.writeLog(msg, match.group('prog'), priority = pri & 7, facility = pri // 8)
+            pri = SysLogHandler.LOG_SYSLOG * 8 + SysLogHandler.LOG_ERR
+            prog = "?"
+            msg = "??" + msg
+        else:
+            pri = int(match.group('pri'))
+            prog = os.path.basename(match.group('prog'))
+            msg = match.group('date') + ' ' + prog + ' ' + match.group('rest')
+        self.parent.writeLog(msg, prog, priority = pri & 7, facility = pri // 8)
 
     def data_received(self, data):
         try:
@@ -277,6 +194,7 @@ class SyslogServerProtocol(asyncio.Protocol):
 class SyslogServer:
 
     _loglist = list()
+    _server = None
 
     def run1(self):  # alternative additional datagram endpoint (experimental, probably not needed)
         loop = asyncio.get_event_loop()
@@ -287,8 +205,17 @@ class SyslogServer:
         loop = asyncio.get_event_loop()
         listen = loop.create_unix_server(partial(SyslogServerProtocol, self), path="/dev/log")
         future = asyncio.async(listen)
-        future.add_done_callback(lambda f: os.chmod("/dev/log", 0o777))
+        future.add_done_callback(self._run_done)
         return future
+
+    def _run_done(self, f):
+        # TODO: HANDLE ERRORS HERE IF FUTURE EXCEPTION
+        self._server = f.result()
+        os.chmod("/dev/log", 0o777)
+
+    def close(self):
+        if self._server:
+            self._server.close()
 
     def configure(self, config):
         loglist = self._loglist = list()
