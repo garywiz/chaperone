@@ -1,7 +1,7 @@
 #!/bin/bash
 
-docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint=/home/garyw/chaperone/bin/chaperone bst/chapdev \
+docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint=/home/garyw/dev/chaperone/chaperone/bin/chaperone bst/chapdev \
     --shut \
     --debug \
-    --config chaperone/testing/test.d \
+    --config dev/chaperone/testing/test.d \
     --user garyw /bin/bash -i
