@@ -1,0 +1,26 @@
+#!/usr/bin/python3
+# -*- mode: python -*-
+
+"""
+Interactive command tool for chaperone
+
+Usage:
+    telchap <command> [<args> ...]
+"""
+
+import sys
+import os
+import asyncio
+import shlex
+from docopt import docopt
+
+# Assure that packages in the same directory as ours (bin) can be used without concern for where
+# we are installed
+sys.path[0] = os.path.dirname(sys.path[0])
+
+from cproc.client import CommandClient
+
+options = docopt(__doc__, options_first=True)
+print(options)
+
+result = CommandClient.sendCommand(options['<command>'] + " " + " ".join([shlex.quote(a) for a in options['<args>']]))

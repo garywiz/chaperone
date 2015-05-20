@@ -11,6 +11,7 @@ from time import time, sleep
 
 from cutil.logging import warn, info, debug, set_log_level, enable_syslog_handler
 from cproc.watcher import InitChildWatcher
+from cproc.commands import CommandServer
 from cutil.syslog import SyslogServer
 from cutil.misc import lazydict
 
@@ -121,6 +122,7 @@ class TopLevelProcess(object):
     _killing_system = False
     _enable_exit = False
     _syslog = None
+    _command = None
 
     def __init__(self):
         policy = asyncio.get_event_loop_policy()
@@ -158,6 +160,8 @@ class TopLevelProcess(object):
     def _final_stop(self):
         if self._syslog:
             self._syslog.close()
+        if self._command:
+            self._command.close()
         self.loop.stop()
 
     def kill_system(self):
@@ -214,6 +218,10 @@ class TopLevelProcess(object):
 
         f = self._syslog.run()
         f.add_done_callback(self._syslog_started)
+        self.activate(f)
+
+        self._command = CommandServer()
+        f = self._command.run()
         self.activate(f)
 
         self.loop.run_forever()
