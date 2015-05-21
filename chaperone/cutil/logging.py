@@ -19,16 +19,22 @@ _root_logger.addHandler(_stderr_handler)
 def set_python_log_level(lev):
     logger.setLevel(lev)
 
+class CustomSysLog(SysLogHandler):
+
+    def emit(self, record):
+        self.facility = getattr(record, '_facility', SysLogHandler.LOG_LOCAL5)
+        super().emit(record)
+
 def enable_syslog_handler():
     global _syslog_handler
-    _syslog_handler = SysLogHandler('/dev/log')
+    _syslog_handler = CustomSysLog('/dev/log')
     sf = logging.Formatter('{asctime} %s[%d]: {message}' % (sys.argv[0] or '-', os.getpid()), 
                            datefmt="%b %d %H:%M:%S", style='{')
     _syslog_handler.setFormatter(sf)
     _root_logger.addHandler(_syslog_handler)
     _root_logger.removeHandler(_stderr_handler)
 
-def _versatile_logprint(delegate, fmt, *args, **kwargs):
+def _versatile_logprint(delegate, fmt, *args, facility=None, **kwargs):
     """
     In addition to standard log formatting, the following two special cases are
     covered:
@@ -36,6 +42,9 @@ def _versatile_logprint(delegate, fmt, *args, **kwargs):
     2.  If there are '{' formatting arguments, then apply new-style .format using arguments
         provided.
     """
+    if facility:
+        kwargs['extra'] = {'_facility': facility}
+
     if not len(args):
         delegate(fmt, **kwargs)
     elif '%' not in fmt:

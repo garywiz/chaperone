@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+
+"""
+Repeat utility for testing
+
+Usage: repeat [--nosignals] [-n=<reps>] [-i=<interval>] [-e] <message>
+
+Options:
+    -n=<reps>         Specify number of repetitions, or infinite if absent
+    -i=<interval>     Specify interval, or 1 second if absent
+    --nosignals       Ignore all signals if present
+    -e                Output to stderr instead of stdout.    
+"""
+
+import signal
+from time import sleep, strftime, localtime
+from docopt import docopt
+import sys
+
+opt = docopt(__doc__)
+
+if opt['--nosignals']:
+   signal.signal(signal.SIGTERM, lambda signum, frame: print("ignoring SIGTERM"))
+   signal.signal(signal.SIGHUP, lambda signum, frame: print("ignoring SIGHUP"))
+   signal.signal(signal.SIGINT, lambda signum, frame: print("ignoring SIGINT"))
+   
+reps = iter(int,1) if not opt['-n'] else range(int(opt['-n']))
+delay = 1 if not opt['-i'] else int(opt['-i'])
+handle = sys.stderr if opt['-e'] else sys.stdout
+msg = " " + opt['<message>'] + "\n"
+
+for n in reps:
+   handle.write(strftime("%M:%S", localtime()) + msg)
+   handle.flush()
+   sleep(delay)

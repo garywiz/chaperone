@@ -5,16 +5,31 @@ import asyncio
 import shlex
 import signal
 import logging
+from logging.handlers import SysLogHandler
 
 from functools import partial
 from fnmatch import fnmatch
 from time import time, sleep
 
-from chaperone.cutil.logging import warn, info, debug, set_python_log_level, enable_syslog_handler
+from chaperone.cutil.logging import warn, info, debug, error, set_python_log_level, enable_syslog_handler
 from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.commands import CommandServer
 from chaperone.cutil.syslog import SyslogServer
 from chaperone.cutil.misc import lazydict
+
+@asyncio.coroutine
+def _process_logger(stream, kind):
+    while True:
+        data = yield from stream.readline()
+        if not data:
+            return
+        line = data.decode('ascii').rstrip()
+        if kind == 'stderr':
+            # we map to warning because stderr output is "to be considered" and not strictly
+            # erroneous
+            warn(line, facility=SysLogHandler.LOG_DAEMON)
+        else:
+            info(line, facility=SysLogHandler.LOG_DAEMON)
 
 class Environment(lazydict):
 
@@ -39,6 +54,8 @@ class SubProcess(object):
     _user_gid = None
     _user_env = None
     _proc = None
+    _stdout = "inherit"
+    _stderr = "inherit"
 
     @classmethod
     @asyncio.coroutine
@@ -60,6 +77,9 @@ class SubProcess(object):
     def configure(self, service):
         args = None
         self.name = service.name
+        self._stdout = service.stdout
+        self._stderr = service.stderr
+
         if service.command:
             assert not (service.command and (service.bin or service.args)), "bin/args and command config are mutually-exclusive"
             args = shlex.split(service.command)
@@ -93,9 +113,21 @@ class SubProcess(object):
         args = self._prog_args
         assert args, "No arguments provided to SubProcess.run()"
         info("Running %s... " % " ".join(args))
+        kwargs = dict()
+
+        if self._stdout == 'log':
+            kwargs['stdout'] = asyncio.subprocess.PIPE
+        if self._stderr == 'log':
+            kwargs['stderr'] = asyncio.subprocess.PIPE
+
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess,
-                                                env=env)
+                                                env=env, **kwargs)
         proc = self._proc = yield from create
+
+        if self._stdout == 'log':
+            asyncio.async(_process_logger(proc.stdout, 'stdout'))
+        if self._stderr == 'log':
+            asyncio.async(_process_logger(proc.stderr, 'stderr'))
 
     @asyncio.coroutine
     def wait(self):

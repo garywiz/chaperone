@@ -27,6 +27,8 @@ _config_schema = V.Any(
         'enabled': bool,
         'env_inherit': [ str ],
         'env_add': { str: str },
+        'stdout': V.Any(None, 'log', 'inherit'),
+        'stderr': V.Any(None, 'log', 'inherit'),
       },
       V.Match('^settings$'): {
         'env_inherit': [ str ],
@@ -76,6 +78,8 @@ class ServiceConfig(_BaseConfig):
     enabled = True
     env_add = None
     env_inherit = ['*']
+    stdout = "log"
+    stderr = "log"
     bin = None
 
     _repr_pat = "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})"
