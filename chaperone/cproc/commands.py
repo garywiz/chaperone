@@ -3,8 +3,9 @@ import asyncio
 import stat
 import shlex
 from functools import partial
-from cutil.servers import Server, ServerProtocol
 from docopt import docopt
+
+from chaperone.cutil.servers import Server, ServerProtocol
 
 COMMAND_DOC = """
 Usage: telchap status

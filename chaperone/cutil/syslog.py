@@ -6,10 +6,10 @@ import sys
 
 from functools import partial
 
-from cutil.logging import info, warn, debug
-from cutil.misc import lazydict
-from cutil.syslog_handlers import LogOutput
-from cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
+from chaperone.cutil.logging import info, warn, debug
+from chaperone.cutil.misc import lazydict
+from chaperone.cutil.syslog_handlers import LogOutput
+from chaperone.cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
 
 from logging.handlers import SysLogHandler
 
@@ -68,7 +68,7 @@ class _syslog_spec_matcher:
 
     __slots__ = ('_regexes', '_match', 'debugexpr')
 
-    def __init__(self, speclist):
+    def __init__(self, speclist, minimum_priority = None):
         self._regexes = []
 
         pieces = _RE_SPECSEP.split(speclist)
@@ -77,7 +77,7 @@ class _syslog_spec_matcher:
         neg = list()
         pos = list()
         for p in pieces:
-            self._init_spec(p, neg, pos)
+            self._init_spec(p, neg, pos, minimum_priority)
 
         if not pos:
             self._buildex("False")
@@ -94,7 +94,7 @@ class _syslog_spec_matcher:
         self.debugexpr = nexpr
         self._match = eval("lambda s,p,f,g,buf: " + nexpr)
 
-    def _init_spec(self, spec, neg, pos):
+    def _init_spec(self, spec, neg, pos, minpri):
         match = _RE_SPEC.match(spec)
 
         if not match:
@@ -126,6 +126,8 @@ class _syslog_spec_matcher:
             prival = PRIORITY_DICT.get(pri)
             if prival == None:
                 raise Exception("Invalid logging priority, %s: %s" % (pri, spec))
+            if minpri is not None and minpri > prival:
+                prival = minpri
             if '=' in pfx:
                 c2 = "p==%d" % prival
             else:
@@ -217,11 +219,11 @@ class SyslogServer:
         if self._server:
             self._server.close()
 
-    def configure(self, config):
+    def configure(self, config, minimum_priority = None):
         loglist = self._loglist = list()
         lc = config.get_logconfigs()
         for k,v in lc.items():
-            matcher = _syslog_spec_matcher(v.filter or '*.*')
+            matcher = _syslog_spec_matcher(v.filter or '*.*', minimum_priority)
             loglist.append( (matcher, LogOutput.getOutputHandlers(v)) )
 
     def writeLog(self, msg, prog, priority, facility):

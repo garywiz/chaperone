@@ -3,19 +3,18 @@ import pwd
 import errno
 import asyncio
 import shlex
+import signal
+import logging
+
 from functools import partial
-
 from fnmatch import fnmatch
-
 from time import time, sleep
 
-from cutil.logging import warn, info, debug, set_log_level, enable_syslog_handler
-from cproc.watcher import InitChildWatcher
-from cproc.commands import CommandServer
-from cutil.syslog import SyslogServer
-from cutil.misc import lazydict
-
-import signal
+from chaperone.cutil.logging import warn, info, debug, set_python_log_level, enable_syslog_handler
+from chaperone.cproc.watcher import InitChildWatcher
+from chaperone.cproc.commands import CommandServer
+from chaperone.cutil.syslog import SyslogServer
+from chaperone.cutil.misc import lazydict
 
 class Environment(lazydict):
 
@@ -97,7 +96,6 @@ class SubProcess(object):
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess,
                                                 env=env)
         proc = self._proc = yield from create
-        debug("CREATED PROCESS: {0}", proc)
 
     @asyncio.coroutine
     def wait(self):
@@ -105,7 +103,7 @@ class SubProcess(object):
         if not proc:
             raise Exception("Process not started, can't wait")
         yield from proc.wait()
-        info("Process status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
+        info("Process exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
 
         
 
@@ -123,6 +121,7 @@ class TopLevelProcess(object):
     _enable_exit = False
     _syslog = None
     _command = None
+    _minimum_syslog_level = None
 
     def __init__(self):
         policy = asyncio.get_event_loop_policy()
@@ -149,11 +148,27 @@ class TopLevelProcess(object):
     def loop(self):
         return asyncio.get_event_loop()
 
+    def force_log_level(self, level):
+        """
+        Specifies the *minimum* logging level that will be applied to all syslog entries.
+        This is primarily useful for debugging, where you want to override any limitations
+        imposed on log file entries.
+
+        As a (convenient) side-effect, if the level is DEBUG, then debug features of both
+        asyncio as well as chaperone will be enabled.
+        """
+        levid = getattr(logging, level.upper(), None)
+        if not levid:
+            raise Exception("Not a valid log level: {0}".format(level))
+        set_python_log_level(levid)
+        self._minimum_syslog_level = levid
+        if levid == logging.DEBUG:
+            self.debug = True
+
     def _no_processes(self):
-        debug("NO PROCESSES!", self)
         self._all_killed = True
-        if self._enable_exit and self.exit_when_no_processes:
-            debug("FORCING EXIT")
+        if self._enable_exit and (self._killing_system or self.exit_when_no_processes):
+            debug("Final termination phase.")
             self._enable_exit = False
             self.loop.call_later(0.5, self._final_stop)
 
@@ -168,7 +183,7 @@ class TopLevelProcess(object):
         if self._killing_system:
             return
 
-        info("KILLING SYSTEM")
+        warn("Request made to kill system.")
         self._killing_system = True
 
         try:
@@ -176,7 +191,7 @@ class TopLevelProcess(object):
             if self.send_sighup:
                 os.kill(-1, signal.SIGHUP)
         except ProcessLookupError:
-            info("No processes remain when attempting to kill system, just stop.")
+            debug("No processes remain when attempting to kill system, just stop.")
             self._no_processes()
             return
 
@@ -191,7 +206,7 @@ class TopLevelProcess(object):
         try:
             os.kill(-1, signal.SIGKILL)
         except ProcessLookupError:
-            info("No processes when attempting to force quit")
+            debug("No processes when attempting to force quit")
             self._no_processes()
             return
 
@@ -208,21 +223,31 @@ class TopLevelProcess(object):
 
     def _syslog_started(self, f):
         enable_syslog_handler()
-        info("Switching all chaperone logging to /dev/log", str(f.result()))
+        info("Switching all chaperone logging to /dev/log")
 
-    def run_event_loop(self, config):
-        "Sets up the event loop and runs it."
+    def _system_started(self, f, startup):
+        info("System started successfully")
+        if startup:
+            self.activate(startup)
+
+    def run_event_loop(self, config, startup_coro = None):
+        """
+        Sets up the event loop and runs it, setting up basic services such as syslog
+        as well as the command services sockets.   Then, calls the startup coroutine (if any)
+        to tailor the environment and start up other services as needed.
+        """
 
         self._syslog = SyslogServer()
-        self._syslog.configure(config)
+        self._syslog.configure(config, self._minimum_syslog_level)
 
-        f = self._syslog.run()
-        f.add_done_callback(self._syslog_started)
-        self.activate(f)
+        syf = self._syslog.run()
+        syf.add_done_callback(self._syslog_started)
 
         self._command = CommandServer()
-        f = self._command.run()
-        self.activate(f)
+        cmdf = self._command.run()
+
+        f = asyncio.gather(syf, cmdf)
+        f.add_done_callback(lambda f: self._system_started(f, startup_coro))
 
         self.loop.run_forever()
         self.loop.close()
@@ -235,22 +260,26 @@ class TopLevelProcess(object):
 
         masterenv = Environment(config.get_settings())
 
-        slist = config.get_services().get_startup_list()
-        info("RUN SERVICES: {0}".format(slist))
+        slist = [s for s in config.get_services().get_startup_list() if s.enabled]
+
+        for n in range(len(slist)):
+            if n == 0:
+                info("Service Startup order...")
+            info("#{1}. Service {0.name}, ignore_failures={0.ignore_failures}", slist[n], n+1)
+
         for s in slist:
-            if not s.enabled:
-                continue
-            info("RUNNING SERVICE: " + str(s))
+            debug("Running service: " + str(s))
             subenv = Environment(s, masterenv)
             try:
                 yield from SubProcess.spawn(service=s, env=subenv)
             except Exception as ex:
-                debug("PROCESS COULD NOT BE STARTED", str(ex), type(ex))
+                debug("Process could not be started due to exception: {0}", ex)
                 if isinstance(ex, FileNotFoundError) and s.optional:
-                    debug("OPTIONAL SERVICE BINARY MISSING, WE IGNORE IT")
+                    warn("Optional service {0} ignored due to exception: {1}", s.name, ex)
                 elif s.ignore_failures:
-                    debug("IGNORING FAILURE AND CONTINUING")
+                    warn("Service {0} ignoring failures.  Not started due to exception: {1}", s.name, ex)
                 else:
+                    self._enable_exit = True
                     raise
 
         self._enable_exit = True

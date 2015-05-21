@@ -34,12 +34,10 @@ class Server:
     def _run_done(self, f):
         # Handle errors here!
         self.server = f.result()
-        print("IN SHARED _run_done", self.server)
 
     def close(self):
         s = self.server
         if s:
             if isinstance(s, tuple):
                 s = s[0]
-            print("CLOSING", self)
             s.close()

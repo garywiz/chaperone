@@ -1,0 +1,10 @@
+Chaperone is a lean, full-featured top-level system manager, similar to init, systemd, and others,
+but designed for lean container environments like Docker.  It is a single, small program which provides
+process clean-up, rudimentary logging, and service management without the overhead of additional
+complex configuration.
+
+================   =====================================
+Documentation      http://garywiz.github.io/chaperone
+pytracker Source   http://github.com/garywiz/chaperone
+pypi link          http://pypi.python.org/pypi/chaperone
+================   =====================================

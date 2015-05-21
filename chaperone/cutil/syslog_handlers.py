@@ -1,8 +1,10 @@
 import sys
 import os
+
 from time import time, localtime, strftime
-from cutil.misc import lazydict
-from cutil.syslog_info import get_syslog_info
+
+from chaperone.cutil.misc import lazydict
+from chaperone.cutil.syslog_info import get_syslog_info
 
 class LogOutput:
     name = None

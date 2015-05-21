@@ -18,7 +18,7 @@ Options:
     --shutdown_on_exit       If set, then the entire system will be shutdown when the given command (if any)
                              terminates.
     --nodelay                Eliminates delay before initial command prompt when there are services.
-    --debug                  Turn on debugging features
+    --debug                  Turn on debugging features (same as --log-level=DEBUG)
     --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
 
 If a user is specified, then the basename of file_or_dir is searched in the user's directory, and it
@@ -35,29 +35,21 @@ from docopt import docopt
 
 # Assure that packages in the same directory as ours (bin) can be used without concern for where
 # we are installed
-sys.path[0] = os.path.dirname(sys.path[0])
+sys.path[0] = os.path.dirname(os.path.dirname(sys.path[0]))
 
-from cproc import TopLevelProcess
-from cutil.config import Configuration
-from cutil.logging import warn, info, debug, set_log_level
+from chaperone.cproc import TopLevelProcess
+from chaperone.cutil.config import Configuration
+from chaperone.cutil.logging import warn, info, debug, error
 
 options = docopt(__doc__, options_first=True)
-print(options)
+
 if options['--debug']:
    options['--log-level'] = "DEBUG"
-   debug('OPTIONS', options)
-
-lev = options.get('--log-level')
-if lev:
-   levid = getattr(logging, lev.upper())
-   if not levid:
-      print("Invalid log level: {0}".format(lev))
-   else:
-      set_log_level(levid)
+   print('COMMAND OPTIONS', options)
 
 tlp = TopLevelProcess.sharedInstance()
-if options['--debug']:
-   tlp.debug = True
+if options['--log-level']:
+   tlp.force_log_level(options['--log-level'])
 
 cmd = options['<command>']
 
@@ -66,25 +58,35 @@ config = Configuration.configFromCommandSpec(options['--config'], user=options['
 if tlp.debug:
    config.dump()
 
-@asyncio.coroutine
-def run_command():
-   sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')), wait=True, config=config)
-   yield from sproc
-   if options['--shutdown_on_exit']:
-      tlp.kill_system()
-
-services = tlp.run_services(config)
-tlp.activate(services)
-
 proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
-
 if cmd:
    proctitle += " " + cmd  + " " + " ".join(options['<args>'])
-   if services and not options['--nodelay']:
-      tlp.loop.call_later(1, lambda: tlp.activate(run_command()))
-   else:
-      tlp.loop.call_soon(lambda: tlp.activate(run_command()))
- 
 setproctitle(proctitle)
 
-tlp.run_event_loop(config)
+@asyncio.coroutine
+def startup_done():
+
+   service_errors = False
+
+   try:
+      yield from tlp.run_services(config)
+   except Exception as ex:
+      error("System services startup cancelled due to error: {0}", ex)
+      service_errors = True
+
+   if cmd:
+      if service_errors:
+         warn("Service startup errors occurred.  Not running initial command: '{0}'", cmd)
+      else:
+        if not options['--nodelay']:
+           yield from asyncio.sleep(2)
+        try:
+           sproc = tlp.run([cmd] + options['<args>'], user=(options.get('--user')), wait=True, config=config)
+           yield from sproc
+        except Exception as ex:
+           error("Initial startup command ('{0}') did not run: {1}", cmd, ex)
+
+      if options['--shutdown_on_exit']:
+         tlp.kill_system()
+
+tlp.run_event_loop(config, startup_done())

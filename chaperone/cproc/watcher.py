@@ -1,10 +1,11 @@
 import os
 import asyncio
 import threading
+
 from functools import partial
 from asyncio.unix_events import BaseChildWatcher
 
-from cutil.logging import warn, info, debug
+from chaperone.cutil.logging import warn, info, debug
 
 class ProcStatus(int):
     def __new__(cls, val):

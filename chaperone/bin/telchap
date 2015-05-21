@@ -16,9 +16,9 @@ from docopt import docopt
 
 # Assure that packages in the same directory as ours (bin) can be used without concern for where
 # we are installed
-sys.path[0] = os.path.dirname(sys.path[0])
+sys.path[0] = os.path.dirname(os.path.dirname(sys.path[0]))
 
-from cproc.client import CommandClient
+from chaperone.cproc.client import CommandClient
 
 options = docopt(__doc__, options_first=True)
 print(options)

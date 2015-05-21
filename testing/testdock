@@ -2,6 +2,6 @@
 
 docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint=/home/garyw/dev/chaperone/chaperone/bin/chaperone bst/chapdev \
     --shut \
-    --debug \
     --config dev/chaperone/testing/test.d \
+    --log-level INFO \
     --user garyw /bin/bash -i

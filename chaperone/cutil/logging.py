@@ -1,8 +1,9 @@
-from functools import partial
-from logging.handlers import SysLogHandler
 import logging
 import os
 import sys
+
+from logging.handlers import SysLogHandler
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ _stderr_handler.setFormatter(_format)
 
 _root_logger.addHandler(_stderr_handler)
 
-def set_log_level(lev):
+def set_python_log_level(lev):
     logger.setLevel(lev)
 
 def enable_syslog_handler():

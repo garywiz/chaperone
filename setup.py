@@ -1,0 +1,39 @@
+import os
+import subprocess
+from setuptools import setup
+
+ourdir = os.path.dirname(__file__)
+
+def read(fname):
+    return open(os.path.join(ourdir, fname)).read()
+
+def get_version():
+    return subprocess.check_output(["python", os.path.join("chaperone/cproc/version.py")]).decode().strip()
+
+setup(
+    name = "chaperone",
+    version = get_version(),
+    description = 'Simple system init daemon for Docker environments',
+    long_description = read('README'),
+    packages = ['chaperone'],
+    #test_suite = "pyt_tests.tests.test_all",
+    license = "BSD 3",
+    author = "Gary Wisniewski",
+    author_email = "pypi-garywiz@gw.spidereye.com",
+    url = "http://github.com/garywiz/chaperone",
+    keywords = "docker init systemd syslog"
+
+    install_requires = ['docopt>=0.6.2', 'setproctitle>=1.1.8', 'PyYAML>=3.1.1',
+                        'voluptuous>=0.8.7']
+
+    classifiers = [
+        "Development Status :: 2 - Pre-Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 3",
+        "Topic :: System :: Logging",
+        "Topic :: System :: Boot :: Init",
+        ]
+    )
