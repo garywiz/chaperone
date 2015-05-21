@@ -1,6 +1,6 @@
 import os
 import subprocess
-from setuptools import setup
+from setuptools import setup, find_packages
 
 ourdir = os.path.dirname(__file__)
 
@@ -15,16 +15,16 @@ setup(
     version = get_version(),
     description = 'Simple system init daemon for Docker environments',
     long_description = read('README'),
-    packages = ['chaperone'],
+    packages = find_packages(),
     #test_suite = "pyt_tests.tests.test_all",
     license = "BSD 3",
     author = "Gary Wisniewski",
     author_email = "pypi-garywiz@gw.spidereye.com",
     url = "http://github.com/garywiz/chaperone",
-    keywords = "docker init systemd syslog"
+    keywords = "docker init systemd syslog",
 
     install_requires = ['docopt>=0.6.2', 'setproctitle>=1.1.8', 'PyYAML>=3.1.1',
-                        'voluptuous>=0.8.7']
+                        'voluptuous>=0.8.7'],
 
     classifiers = [
         "Development Status :: 2 - Pre-Alpha",
