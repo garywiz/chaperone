@@ -2,9 +2,9 @@
 Lightweight process and service manager
 
 Usage:
-    chaperone [--user=<name>]
-              [--config=<file_or_dir>] 
-              [--shutdown_on_exit] [--nodelay] [--debug]
+    chaperone [--config=<file_or_dir>] 
+              [--user=<name>]
+              [--shutdown_on_exit] [--nodelay] [--debug] [--force]
               [--log-level=<level>]
               [<command> [<args> ...]]
 
@@ -17,6 +17,7 @@ Options:
     --nodelay                Eliminates delay before initial command prompt when there are services.
     --debug                  Turn on debugging features (same as --log-level=DEBUG)
     --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
+    --force                  If chaperone normally refuses, do it anyway and take the risk.
 
 If a user is specified, then the basename of file_or_dir is searched in the user's directory, and it
 must be owned by the user to take effect.
@@ -30,50 +31,66 @@ from setproctitle import setproctitle
 from functools import partial
 from docopt import docopt
 
-from chaperone.cproc import TopLevelProcess
 from chaperone.cutil.config import Configuration
 from chaperone.cutil.logging import warn, info, debug, error
+from chaperone.cproc import TopLevelProcess
+
+MSG_PID1 = """Normally, chaperone expects to run as PID 1 in the 'init' role.
+If you want to go ahead anyway, use --force."""
+
+MSG_NOTHING_TO_DO = """There are no services configured to run, nor is there a command specified
+on the command line to run as an application.  You need to do one or the other."""
 
 def main_entry():
-    options = docopt(__doc__, options_first=True)
+   options = docopt(__doc__, options_first=True)
 
-    if options['--debug']:
-       options['--log-level'] = "DEBUG"
-       print('COMMAND OPTIONS', options)
+   if options['--debug']:
+      options['--log-level'] = "DEBUG"
+      print('COMMAND OPTIONS', options)
 
-    tlp = TopLevelProcess.sharedInstance()
-    if options['--log-level']:
-       tlp.force_log_level(options['--log-level'])
+   force = options['--force']
 
-    cmd = options['<command>']
+   if not force and os.getpid() != 1:
+      print(MSG_PID1)
+      exit(1)
 
-    config = Configuration.configFromCommandSpec(options['--config'], user=options['--user'])
+   tlp = TopLevelProcess.sharedInstance()
+   if options['--log-level']:
+      tlp.force_log_level(options['--log-level'])
 
-    if tlp.debug:
-       config.dump()
+   cmd = options['<command>']
 
-    proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
-    if cmd:
-       proctitle += " " + cmd  + " " + " ".join(options['<args>'])
-    setproctitle(proctitle)
+   config = Configuration.configFromCommandSpec(options['--config'], user=options['--user'])
 
-    # Define here so we can share scope
+   if not (config.get_services() or cmd):
+      print(MSG_NOTHING_TO_DO)
+      exit(1)
 
-    @asyncio.coroutine
-    def startup_done():
+   if tlp.debug:
+      config.dump()
 
-       service_errors = False
+   proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
+   if cmd:
+      proctitle += " " + cmd  + " " + " ".join(options['<args>'])
+   setproctitle(proctitle)
 
-       try:
-          yield from tlp.run_services(config)
-       except Exception as ex:
-          error("System services startup cancelled due to error: {0}", ex)
-          service_errors = True
+   # Define here so we can share scope
 
-       if cmd:
-          if service_errors:
-             warn("Service startup errors occurred.  Not running initial command: '{0}'", cmd)
-          else:
+   @asyncio.coroutine
+   def startup_done():
+
+      service_errors = False
+
+      try:
+         yield from tlp.run_services(config)
+      except Exception as ex:
+         error("System services startup cancelled due to error: {0}", ex)
+         service_errors = True
+
+      if cmd:
+         if service_errors:
+            warn("Service startup errors occurred.  Not running initial command: '{0}'", cmd)
+         else:
             if not options['--nodelay']:
                yield from asyncio.sleep(2)
             try:
@@ -82,7 +99,7 @@ def main_entry():
             except Exception as ex:
                error("Initial startup command ('{0}') did not run: {1}", cmd, ex)
 
-          if options['--shutdown_on_exit']:
-             tlp.kill_system()
+      if options['--shutdown_on_exit']:
+         tlp.kill_system()
 
-    tlp.run_event_loop(config, startup_done())
+   tlp.run_event_loop(config, startup_done())

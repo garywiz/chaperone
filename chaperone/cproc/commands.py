@@ -6,6 +6,7 @@ from functools import partial
 from docopt import docopt
 
 from chaperone.cutil.servers import Server, ServerProtocol
+from chaperone.cutil.misc import maybe_remove
 import chaperone.cutil.syslog_info as syslog_info
 
 COMMAND_DOC = """
@@ -13,6 +14,9 @@ Usage: telchap status
        telchap shutdown
        telchap loglevel [<level>]
 """
+
+CHAP_FIFO = "/dev/chaperone"
+CHAP_SOCK = "/dev/chaperone.sock"
 
 class _BaseCommand(object):
 
@@ -87,12 +91,17 @@ class CommandProtocol(ServerProtocol):
 class _InteractiveServer(Server):
 
     def _create_server(self):
+        maybe_remove(CHAP_SOCK)
         return asyncio.get_event_loop().create_unix_server(CommandProtocol.buildProtocol(parent=self,interactive=True), 
-                                                           path="/dev/chaperone.sock")
+                                                           path=CHAP_SOCK)
 
     def _run_done(self, f):
         super()._run_done(f)
-        os.chmod("/dev/chaperone.sock", 0o777)
+        os.chmod(CHAP_SOCK, 0o777)
+
+    def close(self):
+        super().close()
+        maybe_remove(CHAP_SOCK)
 
 class CommandServer(Server):
 
@@ -100,7 +109,7 @@ class CommandServer(Server):
     _fifoname = None
     _iserve = None
 
-    def __init__(self, controller, filename = "/dev/chaperone"):
+    def __init__(self, controller, filename = CHAP_FIFO):
         """
         Creates a new command FIFO and socket.  The controller is the object to which commands and interactions
         will occur, usually a chaperone.cproc.process_manager.TopLevelProcess.
@@ -117,6 +126,7 @@ class CommandServer(Server):
     def _open(self):
         name = self._fifoname
 
+        maybe_remove(name)
         if not os.path.exists(name):
             os.mkfifo(name)
 
@@ -132,6 +142,7 @@ class CommandServer(Server):
 
     def close(self):
         super().close()
+        maybe_remove(CHAP_FIFO)
         if self._iserve:
             self._iserve.close()
 

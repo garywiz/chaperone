@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# This is a great little program to make it easy to share basic build components across
+# a set of docker files.   Basically, you do this:
+#    cd sandbox/someimage
+#    ln -s ../setup  #if needed
+#    ./setup/build
+#
+
+helpmsg="
+usage: setup/build\n
+\n
+-n   name the image (else directoryname is used)\n
+-x   disable the cache\n
+-y   ask no questions and do the default\n
+-p ? specify prefix to use for build tag (default chapdev/)\n
+\n
+If you have additional arguments to docker, then include them after a --\n
+"
+
+if [ "$0" != './setup/build' ] ; then
+    echo 'Sorry, I only work if executed as "./setup/build"'
+    exit 1
+fi
+
+if [ ! -f Dockerfile ]; then
+    echo 'Hey, where is your ./Dockerfile?'
+    exit 1
+fi
+
+ipfx='chapdev/'
+buildargs=(-t ${PWD##*/})
+noquestions=''
+
+while getopts "n:hxy" opt; do
+    case $opt in
+	n)
+	    buildargs[1]=$OPTARG
+	    ;;
+	h)
+	    echo -e $helpmsg
+	    exit 0
+	    ;;
+	y)
+	    noquestions='true'
+	    yn='y'
+	    ;;
+	p)
+	    ipfx=$OPTARG
+	    ;;
+	x)
+	    buildargs+=(--no-cache)
+	    ;;
+	\?)
+	    exit 1
+	    ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+buildargs[1]=$ipfx${buildargs[1]}
+imagename=${buildargs[1]}
+echo Building image: $imagename
+
+oldimage=`docker images -q $imagename`
+
+echo docker build ${buildargs[*]} $* -
+tar czh . | docker build ${buildargs[*]} $* -
+
+newimage=`docker images -q $imagename`
+
+if [ "$oldimage" -a "$oldimage" != "$newimage" ]; then
+    if [ ! "$noquestions" ]; then
+	read -p "Delete old image $oldimage? (y/n) " yn
+    fi
+    if [ "$yn" = "y" ]; then
+	docker rmi $oldimage
+	echo $oldimage removed
+    fi
+fi

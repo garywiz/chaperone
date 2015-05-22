@@ -1,0 +1,8 @@
+#!/bin/bash
+
+SANDBOX=$PWD
+
+docker run -t -i --rm=true -e "TERM=$TERM" -v /home:/home -e "SANDBOX=$SANDBOX" chapdev/bareimage \
+    /bin/bash /home/garyw/dev/chaperone/sandbox/bare_startup.sh
+
+

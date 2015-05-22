@@ -15,6 +15,7 @@ from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.commands import CommandServer
 from chaperone.cutil.syslog import SyslogServer
 from chaperone.cutil.misc import lazydict, Environment
+from chaperone.cproc.version import DISPLAY_VERSION
 
 @asyncio.coroutine
 def _process_logger(stream, kind):
@@ -146,6 +147,7 @@ class TopLevelProcess(object):
         policy.set_child_watcher(w)
         w.add_no_processes_handler(self._no_processes)
         self.loop.add_signal_handler(signal.SIGTERM, self.kill_system)
+        self.loop.add_signal_handler(signal.SIGINT, self._got_sigint)
 
     @classmethod
     def sharedInstance(cls):
@@ -203,6 +205,10 @@ class TopLevelProcess(object):
             self._command.close()
         self.loop.stop()
 
+    def _got_sigint(self):
+        print("\nCtrl-C ... killing chaperone.")
+        self.kill_system()
+        
     def kill_system(self):
         if self._killing_system:
             return
@@ -250,7 +256,7 @@ class TopLevelProcess(object):
         info("Switching all chaperone logging to /dev/log")
 
     def _system_started(self, f, startup):
-        info("System started successfully")
+        info("chaperone version {0}, ready.", DISPLAY_VERSION)
         if startup:
             self.activate(startup)
 

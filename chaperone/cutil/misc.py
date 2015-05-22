@@ -70,3 +70,13 @@ class Environment(lazydict):
         if not isinstance(instr, str):
             return instr
         return _RE_ENVVAR.sub(self._elookup, instr)
+
+def maybe_remove(fn):
+    """
+    Tries to remove a file but ignores a FileNotFoundError.
+    """
+    try:
+        os.remove(fn)
+    except FileNotFoundError:
+        pass
+

@@ -1,0 +1,12 @@
+#/bin/bash
+# If our host has an apt proxy container running at 3142, then use it for apt
+
+defhost=`ip route | awk '/default/ { print $3; }'`
+
+if nc -z $defhost 3142; then
+   echo "Acquire::http { Proxy \"http://$defhost:3142\"; };" >/etc/apt/apt.conf.d/01proxy
+   echo ADDED PROXY FOR apt-get on $defhost
+else
+   rm -f /etc/apt/apt.conf.d/01proxy
+   echo NO PROXY FOR apt-get
+fi

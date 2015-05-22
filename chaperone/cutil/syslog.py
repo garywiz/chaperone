@@ -7,7 +7,7 @@ import sys
 from functools import partial
 
 from chaperone.cutil.logging import info, warn, debug
-from chaperone.cutil.misc import lazydict
+from chaperone.cutil.misc import lazydict, maybe_remove
 from chaperone.cutil.syslog_handlers import LogOutput
 from chaperone.cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
 
@@ -117,7 +117,7 @@ class _syslog_spec_matcher:
 
         if gdict['regex'] is not None:
             self._regexes.append(re.compile(gdict['regex'], re.IGNORECASE))
-            c1 = 'bool(buf.search(s._regexes[%d]))' % (len(self._regexes) - 1)
+            c1 = 'bool(s._regexes[%d].search(buf))' % (len(self._regexes) - 1)
         elif gdict['prog'] is not None:
             c1 = '(g and "%s" == g.lower())' % gdict['prog'].lower()
         elif gdict['fac'] != '*':
@@ -216,6 +216,7 @@ class SyslogServer:
 
     def run(self):
         loop = asyncio.get_event_loop()
+        maybe_remove("/dev/log")
         listen = loop.create_unix_server(partial(SyslogServerProtocol, self), path="/dev/log")
         future = asyncio.async(listen)
         future.add_done_callback(self._run_done)
@@ -229,6 +230,7 @@ class SyslogServer:
     def close(self):
         if self._server:
             self._server.close()
+            maybe_remove("/dev/log")
 
     def configure(self, config, minimum_priority = None):
         loglist = self._loglist = list()

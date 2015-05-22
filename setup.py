@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 from setuptools import setup, find_packages
 
@@ -8,7 +9,7 @@ def read(fname):
     return open(os.path.join(ourdir, fname)).read()
 
 def get_version():
-    return subprocess.check_output(["python", os.path.join("chaperone/cproc/version.py")]).decode().strip()
+    return subprocess.check_output([sys.executable, os.path.join("chaperone/cproc/version.py")]).decode().strip()
 
 setup(
     name = "chaperone",
