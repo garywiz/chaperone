@@ -13,10 +13,16 @@ def get_version():
 setup(
     name = "chaperone",
     version = get_version(),
-    description = 'Simple system init daemon for Docker environments',
+    description = 'Simple system init daemon for Docker-like environments',
     long_description = read('README'),
     packages = find_packages(),
     #test_suite = "pyt_tests.tests.test_all",
+    entry_points={
+        'console_scripts': [
+            'chaperone = chaperone.exec.chaperone:main_entry',
+            'telchap = chaperone.exec.telchap:main_entry',
+        ],
+    },
     license = "BSD 3",
     author = "Gary Wisniewski",
     author_email = "pypi-garywiz@gw.spidereye.com",

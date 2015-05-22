@@ -6,12 +6,51 @@ from functools import partial
 from docopt import docopt
 
 from chaperone.cutil.servers import Server, ServerProtocol
+import chaperone.cutil.syslog_info as syslog_info
 
 COMMAND_DOC = """
 Usage: telchap status
        telchap shutdown
-       telchap help
+       telchap loglevel [<level>]
 """
+
+class _BaseCommand(object):
+
+    command_name = "X"
+
+    def match(self, opts):
+        return opts.get(self.command_name, False)
+
+    def exec(self, opts, controller):
+        try:
+            return str(self.do_exec(opts, controller))
+        except Exception as ex:
+            return "Command error: " + str(ex)
+
+
+class loglevelCommand(_BaseCommand):
+
+    command_name = "loglevel"
+
+    def do_exec(self, opts, controller):
+        lev = opts['<level>']
+        if lev is None:
+            curlev = controller.force_log_level()
+            if curlev is None:
+                return "Forced Logging Level: NOT SET"
+            try:
+                pri = "*." + syslog_info.PRIORITY[curlev]
+            except IndexError:
+                pri = "Forced Logging Level: UNKNOWN"
+            return pri
+        if lev.startswith('*.'):
+            lev = lev[2:]
+        controller.force_log_level(lev)
+        return "All logging set to include priorities >= *." + lev.lower()
+            
+COMMANDS = (
+    loglevelCommand(),
+)
 
 class CommandProtocol(ServerProtocol):
 
@@ -27,7 +66,12 @@ class CommandProtocol(ServerProtocol):
         except SystemExit as ex:
             result = "COMMAND-ERROR\n" + str(ex)
         else:
-            result = "RESULT\n" + str(options)
+            result = "?"
+            for c in COMMANDS:
+                if c.match(options):
+                    result = c.exec(options, self.parent.controller)
+                    break
+            result = "RESULT\n" + result
         return result
 
     def data_received(self, data):
@@ -52,15 +96,22 @@ class _InteractiveServer(Server):
 
 class CommandServer(Server):
 
+    controller = None
     _fifoname = None
     _iserve = None
 
-    def __init__(self, filename = "/dev/chaperone"):
+    def __init__(self, controller, filename = "/dev/chaperone"):
+        """
+        Creates a new command FIFO and socket.  The controller is the object to which commands and interactions
+        will occur, usually a chaperone.cproc.process_manager.TopLevelProcess.
+        """
+        self.controller = controller
         self._fifoname = filename
 
     def _run_done(self, f):
         super()._run_done(f)
         self._iserve = _InteractiveServer()
+        self._iserve.controller = self.controller # share this with our domain socket
         asyncio.async(self._iserve.run())
 
     def _open(self):

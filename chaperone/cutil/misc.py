@@ -1,4 +1,7 @@
+import re
+import os
 import copy
+from fnmatch import fnmatch
 
 class lazydict(dict):
 
@@ -35,3 +38,35 @@ class lazydict(dict):
 
     def deepcopy(self):
         return copy.deepcopy(self)
+
+
+# Technically IEEE 1003.1-2001 states env vars can contain anything except '=' and NUL but we need to
+# obviously exclude the terminator!
+_RE_ENVVAR = re.compile(r'\$(?:\([^\)=]+\)|{[^\)=]+})')
+
+class Environment(lazydict):
+
+    def __init__(self, config, from_env = os.environ):
+        super().__init__()
+        if not config:
+            self.update(from_env)
+        else:
+            inherit = config.get('env_inherit')
+            if inherit:
+                self.update({k:v for k,v in from_env.items() if any([fnmatch(k,pat) for pat in inherit])})
+            add = config.get('env_add')
+            if add:
+                self.update(add)
+
+    def _elookup(self, match):
+        whole = match.group(0)
+        return self.get(whole[2:-1], whole)
+
+    def expand(self, instr):
+        """
+        Expands an input string by replacing environment variables of the form ${ENV} or $(ENV).
+        If an expansion is not found, the substituion is ignored and the original reference remains.
+        """
+        if not isinstance(instr, str):
+            return instr
+        return _RE_ENVVAR.sub(self._elookup, instr)

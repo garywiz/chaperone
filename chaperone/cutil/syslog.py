@@ -66,12 +66,23 @@ class _syslog_spec_matcher:
         Just nipping that in the bud.
     """
 
-    __slots__ = ('_regexes', '_match', 'debugexpr')
+    __slots__ = ('_regexes', '_match', 'debugexpr', 'selector')
 
-    def __init__(self, speclist, minimum_priority = None):
+    def __init__(self, selector, minimum_priority = None):
+        self.selector = selector
+        self._compile(minimum_priority)
+
+    def reset_minimum_priority(self, minimum_priority = None):
+        """
+        Recompile the spec using a new minimum priority.  minimum_priority may be None to eliminate
+        any such minimum from having an effect and reverting to the exact selectors.
+        """
+        self._compile(minimum_priority)
+
+    def  _compile(self, minimum_priority):
         self._regexes = []
 
-        pieces = _RE_SPECSEP.split(speclist)
+        pieces = _RE_SPECSEP.split(self.selector)
 
         # Build the list of negations and positive expressions
         neg = list()
@@ -225,6 +236,14 @@ class SyslogServer:
         for k,v in lc.items():
             matcher = _syslog_spec_matcher(v.filter or '*.*', minimum_priority)
             loglist.append( (matcher, LogOutput.getOutputHandlers(v)) )
+
+    def reset_minimum_priority(self, minimum_priority = None):
+        """
+        Specifies a new minimum priority for logging.  Recompiles all selectors, so it's best
+        to provide this when the configure is done, if possible.
+        """
+        for m in self._loglist:
+            m[0].reset_minimum_priority(minimum_priority)
 
     def writeLog(self, msg, prog, priority, facility):
         for m in self._loglist:

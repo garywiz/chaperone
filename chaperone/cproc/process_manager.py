@@ -8,14 +8,13 @@ import logging
 from logging.handlers import SysLogHandler
 
 from functools import partial
-from fnmatch import fnmatch
 from time import time, sleep
 
 from chaperone.cutil.logging import warn, info, debug, error, set_python_log_level, enable_syslog_handler
 from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.commands import CommandServer
 from chaperone.cutil.syslog import SyslogServer
-from chaperone.cutil.misc import lazydict
+from chaperone.cutil.misc import lazydict, Environment
 
 @asyncio.coroutine
 def _process_logger(stream, kind):
@@ -30,20 +29,6 @@ def _process_logger(stream, kind):
             warn(line, facility=SysLogHandler.LOG_DAEMON)
         else:
             info(line, facility=SysLogHandler.LOG_DAEMON)
-
-class Environment(lazydict):
-
-    def __init__(self, config, from_env = os.environ):
-        super().__init__()
-        if not config:
-            self.update(from_env)
-        else:
-            inherit = config.get('env_inherit')
-            if inherit:
-                self.update({k:v for k,v in from_env.items() if any([fnmatch(k,pat) for pat in inherit])})
-            add = config.get('env_add')
-            if add:
-                self.update(add)
 
 class SubProcess(object):
 
@@ -180,7 +165,7 @@ class TopLevelProcess(object):
     def loop(self):
         return asyncio.get_event_loop()
 
-    def force_log_level(self, level):
+    def force_log_level(self, level = None):
         """
         Specifies the *minimum* logging level that will be applied to all syslog entries.
         This is primarily useful for debugging, where you want to override any limitations
@@ -188,14 +173,21 @@ class TopLevelProcess(object):
 
         As a (convenient) side-effect, if the level is DEBUG, then debug features of both
         asyncio as well as chaperone will be enabled.
+
+        If level is not provided, then returns the current setting.
         """
+        if level is None:
+            return self._minimum_syslog_level
+
         levid = getattr(logging, level.upper(), None)
         if not levid:
             raise Exception("Not a valid log level: {0}".format(level))
         set_python_log_level(levid)
         self._minimum_syslog_level = levid
-        if levid == logging.DEBUG:
-            self.debug = True
+        self.debug = (levid == logging.DEBUG)
+        if self._syslog:
+            self._syslog.reset_minimum_priority(levid)
+        info("Forcing all log output to '{0}' or greater", level)
 
     def _no_processes(self):
         self._all_killed = True
@@ -251,7 +243,7 @@ class TopLevelProcess(object):
        return future
 
     def run(self, args, user=None, wait=False, config=None):
-        return SubProcess.spawn(args, user, wait=wait, env=Environment(config.get_settings()))
+        return SubProcess.spawn(args, user, wait=wait, env=config.get_environment())
 
     def _syslog_started(self, f):
         enable_syslog_handler()
@@ -275,7 +267,7 @@ class TopLevelProcess(object):
         syf = self._syslog.run()
         syf.add_done_callback(self._syslog_started)
 
-        self._command = CommandServer()
+        self._command = CommandServer(self)
         cmdf = self._command.run()
 
         f = asyncio.gather(syf, cmdf)
@@ -290,7 +282,7 @@ class TopLevelProcess(object):
 
         # First, determine our overall configuration for the services environment.
 
-        masterenv = Environment(config.get_settings())
+        masterenv = config.get_environment()
 
         slist = [s for s in config.get_services().get_startup_list() if s.enabled]
 

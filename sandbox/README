@@ -1,0 +1,7 @@
+Files in this directory were created ad-hoc by me as a sandbox testing area.  Typically, I create a docker
+image and point /home to my host's /home, then keep chaperone in a sub-directory where I work on it without
+needing to install it each time.   I run my docker image with ./testdock and it isolates operation in this
+sandbox directory.
+
+This directory may be retired at some point, hopefully soon, once a more structured set of examples exists
+in a separate samples directory.

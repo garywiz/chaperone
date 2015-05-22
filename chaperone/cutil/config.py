@@ -1,11 +1,12 @@
 import os
 import pwd
+from copy import deepcopy
 
 import yaml
 import voluptuous as V
 
 from chaperone.cutil.logging import info, warn, debug
-from chaperone.cutil.misc import lazydict
+from chaperone.cutil.misc import lazydict, Environment
 
 @V.message('not an executable file', cls=V.FileInvalid)
 @V.truth
@@ -51,11 +52,16 @@ class _BaseConfig(object):
 
     name = None
     _repr_pat = None
+    _expand_these = None
 
-    def __init__(self, name, initdict):
+    def __init__(self, name, initdict, env = None):
         self.name = name
+        if env and self._expand_these:
+            expand = env.expand
+        else:
+            expand = lambda x: x
         for k,v in initdict.items():
-            setattr(self, k, v)
+            setattr(self, k, expand(v))
 
     def get(self, attr, default = None):
         return getattr(self, attr, default)
@@ -64,6 +70,7 @@ class _BaseConfig(object):
         if self._repr_pat:
             return self._repr_pat.format(self)
         return super().__repr__()
+
 
 class ServiceConfig(_BaseConfig):
 
@@ -83,13 +90,14 @@ class ServiceConfig(_BaseConfig):
     bin = None
 
     _repr_pat = "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})"
+    _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
 
-    def __init__(self, name, initdict):
-        super().__init__(name, initdict)
+    def __init__(self, name, initdict, env = None):
+        super().__init__(name, initdict, env)
         self.before = set(self.before.split()) if self.before is not None else set()
         self.after = set(self.after.split()) if self.after is not None else set()
 
-
+            
 class LogConfig(_BaseConfig):
 
     filter = '*.*'
@@ -99,16 +107,19 @@ class LogConfig(_BaseConfig):
     enabled = True
     extended = False            # include facility/priority information
     
+    _expand_these = {'filter', 'file'}
+
+
 class ServiceDict(lazydict):
 
     _ordered_startup = None
 
-    def __init__(self, servdict):
+    def __init__(self, servdict, env = None):
         """
         Accepts a dictionary of values to be turned into services.
         """
         super().__init__(
-            ((k,ServiceConfig(k,v)) for (k,v) in servdict)
+            ((k,ServiceConfig(k,v,env)) for (k,v) in servdict)
         )
 
     def get_startup_list(self):
@@ -179,6 +190,7 @@ class ServiceDict(lazydict):
 class Configuration(object):
 
     _conf = None
+    _env = None                 # calculated environment
 
     @classmethod
     def configFromCommandSpec(cls, spec, user = None, default = None):
@@ -256,17 +268,25 @@ class Configuration(object):
                 conf[k] = v
 
     def get_services(self):
+        env = self.get_environment()
         return ServiceDict( 
-            ((k,v) for k,v in self._conf.items() if k.endswith('.service'))
+            ((k,v) for k,v in self._conf.items() if k.endswith('.service')),
+            env
         )
 
     def get_logconfigs(self):
+        env = self.get_environment()
         return lazydict(
-            ((k,LogConfig(k,v)) for k,v in self._conf.items() if k.endswith('.logging'))
+            ((k,LogConfig(k,v,env)) for k,v in self._conf.items() if k.endswith('.logging'))
         )
 
     def get_settings(self):
         return self._conf.get('settings')
+
+    def get_environment(self):
+        if not self._env:
+            self._env = Environment(self.get_settings())
+        return self._env
 
     def dump(self):
         debug('FULL CONFIGURATION: {0}'.format(self._conf))
