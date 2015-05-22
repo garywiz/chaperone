@@ -3,8 +3,10 @@ but designed for lean container environments like Docker.  It is a single, small
 process clean-up, rudimentary logging, and service management without the overhead of additional
 complex configuration.
 
-================   =====================================
-Documentation      http://garywiz.github.io/chaperone
-pytracker Source   http://github.com/garywiz/chaperone
+*IMPORTANT*:  This project has just begun and is is PRE-ALPHA phase.  Explore at your own risk. The best source of information is the ``github`` link below.  Status will be posted there regularly.
+
+================   ======================================================
+Documentation      http://garywiz.github.io/chaperone (not yet available)
+chaperone Source   http://github.com/garywiz/chaperone
 pypi link          http://pypi.python.org/pypi/chaperone
-================   =====================================
+================   ======================================================

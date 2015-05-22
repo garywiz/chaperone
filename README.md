@@ -1,6 +1,8 @@
 Chaperone: A lean init-style startup manager for Docker-like containers
 -----------------------------------------------------------------------
 
+*IMPORTANT*:  This project has just begun and is is PRE-ALPHA phase.  Explore at your own risk.
+
 This is a lean, full-featured process which runs at the root of a docker
 container tree.  It provides:
 
@@ -40,7 +42,7 @@ system services (such as runit).  Chaperone is designed to be self-contained.
 Status
 ------
 
-As of Friday, 22-May-2014...
+As of Friday, 22-May-2015...
 
 THIS PROJECT IS IN PRE-RELEASE PHASE, and has been uploaded here and to PyPi to
 prepare for a more formal release.  I advise you do not use it yet.  However,
@@ -66,7 +68,7 @@ License
 
 This software is distributed under the BSD License.
 
-Copyright (c) 2013, Gary J. Wisniewski,
+Copyright (c) 2015, Gary J. Wisniewski,
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
