@@ -11,7 +11,7 @@ Usage:
 Options:
     -v                       Provide verbose messages
     --user=<name>            Start first process as user (else root)
-    --config=<file_or_dir>   Specifies file or directory for configuration [default: /etc/chaperone.d]
+    --config=<file_or_dir>   Specifies file or directory for configuration [default: /etc/chaperone/config.d]
     --shutdown_on_exit       If set, then the entire system will be shutdown when the given command (if any)
                              terminates.
     --nodelay                Eliminates delay before initial command prompt when there are services.

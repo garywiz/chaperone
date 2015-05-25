@@ -196,34 +196,20 @@ class Configuration(object):
     def configFromCommandSpec(cls, spec, user = None, default = None):
         """
         A command specification (typically specified with the --config=<file_or_dir> command
-        line option) is used to create a configuration object.
+        line option) is used to create a configuration object.   The target may be either a file
+        or a directory.  If it is a file, then the file itself will be the only configuration
+        read.  If it is a directory, then a search is made for any top-level files which end in
+        .conf or .yaml, and those will be combined according to lexicographic order.
 
-        If no user is specified, then the spec is relative to the root of the file system and may
-        or may not contain a path.
-
-        If a user is specified, then the spec is relative to the user's home directory.  However, 
-        if it is a full path, then the leading path is stripped off before it is used.
-
-        Thus, for root:
-            chaperone.d      ->   /chaperone.d
-            /etc/chaperone.d ->   /etc/chaperone.d
-            foo/chaperone.d  ->   /foo/chaperone.d
-
-        for jbloggs:
-            chaperone.d      ->   /home/jbloggs/chaperone.d
-            /etc/chaperone.d ->   /home/jbloggs/chaperone.d
-            foo/chaperone.d  ->   /home/jbloggs/foo/chaperone.d
-
-        This allows you to easily specify a system default location has sensible per-user mappings.
+        If the configuration path is a relative path, then it is relative to either the root
+        directory, or the home directory of the given user.  This allows a user-specific
+        configuration to automatically take effect if desired.
         """
 
         frombase = '/'
 
         if user:
-            pwrec = pwd.getpwnam(user)
-            frombase = pwrec.pw_dir
-            if os.path.isabs(spec):
-                spec = os.path.basename(spec)
+            frombase = pwd.getpwnam(user).pw_dir
 
         trypath = os.path.join(frombase, spec)
 
