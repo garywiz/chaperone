@@ -1,6 +1,6 @@
 from prefix import *
 
-from cutil.syslog import _syslog_spec_matcher
+from chaperone.cutil.syslog import _syslog_spec_matcher
 
 SPECS = (
     ('*.*',                                    '(True)'),

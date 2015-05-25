@@ -1,6 +1,6 @@
 from prefix import *
 
-from cutil.config import ServiceDict
+from chaperone.cutil.config import ServiceDict
 
 OT1 = {
     'one.service': { },

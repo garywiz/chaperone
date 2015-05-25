@@ -165,7 +165,7 @@ class ServiceDict(lazydict):
 
         afters = set(services.keys())
         for v in services.values():
-            v.refs = map(lambda n: services[n], v.after.intersection(afters))
+            v.refs = tuple(map(lambda n: services[n], v.after.intersection(afters)))
 
         svlist = list()         # this will be our final list, containing original items
         svseen = set()
