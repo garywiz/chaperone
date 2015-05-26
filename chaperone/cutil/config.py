@@ -20,6 +20,7 @@ _config_schema = V.Any(
         'command': str,
         'bin': str,
         'args': str,
+        'group': str,
         'restart': bool,
         'before': str,
         'after': str,
