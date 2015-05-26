@@ -79,12 +79,10 @@ class SubProcess(object):
         if self._user_uid:
             os.setgid(self._user_gid)
             os.setuid(self._user_uid)
-            os.environ.update(self._user_env)
             try:
                 os.chdir(self._user_home)
             except Exception as ex:
                 pass
-            
 
     def _setup_user(self, user):
         """
@@ -112,8 +110,12 @@ class SubProcess(object):
         if self._stderr == 'log':
             kwargs['stderr'] = asyncio.subprocess.PIPE
 
+        if self._user_env:
+            env = Environment(env)
+            env.update(self._user_env)
+
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess,
-                                                env=env, **kwargs)
+                                                env=env.expanded(), **kwargs)
         proc = self._proc = yield from create
 
         if self._stdout == 'log':
@@ -305,7 +307,7 @@ class TopLevelProcess(object):
 
         for s in slist:
             debug("Running service: " + str(s))
-            subenv = Environment(s, masterenv)
+            subenv = Environment(masterenv, config=s)
             try:
                 yield from SubProcess.spawn(service=s, env=subenv)
             except Exception as ex:

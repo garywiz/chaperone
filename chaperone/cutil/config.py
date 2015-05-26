@@ -28,13 +28,15 @@ _config_schema = V.Any(
         'ignore_failures': bool,
         'enabled': bool,
         'env_inherit': [ str ],
-        'env_add': { str: str },
+        'env_unset': [ str ],
+        'env_set': { str: str },
         'stdout': V.Any(None, 'log', 'inherit'),
         'stderr': V.Any(None, 'log', 'inherit'),
       },
       V.Match('^settings$'): {
         'env_inherit': [ str ],
-        'env_add': { str: str },
+        'env_unset': [ str ],
+        'env_set': { str: str },
       },
       V.Match('^.+\.logging'): {
         'filter': str,
@@ -84,7 +86,8 @@ class ServiceConfig(_BaseConfig):
     command = None
     args = None
     enabled = True
-    env_add = None
+    env_set = None
+    env_unset = None
     env_inherit = ['*']
     stdout = "log"
     stderr = "log"
@@ -272,7 +275,7 @@ class Configuration(object):
 
     def get_environment(self):
         if not self._env:
-            self._env = Environment(self.get_settings())
+            self._env = Environment(config=self.get_settings())
         return self._env
 
     def dump(self):

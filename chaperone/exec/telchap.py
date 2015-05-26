@@ -18,4 +18,7 @@ def main_entry():
     try:
         result = CommandClient.sendCommand(options['<command>'] + " " + " ".join([shlex.quote(a) for a in options['<args>']]))
     except (ConnectionRefusedError, FileNotFoundError) as ex:
-        print("chaperone does not seem to be listening, is it running?\n(Error is: {0})".format(ex))
+        result = "chaperone does not seem to be listening, is it running?\n(Error is: {0})".format(ex)
+
+    print(result)
+

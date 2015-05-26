@@ -1,5 +1,5 @@
 FROM chapdev/chaperone-base:latest
 
 ADD *.sh /setup-bin/
-ADD etc-chaperone/ /etc/chaperone/
+ADD apps/ /apps/
 RUN /setup-bin/install.sh

@@ -92,7 +92,7 @@ class FileHandler(LogOutput):
 
     def __init__(self, config):
         super().__init__(config)
-        self._orig_filename = config.file
+        self._orig_filename = os.path.abspath(config.file)
         self._maybe_reopen()
 
     def _maybe_reopen(self):
@@ -113,6 +113,9 @@ class FileHandler(LogOutput):
         if self._stat:
             self.handle.flush()
             self.handle.close()
+
+        directory = os.path.dirname(new_filename)
+        os.makedirs(directory, exist_ok=True)
 
         self._cur_filename = new_filename
         self.handle = open(new_filename, 'w')
