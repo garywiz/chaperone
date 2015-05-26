@@ -3,8 +3,8 @@
 # This is a great little program to make it easy to share basic build components across
 # a set of docker files.   Basically, you do this:
 #    cd sandbox/someimage
-#    ln -s ../setup  #if needed
-#    ./setup/build
+#    ln -s ../setup-bin  #if needed
+#    ./setup-bin/build
 #
 
 helpmsg="
@@ -18,8 +18,8 @@ usage: setup/build\n
 If you have additional arguments to docker, then include them after a --\n
 "
 
-if [ "$0" != './setup/build' ] ; then
-    echo 'Sorry, I only work if executed as "./setup/build"'
+if [ "$0" != './setup-bin/build' ] ; then
+    echo 'Sorry, I only work if executed as "./setup-bin/build"'
     exit 1
 fi
 

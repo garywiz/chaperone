@@ -248,7 +248,7 @@ class Configuration(object):
             items = {k:dict() for k in items}
         conf = self._conf
         for k,v in items.items():
-            if k in conf and not k.startswith('service.'):
+            if k in conf and not k.endswith('.service'):
                 conf[k].update(v)
             else:
                 conf[k] = v

@@ -80,6 +80,11 @@ class SubProcess(object):
             os.setgid(self._user_gid)
             os.setuid(self._user_uid)
             os.environ.update(self._user_env)
+            try:
+                os.chdir(self._user_home)
+            except Exception as ex:
+                pass
+            
 
     def _setup_user(self, user):
         """
@@ -88,12 +93,13 @@ class SubProcess(object):
         pwrec = pwd.getpwnam(user)
         self._user_uid = pwrec.pw_uid
         self._user_gid = pwrec.pw_gid
+        self._user_home = pwrec.pw_dir
         self._user_env = {
             'HOME':       pwrec.pw_dir,
             'LOGNAME':    user,
             'USER':       user,
         }
-            
+
     @asyncio.coroutine
     def run(self, env=None):
         args = self._prog_args
