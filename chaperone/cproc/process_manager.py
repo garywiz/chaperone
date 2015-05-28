@@ -4,17 +4,17 @@ import errno
 import asyncio
 import shlex
 import signal
-import logging
-from logging.handlers import SysLogHandler
 
 from functools import partial
 from time import time, sleep
 
-from chaperone.cutil.logging import warn, info, debug, error, set_python_log_level, enable_syslog_handler
+import chaperone.cutil.syslog_info as syslog_info
+from chaperone.cutil.logging import warn, info, debug, error, set_log_level, enable_syslog_handler
 from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.commands import CommandServer
 from chaperone.cutil.syslog import SyslogServer
 from chaperone.cutil.misc import lazydict, Environment
+from chaperone.cutil.config import ServiceConfig
 from chaperone.cproc.version import DISPLAY_VERSION
 
 @asyncio.coroutine
@@ -27,14 +27,16 @@ def _process_logger(stream, kind):
         if kind == 'stderr':
             # we map to warning because stderr output is "to be considered" and not strictly
             # erroneous
-            warn(line, facility=SysLogHandler.LOG_DAEMON)
+            warn(line, facility=syslog_info.LOG_DAEMON)
         else:
-            info(line, facility=SysLogHandler.LOG_DAEMON)
+            info(line, facility=syslog_info.LOG_DAEMON)
 
 class SubProcess(object):
 
     pid = None
     name = None
+    environment = None
+    debug = False
 
     _user_uid = None
     _user_gid = None
@@ -45,34 +47,42 @@ class SubProcess(object):
 
     @classmethod
     @asyncio.coroutine
-    def spawn(cls, args=None, user=None, service=None, wait=False, env=None):
-        debug("spawn: {0}".format((args, user, service)))
-        sp = cls(args, user)
+    def spawn(cls, args=None, service=None, wait=False):
         if service:
-            sp.configure(service)
-        yield from sp.run(env=env)
+            sp = cls()
+            sp.configure(service, args)
+        else:
+            sp = cls(args)
+        yield from sp.run()
         if wait:
             yield from sp.wait()
 
-    def __init__(self, args=None, user=None):
+    def __init__(self, args=None):
         super().__init__()
         self._prog_args = args
-        if user:
-            self._setup_user(user)
 
-    def configure(self, service):
-        args = None
+    def configure(self, service, args):
+
         self.name = service.name
+        self.debug = service.debug
+        self.environment = service.environment
         self._stdout = service.stdout
         self._stderr = service.stderr
 
-        if service.command:
-            assert not (service.command and (service.bin or service.args)), "bin/args and command config are mutually-exclusive"
-            args = shlex.split(service.command)
-        elif service.bin:
-            args = [service.bin] + shlex.split(service.args or '')
-        else:
-            raise Exception("No command or arguments provided for service")
+        #print("SERVICE USER", service.user)
+
+        if service.user or service.environment.user:
+            self._setup_user(service.user or service.environment.user)
+
+        if args is None:
+          if service.command:
+              assert not (service.command and (service.bin or service.args)), "bin/args and command config are mutually-exclusive"
+              args = shlex.split(service.command)
+          elif service.bin:
+              args = [service.bin] + shlex.split(service.args or '')
+          else:
+              raise Exception("No command or arguments provided for service")
+
         self._prog_args = args
 
     def _setup_subprocess(self):
@@ -89,20 +99,17 @@ class SubProcess(object):
         Execute set-up for the new process.
         """
         pwrec = pwd.getpwnam(user)
-        self._user_uid = pwrec.pw_uid
-        self._user_gid = pwrec.pw_gid
-        self._user_home = pwrec.pw_dir
-        self._user_env = {
-            'HOME':       pwrec.pw_dir,
-            'LOGNAME':    user,
-            'USER':       user,
-        }
+        if pwrec.pw_uid != os.getuid():
+            self._user_uid = pwrec.pw_uid
+            self._user_gid = pwrec.pw_gid
 
     @asyncio.coroutine
     def run(self, env=None):
         args = self._prog_args
         assert args, "No arguments provided to SubProcess.run()"
-        info("Running %s... " % " ".join(args))
+
+        debug("{0} attempting start '{1}'... ".format(self.name, " ".join(args)))
+
         kwargs = dict()
 
         if self._stdout == 'log':
@@ -110,12 +117,22 @@ class SubProcess(object):
         if self._stderr == 'log':
             kwargs['stderr'] = asyncio.subprocess.PIPE
 
-        if self._user_env:
-            env = Environment(env)
-            env.update(self._user_env)
+        env = self.environment
+        if env:
+            env = env.get_public_environment()
+
+        #print("ENV", env)
+
+        if self.debug:
+            if not env:
+                debug("{0} environment is empty", self.name)
+            else:
+                debug("{0} environment:", self.name)
+                for k,v in env.items():
+                    debug(" {0} = '{1}'".format(k,v))
 
         create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess,
-                                                env=env.expanded(), **kwargs)
+                                                env=env, **kwargs)
         proc = self._proc = yield from create
 
         if self._stdout == 'log':
@@ -189,12 +206,12 @@ class TopLevelProcess(object):
         if level is None:
             return self._minimum_syslog_level
 
-        levid = getattr(logging, level.upper(), None)
+        levid = syslog_info.PRIORITY_DICT.get(level.lower(), None)
         if not levid:
             raise Exception("Not a valid log level: {0}".format(level))
-        set_python_log_level(levid)
+        set_log_level(levid)
         self._minimum_syslog_level = levid
-        self.debug = (levid == logging.DEBUG)
+        self.debug = (levid == syslog_info.LOG_DEBUG)
         if self._syslog:
             self._syslog.reset_minimum_priority(levid)
         info("Forcing all log output to '{0}' or greater", level)
@@ -257,7 +274,16 @@ class TopLevelProcess(object):
        return future
 
     def run(self, args, user=None, wait=False, config=None):
-        return SubProcess.spawn(args, user, wait=wait, env=config.get_environment())
+        sdict = {'stdout': 'inherit',
+                 'stderr': 'inherit'}
+        env = config.get_environment()
+        # Specifying a user overrides both the environment user as well
+        # as the exec user.
+        if user:
+            sdict['user'] = user
+            env = Environment(env, user = user)
+        serv = ServiceConfig(sdict, env = env)
+        return SubProcess.spawn(args, service=serv, wait=wait)
 
     def _syslog_started(self, f):
         enable_syslog_handler()
@@ -296,8 +322,6 @@ class TopLevelProcess(object):
 
         # First, determine our overall configuration for the services environment.
 
-        masterenv = config.get_environment()
-
         slist = [s for s in config.get_services().get_startup_list() if s.enabled]
 
         for n in range(len(slist)):
@@ -306,12 +330,10 @@ class TopLevelProcess(object):
             info("#{1}. Service {0.name}, ignore_failures={0.ignore_failures}", slist[n], n+1)
 
         for s in slist:
-            debug("Running service: " + str(s))
-            subenv = Environment(masterenv, config=s)
             try:
-                yield from SubProcess.spawn(service=s, env=subenv)
+                yield from SubProcess.spawn(service=s)
             except Exception as ex:
-                debug("Process could not be started due to exception: {0}", ex)
+                debug("Service {0} could not be started due to exception: {1}", s.name, ex)
                 if isinstance(ex, FileNotFoundError) and s.optional:
                     warn("Optional service {0} ignored due to exception: {1}", s.name, ex)
                 elif s.ignore_failures:

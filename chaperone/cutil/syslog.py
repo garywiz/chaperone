@@ -16,7 +16,7 @@ from logging.handlers import SysLogHandler
 _RE_SPEC = re.compile(r'^(?P<fpfx>!?)(?:/(?P<regex>.+)/|\[(?P<prog>.+)\]|(?P<fac>[,*0-9a-zA-Z]+))\.(?P<pfx>!?=?)(?P<pri>[*a-zA-Z]+)$')
 _RE_SPECSEP = re.compile(r' *; *')
 
-_RE_SYSLOG = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?P<prog>[^ \[]+)(?P<rest>(?:\[\d+\])?: .+)$')
+_RE_SYSLOG = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?P<prog>[^ \[]+)(?P<rest>(?:\[\d+\])?: .+)$', re.DOTALL)
 
 class _syslog_spec_matcher:
     """

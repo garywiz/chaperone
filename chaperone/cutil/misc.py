@@ -1,5 +1,6 @@
 import re
 import os
+import pwd
 import copy
 from fnmatch import fnmatch
 
@@ -54,15 +55,40 @@ _RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$')
 
 class Environment(lazydict):
 
-    def __init__(self, from_env = os.environ, config = None):
+    user = None
+
+    def __init__(self, from_env = os.environ, config = None, user = None):
+        """
+        Create a new environment.  An environment may have a user associated with it.  If so,
+        then it will be pre-populated with the user's HOME, USER and LOGNAME so that expansions
+        can reference these.
+        """
         super().__init__()
+
+        #print("\n--ENV INIT", from_env, config, user, type(from_env), from_env and getattr(from_env, 'user', None))
+
+        userenv = dict()
+
+        # Inherit user from passed-in environment
+        if user is None:
+            if from_env and hasattr(from_env, 'user'):
+                self.user = from_env.user
+        else:
+            self.user = user
+            pwrec = pwd.getpwnam(user)
+            if pwrec.pw_uid != os.getuid():
+                userenv['HOME'] = pwrec.pw_dir
+                userenv['USER'] = userenv['LOGNAME'] = user
+
         if not config:
             if from_env:
                 self.update(from_env)
+            self.update(userenv)
         else:
             inherit = config.get('env_inherit')
             if inherit and from_env:
                 self.update({k:v for k,v in from_env.items() if any([fnmatch(k,pat) for pat in inherit])})
+            self.update(userenv)
             add = config.get('env_set')
             if add:
                 self.update(add)
@@ -70,6 +96,8 @@ class Environment(lazydict):
             if unset:
                 for s in unset:
                     self.pop(s, None)
+
+        #print('   DONE (.user={0}): {1}\n'.format(self.user, self))
 
     def _elookup(self, match):
         whole = match.group(0)
@@ -96,6 +124,10 @@ class Environment(lazydict):
         result = Environment(None) 
         for k in sorted(self.keys()): # sorted so outcome is deterministic
             self._expand_into(k, result)
+
+        # Copy user after we expand, since any user information is already present in our
+        # own environment.
+        result.user = self.user
         return result
 
     def _expand_into(self, k, result, default = None):
@@ -129,7 +161,23 @@ class Environment(lazydict):
             val = result[k] = _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0)), val)
 
         return val
-        
+    
+    def get_public_environment(self):
+        """
+        Public variables are those which are exported to the application and do NOT start with an
+        underscore.  All underscore names will be kept private.
+        """
+        privkeys = [k for k in self.keys() if k.startswith('_')]
+        if not privkeys:
+            return self
+
+        newenv = Environment(self)
+    
+        for k in privkeys:
+            del newenv[k]
+
+        return newenv
+
 
 def maybe_remove(fn):
     """
@@ -139,4 +187,3 @@ def maybe_remove(fn):
         os.remove(fn)
     except FileNotFoundError:
         pass
-

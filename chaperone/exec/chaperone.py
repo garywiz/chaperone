@@ -29,7 +29,6 @@ Notes:
 import sys
 import os
 import asyncio
-import logging
 import subprocess
 
 from setproctitle import setproctitle
@@ -114,7 +113,7 @@ def main_entry():
       try:
          yield from tlp.run_services(config)
       except Exception as ex:
-         error("System services startup cancelled due to error: {0}", ex)
+         error(ex, "System services startup cancelled due to error: {0}", ex)
          service_errors = True
 
       if cmd:
@@ -129,7 +128,7 @@ def main_entry():
                   warn("system will be killed when '{0}' exits", cmd)
                yield from sproc
             except Exception as ex:
-               error("Initial startup command ('{0}') did not run: {1}", cmd, ex)
+               error(ex, "Initial startup command ('{0}') did not run: {1}", cmd, ex)
 
          if kill_switch:
             tlp.kill_system()

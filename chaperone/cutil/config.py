@@ -17,15 +17,17 @@ _config_service = { V.Required('bin'): str }
 
 _config_schema = V.Any(
     { V.Match('^.+\.service$'): {
+        'debug': bool,
         'command': str,
         'bin': str,
         'args': str,
-        'group': str,
+        'service_group': str,
         'restart': bool,
         'before': str,
         'after': str,
         'optional': bool,
         'ignore_failures': bool,
+        'user': str,
         'enabled': bool,
         'env_inherit': [ str ],
         'env_unset': [ str ],
@@ -34,6 +36,8 @@ _config_schema = V.Any(
         'stderr': V.Any(None, 'log', 'inherit'),
       },
       V.Match('^settings$'): {
+        'debug': bool,
+        'user': str,
         'env_inherit': [ str ],
         'env_unset': [ str ],
         'env_set': { str: str },
@@ -54,17 +58,42 @@ validator = V.Schema(_config_schema)
 class _BaseConfig(object):
 
     name = None
-    _repr_pat = None
-    _expand_these = None
+    environment = None
+    debug = None
+    env_set = None
+    env_unset = None
+    env_inherit = ['*']
 
-    def __init__(self, name, initdict, env = None):
+    _repr_pat = None
+    _expand_these = {}
+
+    def __init__(self, initdict, name = "MAIN", env = None, settings = None):
         self.name = name
-        if env and self._expand_these:
+
+        #print("_BaseConfig init env user", env and env.user)
+
+        if settings:
+            deb = settings.get('debug')
+            if deb is not None:
+                self.debug = deb
+
+        if env:
+            env = self.environment = Environment(env, config = self).expanded()
             expand = env.expand
         else:
             expand = lambda x: x
+
         for k,v in initdict.items():
-            setattr(self, k, expand(v))
+            if k in self._expand_these:
+                setattr(self, k, env.expand(v))
+            else:
+                setattr(self, k, v)
+
+        self.post_init()
+        #print("BASECONFIG ENVIRONMENT", self.name, self.environment.user, self.environment)
+
+    def post_init(self):
+        pass
 
     def get(self, attr, default = None):
         return getattr(self, attr, default)
@@ -77,7 +106,7 @@ class _BaseConfig(object):
 
 class ServiceConfig(_BaseConfig):
 
-    group = "default"
+    service_group = "default"
     restart = True
     before = None
     after = None
@@ -86,22 +115,19 @@ class ServiceConfig(_BaseConfig):
     command = None
     args = None
     enabled = True
-    env_set = None
-    env_unset = None
-    env_inherit = ['*']
     stdout = "log"
     stderr = "log"
+    user = None
     bin = None
 
-    _repr_pat = "Service:{0.name}(group={0.group}, after={0.after}, before={0.before})"
+    _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
 
-    def __init__(self, name, initdict, env = None):
-        super().__init__(name, initdict, env)
+    def post_init(self):
         self.before = set(self.before.split()) if self.before is not None else set()
         self.after = set(self.after.split()) if self.after is not None else set()
 
-            
+        
 class LogConfig(_BaseConfig):
 
     filter = '*.*'
@@ -110,7 +136,7 @@ class LogConfig(_BaseConfig):
     stdout = False
     enabled = True
     extended = False            # include facility/priority information
-    
+
     _expand_these = {'filter', 'file'}
 
 
@@ -118,12 +144,13 @@ class ServiceDict(lazydict):
 
     _ordered_startup = None
 
-    def __init__(self, servdict, env = None):
+    def __init__(self, servdict, env = None, settings = None):
         """
         Accepts a dictionary of values to be turned into services.
         """
+        #print("ServiceDict.__init__ env user", env.user)
         super().__init__(
-            ((k,ServiceConfig(k,v,env)) for (k,v) in servdict)
+            ((k,ServiceConfig(v,k,env,settings)) for (k,v) in servdict)
         )
 
     def get_startup_list(self):
@@ -137,7 +164,7 @@ class ServiceDict(lazydict):
         services = self.deepcopy()
         groups = lazydict()
         for k,v in services.items():
-            groups.setdefault(v.group, lambda: lazydict())[k] = v
+            groups.setdefault(v.service_group, lambda: lazydict())[k] = v
 
         # We want to only look at the "after:" attribute, so we will eliminate the relevance
         # of befores...
@@ -193,6 +220,7 @@ class ServiceDict(lazydict):
             
 class Configuration(object):
 
+    user = None                 # specifies if a system-wide user was provided
     _conf = None
     _env = None                 # calculated environment
 
@@ -225,17 +253,18 @@ class Configuration(object):
         if os.path.isdir(trypath):
             return cls(*[os.path.join(trypath, f) for f in sorted(os.listdir(trypath))
                          if f.endswith('.yaml') or f.endswith('.conf')],
-                       default = default)
+                       default = default, user = user)
 
-        return cls(trypath, default = default)
+        return cls(trypath, default = default, user = user)
         
-    def __init__(self, *args, default = None):
+    def __init__(self, *args, default = None, user = None):
         """
         Given one or more files, load our configuration.  If no configuration is provided,
         then use the configuration specified by the default.
         """
-        debug("CONFIG INPUT: '{0}'".format(args))
+        debug("CONFIG INPUT (user={1}): '{0}'".format(args, user))
 
+        self.user = user
         self._conf = dict()
 
         for fn in args:
@@ -246,6 +275,9 @@ class Configuration(object):
             self._conf = yaml.load(default)
 
         validator(self._conf)
+
+        s = self.get_settings()
+        self.user = s.get('user', self.user)
 
     def _merge(self, items):
         if type(items) == list:
@@ -261,13 +293,15 @@ class Configuration(object):
         env = self.get_environment()
         return ServiceDict( 
             ((k,v) for k,v in self._conf.items() if k.endswith('.service')),
-            env
+            env,
+            self._conf.get('settings')
         )
 
     def get_logconfigs(self):
         env = self.get_environment()
+        settings = self._conf.get('settings')
         return lazydict(
-            ((k,LogConfig(k,v,env)) for k,v in self._conf.items() if k.endswith('.logging'))
+            ((k,LogConfig(v,k,env,settings)) for k,v in self._conf.items() if k.endswith('.logging'))
         )
 
     def get_settings(self):
@@ -275,7 +309,7 @@ class Configuration(object):
 
     def get_environment(self):
         if not self._env:
-            self._env = Environment(config=self.get_settings())
+            self._env = Environment(config=self.get_settings(), user=self.user)
         return self._env
 
     def dump(self):
