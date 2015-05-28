@@ -58,7 +58,10 @@ def main_entry():
       print(MSG_PID1)
       exit(1)
 
-   kill_switch = options['--exitkills'] or (False if options['--no-exitkills'] else sys.stdin.isatty())
+   tty = sys.stdin.isatty()
+   os.environ["_CHAPERONE_INTERACTIVE"] = "1" if tty else "0"
+
+   kill_switch = options['--exitkills'] or (False if options['--no-exitkills'] else tty)
 
    tlp = TopLevelProcess.sharedInstance()
    if options['--log-level']:

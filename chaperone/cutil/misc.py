@@ -1,6 +1,7 @@
 import re
 import os
 import pwd
+import grp
 import copy
 from fnmatch import fnmatch
 
@@ -55,9 +56,10 @@ _RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$')
 
 class Environment(lazydict):
 
-    user = None
+    uid = None
+    gid = None
 
-    def __init__(self, from_env = os.environ, config = None, user = None):
+    def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
         """
         Create a new environment.  An environment may have a user associated with it.  If so,
         then it will be pre-populated with the user's HOME, USER and LOGNAME so that expansions
@@ -70,15 +72,15 @@ class Environment(lazydict):
         userenv = dict()
 
         # Inherit user from passed-in environment
-        if user is None:
-            if from_env and hasattr(from_env, 'user'):
-                self.user = from_env.user
+        if uid is None:
+            self.uid = getattr(from_env, 'uid', self.uid)
+            self.gid = getattr(from_env, 'gid', self.gid)
         else:
-            self.user = user
-            pwrec = pwd.getpwnam(user)
-            if pwrec.pw_uid != os.getuid():
-                userenv['HOME'] = pwrec.pw_dir
-                userenv['USER'] = userenv['LOGNAME'] = user
+            pwrec = lookup_user(uid, gid)
+            self.uid = pwrec.pw_uid
+            self.gid = pwrec.pw_gid
+            userenv['HOME'] = pwrec.pw_dir
+            userenv['USER'] = userenv['LOGNAME'] = pwrec.pw_name
 
         if not config:
             if from_env:
@@ -97,7 +99,7 @@ class Environment(lazydict):
                 for s in unset:
                     self.pop(s, None)
 
-        #print('   DONE (.user={0}): {1}\n'.format(self.user, self))
+        #print('   DONE (.uid={0}): {1}\n'.format(self.uid, self))
 
     def _elookup(self, match):
         whole = match.group(0)
@@ -125,9 +127,10 @@ class Environment(lazydict):
         for k in sorted(self.keys()): # sorted so outcome is deterministic
             self._expand_into(k, result)
 
-        # Copy user after we expand, since any user information is already present in our
+        # Copy uid after we expand, since any user information is already present in our
         # own environment.
-        result.user = self.user
+        result.uid = self.uid
+        result.gid = self.gid
         return result
 
     def _expand_into(self, k, result, default = None):
@@ -187,3 +190,52 @@ def maybe_remove(fn):
         os.remove(fn)
     except FileNotFoundError:
         pass
+
+def lookup_user(uid, gid = None):
+    """
+    Looks up a user using either a name or integer user value.  If a group is specified,
+    Then set the group explicitly in the returned pwrec
+    """
+    intuid = None
+
+    try:
+        intuid = int(uid)
+    except ValueError:
+        pass
+    
+    if intuid is not None:
+        pwrec = pwd.getpwuid(intuid)
+    else:
+        pwrec = pwd.getpwnam(uid)
+
+    if gid is None:
+        return pwrec
+
+    return type(pwrec)(
+        (pwrec.pw_name,
+         pwrec.pw_passwd,
+         pwrec.pw_uid,
+         lookup_gid(gid),
+         pwrec.pw_gecos,
+         pwrec.pw_dir,
+         pwrec.pw_shell)
+    )
+
+def lookup_gid(gid):
+    """
+    Looks up a user using either a name or integer user value.
+    """
+    intgid = None
+
+    try:
+        intgid = int(gid)
+    except ValueError:
+        pass
+    
+    if intgid is not None:
+        return intgid
+
+    pwrec = grp.getgrnam(gid)
+
+    return pwrec.gr_gid
+

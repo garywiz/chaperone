@@ -6,7 +6,7 @@ import yaml
 import voluptuous as V
 
 from chaperone.cutil.logging import info, warn, debug
-from chaperone.cutil.misc import lazydict, Environment
+from chaperone.cutil.misc import lazydict, Environment, lookup_user
 
 @V.message('not an executable file', cls=V.FileInvalid)
 @V.truth
@@ -27,7 +27,8 @@ _config_schema = V.Any(
         'after': str,
         'optional': bool,
         'ignore_failures': bool,
-        'user': str,
+        'uid': V.Any(str, int),
+        'gid': V.Any(str, int),
         'enabled': bool,
         'env_inherit': [ str ],
         'env_unset': [ str ],
@@ -37,7 +38,8 @@ _config_schema = V.Any(
       },
       V.Match('^settings$'): {
         'debug': bool,
-        'user': str,
+        'uid': V.Any(str, int),
+        'gid': V.Any(str, int),
         'env_inherit': [ str ],
         'env_unset': [ str ],
         'env_set': { str: str },
@@ -78,7 +80,10 @@ class _BaseConfig(object):
                 self.debug = deb
 
         if env:
-            env = self.environment = Environment(env, config = self).expanded()
+            env = self.environment = Environment(env, 
+                                                 config = self, 
+                                                 uid = initdict.get('uid'),
+                                                 gid = initdict.get('gid')).expanded()
             expand = env.expand
         else:
             expand = lambda x: x
@@ -117,7 +122,8 @@ class ServiceConfig(_BaseConfig):
     enabled = True
     stdout = "log"
     stderr = "log"
-    user = None
+    uid = None
+    gid = None
     bin = None
 
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
@@ -220,7 +226,8 @@ class ServiceDict(lazydict):
             
 class Configuration(object):
 
-    user = None                 # specifies if a system-wide user was provided
+    uid = None                  # specifies if a system-wide user was provided
+    gid = None
     _conf = None
     _env = None                 # calculated environment
 
@@ -241,7 +248,7 @@ class Configuration(object):
         frombase = '/'
 
         if user:
-            frombase = pwd.getpwnam(user).pw_dir
+            frombase = lookup_user(user).pw_dir
 
         trypath = os.path.join(frombase, spec)
 
@@ -250,21 +257,25 @@ class Configuration(object):
         if not os.path.exists(trypath):
             return cls(default = default)
 
+        if os.path.exists(trypath):
+            os.environ['_CHAPERONE_CONFIG_DIR'] = os.path.dirname(trypath)
+
         if os.path.isdir(trypath):
             return cls(*[os.path.join(trypath, f) for f in sorted(os.listdir(trypath))
                          if f.endswith('.yaml') or f.endswith('.conf')],
-                       default = default, user = user)
+                       default = default, uid = user)
 
-        return cls(trypath, default = default, user = user)
+
+        return cls(trypath, default = default, uid = user)
         
-    def __init__(self, *args, default = None, user = None):
+    def __init__(self, *args, default = None, uid = None):
         """
         Given one or more files, load our configuration.  If no configuration is provided,
         then use the configuration specified by the default.
         """
-        debug("CONFIG INPUT (user={1}): '{0}'".format(args, user))
+        debug("CONFIG INPUT (uid={1}): '{0}'".format(args, uid))
 
-        self.user = user
+        self.uid = uid
         self._conf = dict()
 
         for fn in args:
@@ -277,7 +288,8 @@ class Configuration(object):
         validator(self._conf)
 
         s = self.get_settings()
-        self.user = s.get('user', self.user)
+        self.uid = s.get('uid', self.uid)
+        self.gid = s.get('gid', self.gid)
 
     def _merge(self, items):
         if type(items) == list:
@@ -309,7 +321,7 @@ class Configuration(object):
 
     def get_environment(self):
         if not self._env:
-            self._env = Environment(config=self.get_settings(), user=self.user)
+            self._env = Environment(config=self.get_settings(), uid=self.uid, gid=self.gid)
         return self._env
 
     def dump(self):

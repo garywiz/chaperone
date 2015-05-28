@@ -5,7 +5,7 @@ from time import sleep
 
 import os
 
-print("Environment:")
+print("UID:{0} GID:{1} Environment:".format(os.getuid(), os.getgid()))
 for k,v in os.environ.items():
     print(" {0}={1}".format(k,v))
 
