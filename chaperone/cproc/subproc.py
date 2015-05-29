@@ -36,6 +36,8 @@ class SubProcess(object):
     _pwrec = None               # the pwrec looked up for execution user/group
     _maybe_run_tried = False    # True if we've already been started
 
+    _fut_monitor = None
+
     def __init__(self, service, family=None):
 
         self.service = service
@@ -123,8 +125,13 @@ class SubProcess(object):
                 for k,v in env.items():
                     debug(" {0} = '{1}'".format(k,v))
 
+
         create = asyncio.create_subprocess_exec(*service.exec_args, preexec_fn=self._setup_subprocess,
                                                 env=env, **kwargs)
+        if service.exit_kills:
+            warn("system wll be killed when '{0}' exits", " ".join(service.exec_args))
+            yield from asyncio.sleep(0.2)
+
         proc = self._proc = yield from create
 
         if service.stdout == 'log':
@@ -133,15 +140,41 @@ class SubProcess(object):
             asyncio.async(_process_logger(proc.stderr, 'stderr'))
 
         if service.exit_kills:
-            warn("system wll be killed when '{0}' exits", " ".join(service.exec_args))
             asyncio.async(self._wait_kill_on_exit())
+
+        # For forking and oneshot proceses, we assume they will take a limited amount of
+        # time to become active or complete their task.  'process_timeout' is how much
+        # time we give them.  But, once they start, we don't monitor the root process
+        # using wait() any longer.   For other types of tasks, we assume that process
+        # termination is subject to restart.
 
         if service.type == 'oneshot' or service.type == 'forking':
             yield from self.timed_wait(service.process_timeout, self._exit_timeout)
+        else:
+            self._fut_monitor = asyncio.async(self._monitor_service())
+
+    @asyncio.coroutine
+    def _monitor_service(self):
+        result = yield from self.wait()
+        if isinstance(result, int) and result > 0:
+            self._abnormal_exit(result)
 
     @asyncio.coroutine
     def _wait_kill_on_exit(self):
         yield from self.wait()
+        self._kill_system()
+
+    def _abnormal_exit(self, code):
+        if self.service.exit_kills:
+            warn("{0} terminated abnormally with {1}", self.service.name, code)
+            return
+        if self.service.ignore_failures:
+            debug("{0} abnormal process exit ignored due to ignore_failures=true", self.service.name)
+            return
+        error("{0} terminated abnormally with {1}", self.service.name, code)
+        self._kill_system()
+
+    def _kill_system(self):
         os.kill(os.getpid(), signal.SIGTERM)
 
     def terminate(self):

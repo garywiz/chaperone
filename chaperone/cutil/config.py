@@ -37,7 +37,7 @@ _config_schema = V.Any(
         'gid': V.Any(str, int),
         'ignore_failures': bool,
         'optional': bool,
-        'process_timeout': float,
+        'process_timeout': V.Any(float, int),
         'restart': bool,
         'service_group': str,
         'stderr': V.Any('log', 'inherit'),
@@ -51,8 +51,8 @@ _config_schema = V.Any(
         'env_set': { str: str },
         'env_unset': [ str ],
         'gid': V.Any(str, int),
-        'idle_delay': float,
-        'process_timeout': float,
+        'idle_delay': V.Any(float, int),
+        'process_timeout': V.Any(float, int),
         'uid': V.Any(str, int),
       },
       V.Match('^.+\.logging'): {
@@ -79,6 +79,16 @@ class _BaseConfig(object):
     _repr_pat = None
     _expand_these = {}
     _settings_defaults = {}
+
+    @classmethod
+    def createConfig(cls, config=None, **kwargs):
+        """
+        Creates a new configuration given a system configuration object.  Initializes the
+        environment as triggers any per-configuration attribute initialization.
+        """
+        return cls(kwargs, 
+                   env=config.get_environment(),
+                   settings=config.get_settings())
 
     def __init__(self, initdict, name = "MAIN", env = None, settings = None):
         self.name = name
@@ -142,8 +152,8 @@ class ServiceConfig(_BaseConfig):
     type = 'simple'
     uid = None
 
-    exec_args = None            # derived from bin/command/args, but may be preset using createService
-    idle_delay = 2.0            # present, but mirrored from settings, not settable per-service
+    exec_args = None            # derived from bin/command/args, but may be preset using createConfig
+    idle_delay = 1.0            # present, but mirrored from settings, not settable per-service
                                 # since it is only triggered once when the first IDLE group item executes
 
     prerequisites = None        # a list of service names which are prerequisites to this one
@@ -151,12 +161,6 @@ class ServiceConfig(_BaseConfig):
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout'}
-
-    @classmethod
-    def createService(cls, config=None, **kwargs):
-        return cls(kwargs, 
-                   env=config.get_environment(),
-                   settings=config.get_settings())
 
     def post_init(self):
         # Assure that exec_args is set to the actual arguments used for execution
@@ -331,7 +335,7 @@ class Configuration(object):
 
         for fn in args:
             if os.path.exists(fn):
-                self._merge(yaml.load(open(fn, 'r')))
+                self._merge(yaml.load(open(fn, 'r').read().expandtabs()))
         
         if not self._conf and default:
             self._conf = yaml.load(default)

@@ -113,13 +113,14 @@ def main_entry():
 
       extra_services = None
       if cmd:
-         cmdsvc = ServiceConfig.createService(config=config,
-                                              exec_args=[cmd] + options['<args>'],
-                                              uid=user,
-                                              exit_kills=kill_switch,
-                                              service_group="IDLE",
-                                              ignore_failures="true",
-                                              stderr='inherit', stdout='inherit')
+         cmdsvc = ServiceConfig.createConfig(config=config,
+                                             name="CONSOLE",
+                                             exec_args=[cmd] + options['<args>'],
+                                             uid=user,
+                                             exit_kills=kill_switch,
+                                             service_group="IDLE",
+                                             ignore_failures="true",
+                                             stderr='inherit', stdout='inherit')
          extra_services = [cmdsvc]
 
       try:
