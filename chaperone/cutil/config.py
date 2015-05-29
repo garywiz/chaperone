@@ -13,10 +13,15 @@ from chaperone.cutil.misc import lazydict, Environment, lookup_user
 def IsExecutable(v):
     return os.path.isfile(v) and os.access(v, os.X_OK)
     
+@V.message('all-uppercase service_groups and service names are reserved for the system')
+@V.truth
+def ValidServiceName(v):
+    return str(v).upper() != str(v)
+
 _config_service = { V.Required('bin'): str }
 
 _config_schema = V.Any(
-    { V.Match('^.+\.service$'): {
+    { ValidServiceName(V.Match('^.+\.service$')): {
         'after': str,
         'args': str,
         'before': str,
@@ -29,12 +34,11 @@ _config_schema = V.Any(
         'env_unset': [ str ],
         'exit_kills': bool,
         'gid': V.Any(str, int),
-        'idle_delay': float,
         'ignore_failures': bool,
         'optional': bool,
         'process_timeout': float,
         'restart': bool,
-        'service_group': str,
+        'service_group': ValidServiceName(str),
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
         'type': V.Any('oneshot', 'simple'),
@@ -127,7 +131,6 @@ class ServiceConfig(_BaseConfig):
     debug = None
     enabled = True
     gid = None
-    idle_delay = 2
     ignore_failures = False
     optional = False
     process_timeout = 10.0      # time to elapse before we decide a process has misbehaved
@@ -137,6 +140,9 @@ class ServiceConfig(_BaseConfig):
     stdout = "log"
     type = 'simple'
     uid = None
+
+    idle_delay = 2              # present, but mirrored from settings, not settable per-service
+                                # since it is only triggered once when the first IDLE group item executes
 
     prerequisites = None        # a list of service names which are prerequisites to this one
 

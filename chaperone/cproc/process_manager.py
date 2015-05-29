@@ -13,7 +13,7 @@ import chaperone.cutil.syslog_info as syslog_info
 from chaperone.cproc.commands import CommandServer
 from chaperone.cproc.version import DISPLAY_VERSION
 from chaperone.cproc.watcher import InitChildWatcher
-from chaperone.cproc.subproc import SubProcess
+from chaperone.cproc.subproc import SubProcess, SubProcessFamily
 from chaperone.cutil.config import ServiceConfig
 from chaperone.cutil.logging import warn, info, debug, error, set_log_level, enable_syslog_handler
 from chaperone.cutil.misc import lazydict, Environment
@@ -101,10 +101,12 @@ class TopLevelProcess(object):
 
     def _got_sigint(self):
         print("\nCtrl-C ... killing chaperone.")
-        self.kill_system()
+        self.kill_system(True)
         
-    def kill_system(self):
-        if self._killing_system:
+    def kill_system(self, force = True):
+        if force:
+            self._enable_exit = True
+        elif self._killing_system:
             return
 
         warn("Request made to kill system.")
@@ -190,21 +192,8 @@ class TopLevelProcess(object):
 
         # First, determine our overall configuration for the services environment.
 
-        slist = [s for s in config.get_services().get_startup_list() if s.enabled]
-
-        for n in range(len(slist)):
-            if n == 0:
-                info("Service Startup order...")
-            info("#{1}. Service {0.name}, ignore_failures={0.ignore_failures}", slist[n], n+1)
-
-        family = {s.name:SubProcess(s) for s in slist}
-
-        for s in family.values():
-            try:
-                if not (yield from s.maybe_run(family)):
-                    return
-            except Exception as ex:
-                debug("Service {0} could not be started due to exception: {1}", s.service.name, ex)
-                self._enable_exit = True
-
-        self._enable_exit = True
+        family = SubProcessFamily(config.get_services().get_startup_list())
+        try:
+            yield from family.run()
+        finally:
+            self._enable_exit = True

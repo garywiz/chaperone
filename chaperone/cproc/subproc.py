@@ -24,10 +24,12 @@ def _process_logger(stream, kind):
         else:
             info(line, facility=syslog_info.LOG_DAEMON)
 
+
 class SubProcess(object):
 
     pid = None
     service = None              # service object
+    family = None
 
     _proc = None
     _pwrec = None               # the pwrec looked up for execution user/group
@@ -41,9 +43,10 @@ class SubProcess(object):
         if wait:
             yield from sp.wait()
 
-    def __init__(self, service, args=None):
+    def __init__(self, service, args=None, family=None):
 
         self.service = service
+        self.family = family
 
         #print("SERVICE USER", service.user)
 
@@ -75,13 +78,9 @@ class SubProcess(object):
                 pass
 
     @asyncio.coroutine
-    def maybe_run(self, service_family = None):
+    def maybe_run(self):
         """
-        Runs this service if it has not already been started.
-
-        If service_family is provided, it is a dictionary of services which can be used to lookup
-        prerequisites.  Prerequisites are run before this service.   Because multiple services may
-        have the same prerequisites, you can "maybe_run" a service multiple times.
+        Runs this service if it is enabled and has not already been started.
         """
 
         if self._maybe_run_tried:
@@ -90,25 +89,25 @@ class SubProcess(object):
 
         service = self.service
 
-        if service_family and service.prerequisites:
-            prereq = [service_family.get(p) for p in service.prerequisites]
+        if not service.enabled:
+            debug("service {0} not enabled, will be skipped", service.name)
+            return
+
+        if self.family and service.prerequisites:
+            prereq = [self.family.get(p) for p in service.prerequisites]
             for p in prereq:
                 if p:
-                    if not (yield from p.maybe_run(service_family)):
-                        return False
+                    yield from p.maybe_run()
 
         try:
             yield from self._start_service()
         except Exception as ex:
             if isinstance(ex, FileNotFoundError) and service.optional:
-                warn("Optional service {0} ignored due to exception: {1}", service.name, ex)
+                warn("optional service {0} ignored due to exception: {1}", service.name, ex)
             elif service.ignore_failures:
-                warn("Service {0} ignoring failures.  Not started due to exception: {1}", s.name, ex)
+                warn("service {0} ignoring failures.  Not started due to exception: {1}", service.name, ex)
             else:
-                print("RAISING EXCEPTION FOR SERVICE", self.service.name, ex)
                 raise
-
-        return True
 
     @asyncio.coroutine
     def _start_service(self):
@@ -151,10 +150,9 @@ class SubProcess(object):
 
         print("SERVICE STARTED", self.service.name)
 
-        if service.type == 'oneshot':
+        if service.type == 'oneshot' or service.type == 'forking':
             ret = yield from self.timed_wait(service.process_timeout, self._exit_timeout)
             print("RET FROM TIMED_WAIT", ret)
-            return False
 
         print("EXITING SERVICE", self.service.name)
 
@@ -166,10 +164,9 @@ class SubProcess(object):
                 service.name, service.process_timeout, 
                 "proceeding due to 'ignore_failures=True'" if service.ignore_failures else
                 "terminating due to 'ignore_failures=False'")
-            error(message)
             if not service.ignore_failures:
                 self._proc.terminate()
-            return Exception(message)
+            raise Exception(message)
 
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
@@ -194,3 +191,26 @@ class SubProcess(object):
             raise Exception("Process not started, can't wait")
         yield from proc.wait()
         info("Process exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
+
+
+class SubProcessFamily(lazydict):
+
+    def __init__(self, startup_list):
+        """
+        Given a pre-analyzed list of processes, complete with prerequisites, build a process
+        family.
+        """
+        super().__init__()
+
+        for s in startup_list:
+            self[s.name] = SubProcess(s, family = self)
+
+    @asyncio.coroutine
+    def run(self):
+        """
+        Runs the family, starting up services in dependency order.  If any problems
+        occur, an exception is raised.
+        """
+
+        for s in self.values():
+            yield from s.maybe_run()
