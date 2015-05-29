@@ -35,7 +35,7 @@ from setproctitle import setproctitle
 from functools import partial
 from docopt import docopt
 
-from chaperone.cutil.config import Configuration
+from chaperone.cutil.config import Configuration, ServiceConfig
 from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cproc import TopLevelProcess
 
@@ -111,29 +111,22 @@ def main_entry():
    @asyncio.coroutine
    def startup_done():
 
-      service_errors = False
+      extra_services = None
+      if cmd:
+         cmdsvc = ServiceConfig.createService(config=config,
+                                              exec_args=[cmd] + options['<args>'],
+                                              uid=user,
+                                              exit_kills=kill_switch,
+                                              service_group="IDLE",
+                                              ignore_failures="true",
+                                              stderr='inherit', stdout='inherit')
+         extra_services = [cmdsvc]
 
       try:
-         yield from tlp.run_services(config)
+         yield from tlp.run_services(config, extra_services)
       except Exception as ex:
-         error(ex, "System services startup cancelled due to error: {0}", ex)
+         error(ex, "System startup cancelled due to error: {0}", ex)
          service_errors = True
-
-      if cmd:
-         if service_errors:
-            warn("Service startup errors occurred.  Not running initial command: '{0}'", cmd)
-         else:
-            if not options['--nodelay']:
-               yield from asyncio.sleep(2)
-            try:
-               sproc = tlp.run([cmd] + options['<args>'], user=user, wait=True, config=config)
-               if kill_switch:
-                  warn("system will be killed when '{0}' exits", cmd)
-               yield from sproc
-            except Exception as ex:
-               error(ex, "Initial startup command ('{0}') did not run: {1}", cmd, ex)
-
-         if kill_switch:
-            tlp.kill_system()
+         tlp.kill_system()
 
    tlp.run_event_loop(config, startup_done())

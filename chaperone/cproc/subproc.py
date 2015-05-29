@@ -1,6 +1,7 @@
 import os
 import asyncio
 import shlex
+import signal
 
 from time import time, sleep
 
@@ -35,20 +36,10 @@ class SubProcess(object):
     _pwrec = None               # the pwrec looked up for execution user/group
     _maybe_run_tried = False    # True if we've already been started
 
-    @classmethod
-    @asyncio.coroutine
-    def spawn(cls, service, args=None, wait=False):
-        sp = cls(service, args)
-        yield from sp.maybe_run()
-        if wait:
-            yield from sp.wait()
-
-    def __init__(self, service, args=None, family=None):
+    def __init__(self, service, family=None):
 
         self.service = service
         self.family = family
-
-        #print("SERVICE USER", service.user)
 
         # The environment has already been modified to reflect our chosen service uid/gid
         uid = service.environment.uid
@@ -57,16 +48,8 @@ class SubProcess(object):
         if uid is not None:
             self._pwrec = lookup_user(uid, gid)
 
-        if args is None:
-          if service.command:
-              assert not (service.command and (service.bin or service.args)), "bin/args and command config are mutually-exclusive"
-              args = shlex.split(service.command)
-          elif service.bin:
-              args = [service.bin] + shlex.split(service.args or '')
-          else:
-              raise Exception("No command or arguments provided for service")
-
-        self._prog_args = args
+        if not service.exec_args:
+            raise Exception("No command or arguments provided for service")
 
     def _setup_subprocess(self):
         if self._pwrec:
@@ -93,30 +76,33 @@ class SubProcess(object):
             debug("service {0} not enabled, will be skipped", service.name)
             return
 
-        if self.family and service.prerequisites:
-            prereq = [self.family.get(p) for p in service.prerequisites]
-            for p in prereq:
-                if p:
-                    yield from p.maybe_run()
+        if self.family:
+            if service.prerequisites:
+                prereq = [self.family.get(p) for p in service.prerequisites]
+                for p in prereq:
+                    if p:
+                        yield from p.maybe_run()
+            # idle only makes sense for families
+            if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
+                self.family._idle_hit = True
+                debug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
+                yield from asyncio.sleep(service.idle_delay)
 
         try:
             yield from self._start_service()
         except Exception as ex:
             if isinstance(ex, FileNotFoundError) and service.optional:
-                warn("optional service {0} ignored due to exception: {1}", service.name, ex)
+                info("optional service {0} ignored due to exception: {1}", service.name, ex)
             elif service.ignore_failures:
-                warn("service {0} ignoring failures.  Not started due to exception: {1}", service.name, ex)
+                info("service {0} ignoring failures. Exception: {1}", service.name, ex)
             else:
                 raise
 
     @asyncio.coroutine
     def _start_service(self):
-        args = self._prog_args
-        assert args, "No arguments provided to SubProcess._start_service()"
-
         service = self.service
 
-        debug("{0} attempting start '{1}'... ".format(service.name, " ".join(args)))
+        debug("{0} attempting start '{1}'... ".format(service.name, " ".join(service.exec_args)))
 
         kwargs = dict()
 
@@ -129,8 +115,6 @@ class SubProcess(object):
         if env:
             env = env.get_public_environment()
 
-        #print("ENV", env)
-
         if service.debug:
             if not env:
                 debug("{0} environment is empty", service.name)
@@ -139,7 +123,7 @@ class SubProcess(object):
                 for k,v in env.items():
                     debug(" {0} = '{1}'".format(k,v))
 
-        create = asyncio.create_subprocess_exec(*self._prog_args, preexec_fn=self._setup_subprocess,
+        create = asyncio.create_subprocess_exec(*service.exec_args, preexec_fn=self._setup_subprocess,
                                                 env=env, **kwargs)
         proc = self._proc = yield from create
 
@@ -148,13 +132,20 @@ class SubProcess(object):
         if service.stderr == 'log':
             asyncio.async(_process_logger(proc.stderr, 'stderr'))
 
-        print("SERVICE STARTED", self.service.name)
+        if service.exit_kills:
+            warn("system wll be killed when '{0}' exits", " ".join(service.exec_args))
+            asyncio.async(self._wait_kill_on_exit())
 
         if service.type == 'oneshot' or service.type == 'forking':
-            ret = yield from self.timed_wait(service.process_timeout, self._exit_timeout)
-            print("RET FROM TIMED_WAIT", ret)
+            yield from self.timed_wait(service.process_timeout, self._exit_timeout)
 
-        print("EXITING SERVICE", self.service.name)
+    @asyncio.coroutine
+    def _wait_kill_on_exit(self):
+        yield from self.wait()
+        os.kill(os.getpid(), signal.SIGTERM)
+
+    def terminate(self):
+        self._proc and self._proc.terminate()
 
     def _exit_timeout(self):
         service = self.service
@@ -165,7 +156,7 @@ class SubProcess(object):
                 "proceeding due to 'ignore_failures=True'" if service.ignore_failures else
                 "terminating due to 'ignore_failures=False'")
             if not service.ignore_failures:
-                self._proc.terminate()
+                self.terminate()
             raise Exception(message)
 
     @asyncio.coroutine
@@ -188,9 +179,10 @@ class SubProcess(object):
     def wait(self):
         proc = self._proc
         if not proc:
-            raise Exception("Process not started, can't wait")
+            raise Exception("Process not running, can't wait")
         yield from proc.wait()
         info("Process exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
+        return proc.returncode
 
 
 class SubProcessFamily(lazydict):

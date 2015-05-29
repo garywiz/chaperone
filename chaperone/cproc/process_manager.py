@@ -187,12 +187,19 @@ class TopLevelProcess(object):
         self.loop.close()
 
     @asyncio.coroutine
-    def run_services(self, config):
+    def run_services(self, config, extra_services):
         "Run services from the speicified config (an instance of cutil.config.Configuration)"
 
         # First, determine our overall configuration for the services environment.
 
-        family = SubProcessFamily(config.get_services().get_startup_list())
+        services = config.get_services()
+
+        if extra_services:
+            services = services.deepcopy()
+            for s in extra_services:
+                services.add(s)
+
+        family = SubProcessFamily(services.get_startup_list())
         try:
             yield from family.run()
         finally:

@@ -1,5 +1,6 @@
 import os
 import pwd
+import shlex
 from copy import deepcopy
 
 import yaml
@@ -21,7 +22,7 @@ def ValidServiceName(v):
 _config_service = { V.Required('bin'): str }
 
 _config_schema = V.Any(
-    { ValidServiceName(V.Match('^.+\.service$')): {
+    { V.Match('^.+\.service$'): {
         'after': str,
         'args': str,
         'before': str,
@@ -38,10 +39,10 @@ _config_schema = V.Any(
         'optional': bool,
         'process_timeout': float,
         'restart': bool,
-        'service_group': ValidServiceName(str),
+        'service_group': str,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
-        'type': V.Any('oneshot', 'simple'),
+        'type': V.Any('oneshot', 'simple', 'forking'),
         'uid': V.Any(str, int),
       },
       V.Match('^settings$'): {
@@ -107,7 +108,6 @@ class _BaseConfig(object):
                 setattr(self, k, v)
 
         self.post_init()
-        #print("BASECONFIG ENVIRONMENT", self.name, self.environment.user, self.environment)
 
     def post_init(self):
         pass
@@ -130,6 +130,7 @@ class ServiceConfig(_BaseConfig):
     command = None
     debug = None
     enabled = True
+    exit_kills = False
     gid = None
     ignore_failures = False
     optional = False
@@ -141,7 +142,8 @@ class ServiceConfig(_BaseConfig):
     type = 'simple'
     uid = None
 
-    idle_delay = 2              # present, but mirrored from settings, not settable per-service
+    exec_args = None            # derived from bin/command/args, but may be preset using createService
+    idle_delay = 2.0            # present, but mirrored from settings, not settable per-service
                                 # since it is only triggered once when the first IDLE group item executes
 
     prerequisites = None        # a list of service names which are prerequisites to this one
@@ -150,7 +152,22 @@ class ServiceConfig(_BaseConfig):
     _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout'}
 
+    @classmethod
+    def createService(cls, config=None, **kwargs):
+        return cls(kwargs, 
+                   env=config.get_environment(),
+                   settings=config.get_settings())
+
     def post_init(self):
+        # Assure that exec_args is set to the actual arguments used for execution
+        if self.command:
+            if self.bin or self.args:
+                raise Exception("bin/args and command config are mutually-exclusive")
+            self.exec_args = shlex.split(self.command)
+        elif self.bin:
+            self.exec_args = [self.bin] + shlex.split(self.args or '')
+
+        # Expand before and after into sets
         self.before = set(self.before.split()) if self.before is not None else set()
         self.after = set(self.after.split()) if self.after is not None else set()
 
@@ -175,10 +192,12 @@ class ServiceDict(lazydict):
         """
         Accepts a dictionary of values to be turned into services.
         """
-        #print("ServiceDict.__init__ env user", env.user)
         super().__init__(
             ((k,ServiceConfig(v,k,env,settings)) for (k,v) in servdict)
         )
+
+    def add(self, service):
+        self[service.name] = service
 
     def get_startup_list(self):
         """
@@ -204,6 +223,15 @@ class ServiceDict(lazydict):
                 elif bef in services:
                     services[bef].after.add(v.name)
             v.before = None
+
+        # The "IDLE" group is special.  Revamp things so that any services in the "IDLE" group
+        # have an implicit "after: 'all-others'" where all-others is an explicit list of all
+        # services NOT in the idle group
+
+        if 'IDLE' in groups:
+            nonidle = set(k for k,v in services.items() if v.service_group != "IDLE")
+            for s in groups['IDLE'].values():
+                s.after.update(nonidle)
 
         # Before is now gone, make sure that all "after... groups" are translated into "after.... service"
 
