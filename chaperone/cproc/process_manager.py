@@ -103,13 +103,24 @@ class TopLevelProcess(object):
         print("\nCtrl-C ... killing chaperone.")
         self.kill_system(True)
         
-    def kill_system(self, force = True):
+    @property
+    def system_alive(self):
+        """
+        Returns true if the system is considered "alive" and new processes, restarts, and other
+        normal operations should proceed.   Generally, the system is alive until it is killed,
+        but the process of shutting down the system may be complex and time consuming, and
+        in the future there may be other factors which cause us to suspend
+        normal system operation.
+        """
+        return not self._killing_system
+
+    def kill_system(self, force = False):
         if force:
             self._enable_exit = True
         elif self._killing_system:
             return
 
-        warn("Request made to kill system.")
+        warn("Request made to kill system." + ((force and " (forced)") or ""))
         self._killing_system = True
 
         try:
@@ -199,7 +210,7 @@ class TopLevelProcess(object):
             for s in extra_services:
                 services.add(s)
 
-        family = SubProcessFamily(services.get_startup_list())
+        family = SubProcessFamily(self, services.get_startup_list())
         try:
             yield from family.run()
         finally:

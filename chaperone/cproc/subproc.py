@@ -1,7 +1,6 @@
 import os
 import asyncio
 import shlex
-import signal
 
 from time import time, sleep
 
@@ -34,7 +33,9 @@ class SubProcess(object):
 
     _proc = None
     _pwrec = None               # the pwrec looked up for execution user/group
-    _maybe_run_tried = False    # True if we've already been started
+    _started = False            # TRUE if the process is started, or disabled but start was attempted
+
+    _starts_allowed = 0         # number of starts permitted before we give up
 
     _fut_monitor = None
 
@@ -42,6 +43,10 @@ class SubProcess(object):
 
         self.service = service
         self.family = family
+
+        # We manage restart counts so that multiple attempts to reset or restart
+        # don't result in constant resets.  We allow one extra for the initial start.
+        self._starts_allowed = self.service.restart_limit + 1
 
         # The environment has already been modified to reflect our chosen service uid/gid
         uid = service.environment.uid
@@ -63,14 +68,19 @@ class SubProcess(object):
                 pass
 
     @asyncio.coroutine
-    def maybe_run(self):
+    def start(self):
         """
-        Runs this service if it is enabled and has not already been started.
+        Runs this service if it is enabled and has not already been started.  Starts
+        prerequisite services first.  A service is considered started if
+           a) It is enabled, and started up normally.
+           b) It is disabled, and an attempt was made to start it.
+           c) An error occurred, it did not start, but failures we an acceptable
+              outcome and the service has not been reset since the errors occurred.
         """
 
-        if self._maybe_run_tried:
-            return True
-        self._maybe_run_tried = True
+        if self._started:
+            return
+        self._started = True
 
         service = self.service
 
@@ -83,7 +93,7 @@ class SubProcess(object):
                 prereq = [self.family.get(p) for p in service.prerequisites]
                 for p in prereq:
                     if p:
-                        yield from p.maybe_run()
+                        yield from p.start()
             # idle only makes sense for families
             if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
                 self.family._idle_hit = True
@@ -157,26 +167,57 @@ class SubProcess(object):
     def _monitor_service(self):
         result = yield from self.wait()
         if isinstance(result, int) and result > 0:
-            self._abnormal_exit(result)
+            yield from self._abnormal_exit(result)
 
     @asyncio.coroutine
     def _wait_kill_on_exit(self):
         yield from self.wait()
         self._kill_system()
 
+    @asyncio.coroutine
     def _abnormal_exit(self, code):
-        if self.service.exit_kills:
-            warn("{0} terminated abnormally with {1}", self.service.name, code)
+        service = self.service
+
+        if service.exit_kills:
+            warn("{0} terminated abnormally with {1}", service.name, code)
             return
-        if self.service.ignore_failures:
-            debug("{0} abnormal process exit ignored due to ignore_failures=true", self.service.name)
+
+        if service.restart and self._starts_allowed > 0:
+            controller = self.family.controller
+            if controller.system_alive:
+                if service.restart_delay:
+                    info("{0} pausing between restart retries", service.name)
+                    yield from asyncio.sleep(service.restart_delay)
+            if controller.system_alive:
+                yield from self.reset(True)
+                yield from self.start()
             return
-        error("{0} terminated abnormally with {1}", self.service.name, code)
+
+        if service.ignore_failures:
+            debug("{0} abnormal process exit ignored due to ignore_failures=true", service.name)
+            return
+
+        error("{0} terminated abnormally with {1}", service.name, code)
         self._kill_system()
 
     def _kill_system(self):
-        os.kill(os.getpid(), signal.SIGTERM)
+        self.family.controller.kill_system()
 
+    @asyncio.coroutine
+    def reset(self, restart = False):
+        if self._proc:
+            if self._proc.returncode is None:
+                self.terminate()
+                yield from self.wait()
+                self._proc = None
+
+        self._started = False
+
+        if restart:
+            self._starts_allowed -= 1
+        else:
+            self._starts_allowed = self.service.restart_limit + 1
+        
     def terminate(self):
         self._proc and self._proc.terminate()
 
@@ -220,12 +261,16 @@ class SubProcess(object):
 
 class SubProcessFamily(lazydict):
 
-    def __init__(self, startup_list):
+    controller = None           # top level system controller
+
+    def __init__(self, controller, startup_list):
         """
         Given a pre-analyzed list of processes, complete with prerequisites, build a process
         family.
         """
         super().__init__()
+
+        self.controller = controller
 
         for s in startup_list:
             self[s.name] = SubProcess(s, family = self)
@@ -238,4 +283,4 @@ class SubProcessFamily(lazydict):
         """
 
         for s in self.values():
-            yield from s.maybe_run()
+            yield from s.start()

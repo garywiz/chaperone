@@ -39,6 +39,7 @@ _config_schema = V.Any(
         'optional': bool,
         'process_timeout': V.Any(float, int),
         'restart': bool,
+        'restart_limit': int,
         'service_group': str,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
@@ -145,7 +146,9 @@ class ServiceConfig(_BaseConfig):
     ignore_failures = False
     optional = False
     process_timeout = 10.0      # time to elapse before we decide a process has misbehaved
-    restart = True
+    restart = False
+    restart_limit = 5           # number of times to invoke a restart before giving up
+    restart_delay = 3           # number of seconds to delay between restarts
     service_group = "default"
     stderr = "log"
     stdout = "log"
