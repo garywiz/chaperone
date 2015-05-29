@@ -138,6 +138,8 @@ class ServiceConfig(_BaseConfig):
     type = 'simple'
     uid = None
 
+    prerequisites = None        # a list of service names which are prerequisites to this one
+
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout'}
@@ -230,6 +232,8 @@ class ServiceDict(lazydict):
                 if item.name not in svseen:
                     svseen.add(item.name)
                     svlist.append(self[item.name])
+                    # set startup prerequisite dependencies
+                    svlist[-1].prerequisites = tuple(r.name for r in item.refs)
 
         add_nodes(services.values())
 

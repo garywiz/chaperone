@@ -197,11 +197,14 @@ class TopLevelProcess(object):
                 info("Service Startup order...")
             info("#{1}. Service {0.name}, ignore_failures={0.ignore_failures}", slist[n], n+1)
 
-        for s in slist:
+        family = {s.name:SubProcess(s) for s in slist}
+
+        for s in family.values():
             try:
-                yield from SubProcess.spawn(s)
+                if not (yield from s.maybe_run(family)):
+                    return
             except Exception as ex:
-                debug("Service {0} could not be started due to exception: {1}", s.name, ex)
+                debug("Service {0} could not be started due to exception: {1}", s.service.name, ex)
                 self._enable_exit = True
 
         self._enable_exit = True
