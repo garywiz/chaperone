@@ -17,40 +17,46 @@ _config_service = { V.Required('bin'): str }
 
 _config_schema = V.Any(
     { V.Match('^.+\.service$'): {
-        'debug': bool,
-        'command': str,
-        'bin': str,
-        'args': str,
-        'service_group': str,
-        'restart': bool,
-        'before': str,
         'after': str,
-        'optional': bool,
-        'ignore_failures': bool,
-        'uid': V.Any(str, int),
-        'gid': V.Any(str, int),
+        'args': str,
+        'before': str,
+        'bin': str,
+        'command': str,
+        'debug': bool,
         'enabled': bool,
         'env_inherit': [ str ],
-        'env_unset': [ str ],
         'env_set': { str: str },
-        'stdout': V.Any(None, 'log', 'inherit'),
-        'stderr': V.Any(None, 'log', 'inherit'),
+        'env_unset': [ str ],
+        'exit_kills': bool,
+        'gid': V.Any(str, int),
+        'idle_delay': float,
+        'ignore_failures': bool,
+        'optional': bool,
+        'process_timeout': float,
+        'restart': bool,
+        'service_group': str,
+        'stderr': V.Any('log', 'inherit'),
+        'stdout': V.Any('log', 'inherit'),
+        'type': V.Any('oneshot', 'simple'),
+        'uid': V.Any(str, int),
       },
       V.Match('^settings$'): {
         'debug': bool,
-        'uid': V.Any(str, int),
-        'gid': V.Any(str, int),
         'env_inherit': [ str ],
-        'env_unset': [ str ],
         'env_set': { str: str },
+        'env_unset': [ str ],
+        'gid': V.Any(str, int),
+        'idle_delay': float,
+        'process_timeout': float,
+        'uid': V.Any(str, int),
       },
       V.Match('^.+\.logging'): {
-        'filter': str,
-        'file': str,
-        'stderr': bool,
-        'stdout': bool,
         'enabled': bool,
         'extended': bool,
+        'file': str,
+        'filter': str,
+        'stderr': bool,
+        'stdout': bool,
      },
    }
 )
@@ -61,13 +67,13 @@ class _BaseConfig(object):
 
     name = None
     environment = None
-    debug = None
     env_set = None
     env_unset = None
     env_inherit = ['*']
 
     _repr_pat = None
     _expand_these = {}
+    _settings_defaults = {}
 
     def __init__(self, initdict, name = "MAIN", env = None, settings = None):
         self.name = name
@@ -75,9 +81,11 @@ class _BaseConfig(object):
         #print("_BaseConfig init env user", env and env.user)
 
         if settings:
-            deb = settings.get('debug')
-            if deb is not None:
-                self.debug = deb
+            for sd in self._settings_defaults:
+                if sd not in initdict:
+                    val = settings.get(sd)
+                    if val is not None:
+                        setattr(self, sd, val)
 
         if env:
             env = self.environment = Environment(env, 
@@ -111,23 +119,28 @@ class _BaseConfig(object):
 
 class ServiceConfig(_BaseConfig):
 
-    service_group = "default"
-    restart = True
-    before = None
     after = None
+    args = None
+    before = None
+    bin = None
+    command = None
+    debug = None
+    enabled = True
+    gid = None
+    idle_delay = 2
     ignore_failures = False
     optional = False
-    command = None
-    args = None
-    enabled = True
-    stdout = "log"
+    process_timeout = 10.0      # time to elapse before we decide a process has misbehaved
+    restart = True
+    service_group = "default"
     stderr = "log"
+    stdout = "log"
+    type = 'simple'
     uid = None
-    gid = None
-    bin = None
 
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
+    _settings_defaults = {'debug', 'idle_delay', 'process_timeout'}
 
     def post_init(self):
         self.before = set(self.before.split()) if self.before is not None else set()

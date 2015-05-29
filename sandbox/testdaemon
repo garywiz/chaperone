@@ -1,8 +1,7 @@
 #!/bin/bash
 
-docker run -d -v /home:/home --entrypoint=/home/garyw/chaperone/bin/chaperone bst/chapdev \
-    --shut \
-    --debug \
-    --config chaperone/testing/test.d \
-    --user garyw
+SANDBOX=$PWD
 
+docker run -d -v /home:/home --entrypoint=$SANDBOX/chaperone -e "SANDBOX=$SANDBOX" bst/chapdev \
+    --config dev/chaperone/sandbox/test.d $* \
+    --user garyw
