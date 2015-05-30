@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+
+"""
+Tool to create processes for various purposes.
+
+Usage:
+    proctool [--dump] [--hang] [--wait=seconds] [--ignore-signals] [--exit=code] [MESSAGE]
+"""
+
+import signal
+import sys
+from time import sleep
+from docopt import docopt
+
+import os
+
+options = docopt(__doc__)
+
+if options['MESSAGE']:
+    print('proctool says: ', options['MESSAGE'])
+
+if options['--dump']:
+    print("UID:{0} GID:{1} PID:{2} Environment:".format(os.getuid(), os.getgid(), os.getpid()))
+    for k,v in os.environ.items():
+        print(" {0}={1}".format(k,v))
+
+if options['--ignore-signals']:
+    signal.signal(signal.SIGTERM, lambda signum, frame: print("ignoring SIGTERM"))
+    signal.signal(signal.SIGHUP, lambda signum, frame: print("ignoring SIGHUP"))
+    signal.signal(signal.SIGINT, lambda signum, frame: print("ignoring SIGINT"))
+
+if len(sys.argv) > 1 and sys.argv[1] == 'NOWAIT':
+    exit(0)
+
+if options['--wait']:
+    sleep(float(options['--wait']))
+
+if options['--hang']:
+    while True:
+        sleep(100)
+
+if options['--exit']:
+    exit(int(options['--exit']))
