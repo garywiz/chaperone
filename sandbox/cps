@@ -1,0 +1,4 @@
+#!/bin/bash
+# Shortcut for more relevant PS for containers
+
+ps --forest -weo 'user,pid,ppid,pgid,sid,%cpu,%mem,stat,command'

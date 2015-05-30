@@ -1,6 +1,7 @@
 import os
 import asyncio
 import shlex
+import importlib
 
 from time import time, sleep
 
@@ -39,6 +40,29 @@ class SubProcess(object):
 
     _fut_monitor = None
 
+    # Class variables
+    _cls_ptdict = lazydict()    # dictionary of process types
+
+    def __new__(cls, service, family=None):
+        """
+        New Subprocesses are managed by subclasses derived from SubProcess so that 
+        complex process behavior can be isolated and loaded only when needed.  That
+        keeps this basic superclass logic less convoluted.
+        """
+        # If we are trying to create a subclass, just inherit __new__ simply
+        if cls is not SubProcess:
+            return super(SubProcess, cls).__new__(cls)
+
+        # Lookup and cache the class object used to create this type.
+        stype = service.type
+        ptcls = SubProcess._cls_ptdict.get(stype)
+        if not ptcls:
+            mod = importlib.import_module('chaperone.cproc.pt.' + stype)
+            ptcls = SubProcess._cls_ptdict[stype] = getattr(mod, stype.capitalize() + 'Process')
+            assert issubclass(ptcls, cls)
+
+        return ptcls(service, family)
+            
     def __init__(self, service, family=None):
 
         self.service = service
@@ -70,6 +94,13 @@ class SubProcess(object):
                 os.chdir(self._pwrec.pw_dir)
             except Exception as ex:
                 pass
+        return
+        if self.service.name != 'CONSOLE':
+            try:
+                #os.setsid()
+                os.setpgrp()
+            except Exception as ex:
+                print("EXCEPTION", ex)
 
     @property
     def status(self):
@@ -190,22 +221,7 @@ class SubProcess(object):
         if service.exit_kills:
             asyncio.async(self._wait_kill_on_exit())
 
-        # For forking and oneshot proceses, we assume they will take a limited amount of
-        # time to become active or complete their task.  'process_timeout' is how much
-        # time we give them.  But, once they start, we don't monitor the root process
-        # using wait() any longer.   For other types of tasks, we assume that process
-        # termination is subject to restart.
-
-        if service.type == 'oneshot' or service.type == 'forking':
-            yield from self.timed_wait(service.process_timeout, self._exit_timeout)
-        else:
-            self._fut_monitor = asyncio.async(self._monitor_service())
-
-    @asyncio.coroutine
-    def _monitor_service(self):
-        result = yield from self.wait()
-        if isinstance(result, int) and result > 0:
-            yield from self._abnormal_exit(result)
+        yield from self.process_started_co()
 
     @asyncio.coroutine
     def _wait_kill_on_exit(self):
@@ -273,18 +289,6 @@ class SubProcess(object):
         
     def terminate(self):
         self._proc and self._proc.terminate()
-
-    def _exit_timeout(self):
-        service = self.service
-        if service.type == 'oneshot':
-            message = "{0} service '{1}' did not exit after {2} second(s), {3}".format(
-                service.type,
-                service.name, service.process_timeout, 
-                "proceeding due to 'ignore_failures=True'" if service.ignore_failures else
-                "terminating due to 'ignore_failures=False'")
-            if not service.ignore_failures:
-                self.terminate()
-            raise Exception(message)
 
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
