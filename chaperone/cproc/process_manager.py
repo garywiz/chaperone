@@ -4,6 +4,7 @@ import errno
 import asyncio
 import shlex
 import signal
+import datetime
 
 from functools import partial
 from time import time, sleep
@@ -34,8 +35,11 @@ class TopLevelProcess(object):
     _syslog = None
     _command = None
     _minimum_syslog_level = None
+    _start_time = None
+    _family = None
 
     def __init__(self):
+        self._start_time = time()
         policy = asyncio.get_event_loop_policy()
         w = self._watcher = InitChildWatcher()
         policy.set_child_watcher(w)
@@ -60,6 +64,30 @@ class TopLevelProcess(object):
     @property
     def loop(self):
         return asyncio.get_event_loop()
+
+    @property
+    def system_alive(self):
+        """
+        Returns true if the system is considered "alive" and new processes, restarts, and other
+        normal operations should proceed.   Generally, the system is alive until it is killed,
+        but the process of shutting down the system may be complex and time consuming, and
+        in the future there may be other factors which cause us to suspend
+        normal system operation.
+        """
+        return not self._killing_system
+
+    @property
+    def version(self):
+        "Returns version identifier"
+        return "chaperone version {0}".format(DISPLAY_VERSION)
+
+    @property
+    def uptime(self):
+        return datetime.timedelta(seconds = time() - self._start_time)
+
+    @property
+    def services(self):
+        return self._family
 
     def force_log_level(self, level = None):
         """
@@ -103,17 +131,6 @@ class TopLevelProcess(object):
         print("\nCtrl-C ... killing chaperone.")
         self.kill_system(True)
         
-    @property
-    def system_alive(self):
-        """
-        Returns true if the system is considered "alive" and new processes, restarts, and other
-        normal operations should proceed.   Generally, the system is alive until it is killed,
-        but the process of shutting down the system may be complex and time consuming, and
-        in the future there may be other factors which cause us to suspend
-        normal system operation.
-        """
-        return not self._killing_system
-
     def kill_system(self, force = False):
         if force:
             self._enable_exit = True
@@ -171,7 +188,7 @@ class TopLevelProcess(object):
         info("Switching all chaperone logging to /dev/log")
 
     def _system_started(self, f, startup):
-        info("chaperone version {0}, ready.", DISPLAY_VERSION)
+        info(self.version + ", ready.")
         if startup:
             self.activate(startup)
 
@@ -210,7 +227,7 @@ class TopLevelProcess(object):
             for s in extra_services:
                 services.add(s)
 
-        family = SubProcessFamily(self, services.get_startup_list())
+        family = self._family = SubProcessFamily(self, services.get_startup_list())
         try:
             yield from family.run()
         finally:

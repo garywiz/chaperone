@@ -13,6 +13,9 @@ COMMAND_DOC = """
 Usage: telchap status
        telchap shutdown
        telchap loglevel [<level>]
+       telchap service <servname> stop
+       telchap service <servname> start
+       telchap service <servname> status
 """
 
 CHAP_FIFO = "/dev/chaperone"
@@ -21,21 +24,76 @@ CHAP_SOCK = "/dev/chaperone.sock"
 class _BaseCommand(object):
 
     command_name = "X"
+    interactive_only = False
 
     def match(self, opts):
+        if isinstance(self.command_name, tuple):
+            return all(opts.get(name, False) for name in self.command_name)
         return opts.get(self.command_name, False)
 
+    @asyncio.coroutine
     def exec(self, opts, controller):
         try:
-            return str(self.do_exec(opts, controller))
+            result = yield from self.do_exec(opts, controller)
+            return str(result)
         except Exception as ex:
             return "Command error: " + str(ex)
 
+
+STMSG = """
+Running:           {0.version}
+Uptime:            {0.uptime}
+Managed processes: {1} ({2} enabled)
+"""
+
+class statusCommand(_BaseCommand):
+
+    command_name = "status"
+    interactive_only = True
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        serv = controller.services
+        msg = STMSG.format(controller, len(serv), len([s for s in serv.values() if s.enabled]))
+        msg += "\nServices:\n\n" + str(serv.get_status_formatter().get_formatted_data()) + "\n"
+        return msg
+
+class serviceCommandBase(_BaseCommand):
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        servname = opts['<servname>']
+        serv = controller.services.get(servname)
+        if not serv:
+            serv = controller.services.get(servname + ".service")
+        if not serv:
+            raise Exception("no such service: " + servname)
+        result = yield from self.do_service_command(serv)
+        return result
+
+class serviceStop(serviceCommandBase):
+
+    command_name = ('service', 'stop')
+
+    @asyncio.coroutine
+    def do_service_command(self, serv):
+        yield from serv.stop()
+        return "service {0} stopped".format(serv.name)
+
+class serviceStart(serviceCommandBase):
+
+    command_name = ('service', 'start')
+
+    @asyncio.coroutine
+    def do_service_command(self, serv):
+        yield from serv.start()
+        return "service {0} started".format(serv.name)
 
 class loglevelCommand(_BaseCommand):
 
     command_name = "loglevel"
 
+    @asyncio.coroutine
     def do_exec(self, opts, controller):
         lev = opts['<level>']
         if lev is None:
@@ -52,14 +110,22 @@ class loglevelCommand(_BaseCommand):
         controller.force_log_level(lev)
         return "All logging set to include priorities >= *." + lev.lower()
             
+##
+## Register all commands here
+##
+
 COMMANDS = (
     loglevelCommand(),
+    statusCommand(),
+    serviceStop(),
+    serviceStart(),
 )
 
 class CommandProtocol(ServerProtocol):
 
     interactive = False
 
+    @asyncio.coroutine
     def _interpret_command(self, msg):
         if not msg:
             return
@@ -72,21 +138,26 @@ class CommandProtocol(ServerProtocol):
         else:
             result = "?"
             for c in COMMANDS:
-                if c.match(options):
-                    result = c.exec(options, self.parent.controller)
+                if c.match(options) and (not c.interactive_only or self.interactive):
+                    result = yield from c.exec(options, self.parent.controller)
                     break
             result = "RESULT\n" + result
         return result
 
-    def data_received(self, data):
-        if self.interactive:
-            result = self._interpret_command(data.decode())
+    @asyncio.coroutine
+    def _command_task(self, cmd, interactive = False):
+        result = yield from self._interpret_command(cmd)
+        if interactive:
             self.transport.write(result.encode())
             self.transport.close()
+
+    def data_received(self, data):
+        if self.interactive:
+            asyncio.async(self._command_task(data.decode(), True))
         else:
             commands = data.decode().split("\n")
             for c in commands:
-                self._interpret_command(c)
+                asyncio.async(self._command_task(c))
 
 class _InteractiveServer(Server):
 

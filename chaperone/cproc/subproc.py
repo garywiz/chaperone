@@ -8,7 +8,7 @@ import chaperone.cutil.syslog_info as syslog_info
 
 from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cutil.misc import lazydict, Environment, lookup_user
-
+from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
 def _process_logger(stream, kind):
@@ -58,6 +58,10 @@ class SubProcess(object):
         if not service.exec_args:
             raise Exception("No command or arguments provided for service")
 
+    def __getattr__(self, name):
+        "Proxies value from the service description if we don't override them."
+        return getattr(self.service, name)
+
     def _setup_subprocess(self):
         if self._pwrec:
             os.setgid(self._pwrec.pw_gid)
@@ -67,8 +71,33 @@ class SubProcess(object):
             except Exception as ex:
                 pass
 
+    @property
+    def status(self):
+        serv = self.service
+        proc = self._proc
+
+        rs = ""
+        if serv.restart and self._starts_allowed > 0:
+            rs = "+r#" + str(self._starts_allowed)
+
+        if self._started:
+            if proc:
+                rc = proc.returncode
+                if proc.returncode is None:
+                    return "running"
+                else:
+                    return proc.returncode.briefly + rs
+                    
+        if not serv.enabled:
+            return "disabled"
+
+        if rs:
+            return rs
+
+        return None
+
     @asyncio.coroutine
-    def start(self):
+    def start(self, enable = True):
         """
         Runs this service if it is enabled and has not already been started.  Starts
         prerequisite services first.  A service is considered started if
@@ -78,11 +107,18 @@ class SubProcess(object):
               outcome and the service has not been reset since the errors occurred.
         """
 
+        service = self.service
+
+        if enable and not service.enabled:
+            if enable:
+                service.enabled = True
+                if not self._proc:
+                    self._started = False
+                debug("service {0} enabled upon start", service.name)
+
         if self._started:
             return
         self._started = True
-
-        service = self.service
 
         if not service.enabled:
             debug("service {0} not enabled, will be skipped", service.name)
@@ -93,7 +129,7 @@ class SubProcess(object):
                 prereq = [self.family.get(p) for p in service.prerequisites]
                 for p in prereq:
                     if p:
-                        yield from p.start()
+                        yield from p.start(enable)
             # idle only makes sense for families
             if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
                 self.family._idle_hit = True
@@ -144,6 +180,8 @@ class SubProcess(object):
 
         proc = self._proc = yield from create
 
+        self.pid = proc.pid
+
         if service.stdout == 'log':
             asyncio.async(_process_logger(proc.stdout, 'stdout'))
         if service.stderr == 'log':
@@ -182,6 +220,11 @@ class SubProcess(object):
             warn("{0} terminated abnormally with {1}", service.name, code)
             return
 
+        # A disabled service should not do recovery
+
+        if not service.enabled:
+            return
+
         if service.restart and self._starts_allowed > 0:
             controller = self.family.controller
             if controller.system_alive:
@@ -190,7 +233,7 @@ class SubProcess(object):
                     yield from asyncio.sleep(service.restart_delay)
             if controller.system_alive:
                 yield from self.reset(True)
-                yield from self.start()
+                yield from self.start(False)
             return
 
         if service.ignore_failures:
@@ -210,6 +253,7 @@ class SubProcess(object):
                 self.terminate()
                 yield from self.wait()
                 self._proc = None
+                self.pid = None
 
         self._started = False
 
@@ -217,6 +261,15 @@ class SubProcess(object):
             self._starts_allowed -= 1
         else:
             self._starts_allowed = self.service.restart_limit + 1
+        
+    @asyncio.coroutine
+    def stop(self):
+        if not (self._proc and self._proc.returncode is None):
+            return
+
+        self.service.enabled = False
+        self._starts_allowed = 0
+        yield from self.reset()
         
     def terminate(self):
         self._proc and self._proc.terminate()
@@ -283,4 +336,10 @@ class SubProcessFamily(lazydict):
         """
 
         for s in self.values():
-            yield from s.start()
+            yield from s.start(False)
+
+    def get_status_formatter(self):
+        df = TableFormatter('pid', 'name', 'enabled', 'status', sort='name')
+        df.add_rows(self.values())
+        return df
+
