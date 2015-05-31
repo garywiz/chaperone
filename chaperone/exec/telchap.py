@@ -5,6 +5,10 @@ Usage:
     telchap <command> [<args> ...]
 """
 
+# perform any patches first
+import chaperone.cutil.patches
+
+# regular code begins
 import sys
 import os
 import asyncio
@@ -21,4 +25,3 @@ def main_entry():
         result = "chaperone does not seem to be listening, is it running?\n(Error is: {0})".format(ex)
 
     print(result)
-

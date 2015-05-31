@@ -26,6 +26,10 @@ Notes:
     but a non-interactive command should not.  You can reverse this assumption with options.
 """
 
+# perform any patches first
+import chaperone.cutil.patches
+
+# regular code begins
 import sys
 import os
 import asyncio

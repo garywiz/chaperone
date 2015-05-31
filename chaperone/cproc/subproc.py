@@ -291,7 +291,8 @@ class SubProcess(object):
     def final_stop(self):
         "Called when the whole system is killed, but before drastic measures are taken."
         for p in list(self._pending):
-            p.cancel()
+            if not p.cancelled():
+                p.cancel()
 
     def terminate(self):
         self._proc and self._proc.terminate()
