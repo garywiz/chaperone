@@ -38,7 +38,7 @@ class SubProcess(object):
 
     _starts_allowed = 0         # number of starts permitted before we give up
 
-    _fut_monitor = None
+    _pending = None             # pending futures
 
     # Class variables
     _cls_ptdict = lazydict()    # dictionary of process types
@@ -68,6 +68,8 @@ class SubProcess(object):
         self.service = service
         self.family = family
 
+        self._pending = set()
+
         # We manage restart counts so that multiple attempts to reset or restart
         # don't result in constant resets.  We allow one extra for the initial start.
         self._starts_allowed = self.service.restart_limit + 1
@@ -95,12 +97,6 @@ class SubProcess(object):
             except Exception as ex:
                 pass
         return
-        if self.service.name != 'CONSOLE':
-            try:
-                #os.setsid()
-                os.setpgrp()
-            except Exception as ex:
-                print("EXCEPTION", ex)
 
     @property
     def status(self):
@@ -214,12 +210,12 @@ class SubProcess(object):
         self.pid = proc.pid
 
         if service.stdout == 'log':
-            asyncio.async(_process_logger(proc.stdout, 'stdout'))
+            self.add_pending(asyncio.async(_process_logger(proc.stdout, 'stdout')))
         if service.stderr == 'log':
-            asyncio.async(_process_logger(proc.stderr, 'stderr'))
+            self.add_pending(asyncio.async(_process_logger(proc.stderr, 'stderr')))
 
         if service.exit_kills:
-            asyncio.async(self._wait_kill_on_exit())
+            self.add_pending(asyncio.async(self._wait_kill_on_exit()))
 
         yield from self.process_started_co()
 
@@ -262,6 +258,10 @@ class SubProcess(object):
     def _kill_system(self):
         self.family.controller.kill_system()
 
+    def add_pending(self, future):
+        self._pending.add(future)
+        future.add_done_callback(lambda f: self._pending.discard(future))
+
     @asyncio.coroutine
     def reset(self, restart = False):
         if self._proc:
@@ -287,6 +287,12 @@ class SubProcess(object):
         self._starts_allowed = 0
         yield from self.reset()
         
+    @asyncio.coroutine
+    def final_stop(self):
+        "Called when the whole system is killed, but before drastic measures are taken."
+        for p in list(self._pending):
+            p.cancel()
+
     def terminate(self):
         self._proc and self._proc.terminate()
 

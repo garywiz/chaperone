@@ -28,14 +28,19 @@ class CustomSysLog(SysLogHandler):
         self.facility = getattr(record, '_facility', syslog_info.LOG_LOCAL5)
         super().emit(record)
 
-def enable_syslog_handler():
+def enable_syslog_handler(enable = True):
     global _syslog_handler
-    _syslog_handler = CustomSysLog('/dev/log')
-    sf = logging.Formatter('{asctime} %s[%d]: {message}' % (sys.argv[0] or '-', os.getpid()), 
-                           datefmt="%b %d %H:%M:%S", style='{')
-    _syslog_handler.setFormatter(sf)
-    _root_logger.addHandler(_syslog_handler)
-    _root_logger.removeHandler(_stderr_handler)
+    if enable:
+        _syslog_handler = CustomSysLog('/dev/log')
+        sf = logging.Formatter('{asctime} %s[%d]: {message}' % (sys.argv[0] or '-', os.getpid()), 
+                               datefmt="%b %d %H:%M:%S", style='{')
+        _syslog_handler.setFormatter(sf)
+        _root_logger.addHandler(_syslog_handler)
+        _root_logger.removeHandler(_stderr_handler)
+    elif _syslog_handler:
+        _root_logger.removeHandler(_syslog_handler)
+        _syslog_handler = None
+        _root_logger.addHandler(_stderr_handler)
 
 def _versatile_logprint(delegate, fmt, *args, facility=None, exceptions=False, **kwargs):
     """

@@ -122,6 +122,7 @@ class TopLevelProcess(object):
 
     def _final_stop(self):
         if self._syslog:
+            enable_syslog_handler(False)
             self._syslog.close()
         if self._command:
             self._command.close()
@@ -139,6 +140,14 @@ class TopLevelProcess(object):
 
         warn("Request made to kill system." + ((force and " (forced)") or ""))
         self._killing_system = True
+        asyncio.async(self._kill_system_co())
+
+    @asyncio.coroutine
+    def _kill_system_co(self):
+
+        if self._family:
+            for f in self._family.values():
+                yield from f.final_stop()
 
         try:
             os.kill(-1, signal.SIGTERM) # first try a sig term
@@ -149,9 +158,7 @@ class TopLevelProcess(object):
             self._no_processes()
             return
 
-        self.loop.call_later(self.kill_all_timeout, self._check_kill_all)
-
-    def _check_kill_all(self):
+        yield from asyncio.sleep(self.kill_all_timeout)
         if self._all_killed:
             return
 

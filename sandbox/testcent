@@ -1,0 +1,7 @@
+#!/bin/bash
+
+SANDBOX=$PWD
+
+docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint=$SANDBOX/chaperone -e "SANDBOX=$SANDBOX" bst/chapdev-centos \
+    --config dev/chaperone/sandbox/centos.d $* \
+    --user garyw /bin/bash
