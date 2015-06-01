@@ -367,7 +367,7 @@ class Configuration(object):
         )
 
     def get_settings(self):
-        return self._conf.get('settings')
+        return self._conf.get('settings') or {}
 
     def get_environment(self):
         if not self._env:

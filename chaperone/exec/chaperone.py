@@ -101,7 +101,7 @@ def main_entry():
       config = Configuration.configFromCommandSpec(options['--config'], user=user)
       services = config.get_services()
    except Exception as ex:
-      print("Configuration Error: " + str(ex))
+      error(ex, "Configuration Error: {0}", ex)
       exit(1)
 
    if not (services or cmd):
