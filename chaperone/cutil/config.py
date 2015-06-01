@@ -43,7 +43,7 @@ _config_schema = V.Any(
         'service_group': str,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
-        'type': V.Any('oneshot', 'simple', 'forking'),
+        'type': V.Any('oneshot', 'simple', 'forking', 'notify'),
         'uid': V.Any(str, int),
       },
       V.Match('^settings$'): {

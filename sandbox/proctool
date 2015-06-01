@@ -4,7 +4,7 @@
 Tool to create processes for various purposes.
 
 Usage:
-    proctool [--dump] [--hang] [--wait=seconds] [--ignore-signals] [--exit=code] [MESSAGE]
+    proctool [--dump] [--hang] [--wait=seconds] [--ignore-signals] [--exit=code] [--notify=CMD] [MESSAGE]
 """
 
 import signal
@@ -18,6 +18,10 @@ options = docopt(__doc__)
 
 if options['MESSAGE']:
     print('proctool says: ', options['MESSAGE'])
+
+if options['--notify']:
+   cmd = options['--notify']
+   os.system('systemd-notify ' + cmd)
 
 if options['--dump']:
     print("UID:{0} GID:{1} PID:{2} Environment:".format(os.getuid(), os.getgid(), os.getpid()))

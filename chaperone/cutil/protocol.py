@@ -29,7 +29,10 @@ class Server:
 
     def _run_done(self, f):
         # Handle errors here!
-        self._server = f.result()
+        srv = f.result()
+        if isinstance(srv, tuple):
+            srv = srv[0]        # (transport,protocol) is returned by some
+        self._server = srv
 
     def close(self):
         if self._server:

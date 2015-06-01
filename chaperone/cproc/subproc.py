@@ -190,6 +190,8 @@ class SubProcess(object):
         if env:
             env = env.get_public_environment()
 
+        yield from self.process_prepare_co(env)
+
         if service.debug:
             if not env:
                 debug("{0} environment is empty", service.name)
@@ -218,6 +220,14 @@ class SubProcess(object):
             self.add_pending(asyncio.async(self._wait_kill_on_exit()))
 
         yield from self.process_started_co()
+
+    @asyncio.coroutine
+    def process_prepare_co(self, environment):
+        pass
+
+    @asyncio.coroutine
+    def process_started_co(self):
+        pass
 
     @asyncio.coroutine
     def _wait_kill_on_exit(self):

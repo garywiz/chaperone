@@ -17,13 +17,11 @@ from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.subproc import SubProcess, SubProcessFamily
 from chaperone.cutil.config import ServiceConfig
 from chaperone.cutil.logging import warn, info, debug, error, set_log_level, enable_syslog_handler
-from chaperone.cutil.misc import lazydict, Environment
+from chaperone.cutil.misc import lazydict, Environment, objectplus
 from chaperone.cutil.syslog import SyslogServer
 
-class TopLevelProcess(object):
+class TopLevelProcess(objectplus):
              
-    _cls_singleton = None
-
     exit_when_no_processes = True
     kill_all_timeout = 5
     send_sighup = False
@@ -48,13 +46,6 @@ class TopLevelProcess(object):
         w.add_no_processes_handler(self._no_processes)
         self.loop.add_signal_handler(signal.SIGTERM, self.kill_system)
         self.loop.add_signal_handler(signal.SIGINT, self._got_sigint)
-
-    @classmethod
-    def sharedInstance(cls):
-        "Return a singleton object for this class."
-        if not cls._cls_singleton:
-            cls._cls_singleton = TopLevelProcess()
-        return cls._cls_singleton
 
     @property
     def debug(self):

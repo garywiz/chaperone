@@ -5,6 +5,22 @@ import grp
 import copy
 from fnmatch import fnmatch
 
+
+class objectplus:
+    """
+    An object which provides some general-purpose useful patterns.
+    """
+
+    _cls_singleton = None
+
+    @classmethod
+    def sharedInstance(cls):
+        "Return a singleton object for this class."
+        if not cls._cls_singleton:
+            cls._cls_singleton = cls()
+        return cls._cls_singleton
+
+
 class lazydict(dict):
 
     __slots__ = ()              # create no __dict__ overhead for a pure dict subclass
