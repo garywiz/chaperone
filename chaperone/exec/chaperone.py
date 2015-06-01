@@ -96,9 +96,14 @@ def main_entry():
             exit(1)
          user = uargs[0]
 
-   config = Configuration.configFromCommandSpec(options['--config'], user=user)
+   try:
+      config = Configuration.configFromCommandSpec(options['--config'], user=user)
+      services = config.get_services()
+   except Exception as ex:
+      print("Configuration Error: " + str(ex))
+      exit(1)
 
-   if not (config.get_services() or cmd):
+   if not (services or cmd):
       print(MSG_NOTHING_TO_DO)
       exit(1)
 

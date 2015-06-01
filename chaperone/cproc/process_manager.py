@@ -29,14 +29,16 @@ class TopLevelProcess(object):
     send_sighup = False
 
     _ignore_signals = False
-    _all_killed = False
-    _killing_system = False
     _enable_exit = False
     _syslog = None
     _command = None
     _minimum_syslog_level = None
     _start_time = None
     _family = None
+
+    _all_killed = False
+    _killing_system = False
+    _kill_future = None
 
     def __init__(self):
         self._start_time = time()
@@ -118,7 +120,9 @@ class TopLevelProcess(object):
         if self._enable_exit and (self._killing_system or self.exit_when_no_processes):
             debug("Final termination phase.")
             self._enable_exit = False
-            self.loop.call_later(0.5, self._final_stop)
+            if self._kill_future and not self._kill_future.cancelled():
+                self._kill_future.cancel()
+            self.loop.call_later(0.1, self._final_stop)
 
     def _final_stop(self):
         if self._syslog:
@@ -140,7 +144,7 @@ class TopLevelProcess(object):
 
         warn("Request made to kill system." + ((force and " (forced)") or ""))
         self._killing_system = True
-        asyncio.async(self._kill_system_co())
+        self._kill_future = asyncio.async(self._kill_system_co())
 
     @asyncio.coroutine
     def _kill_system_co(self):
