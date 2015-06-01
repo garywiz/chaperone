@@ -5,7 +5,7 @@ class OneshotProcess(SubProcess):
 
     @asyncio.coroutine
     def process_started_co(self):
-        yield from self.timed_wait(service.process_timeout, self._exit_timeout)
+        yield from self.timed_wait(self.service.process_timeout, self._exit_timeout)
         
     def _exit_timeout(self):
         service = self.service

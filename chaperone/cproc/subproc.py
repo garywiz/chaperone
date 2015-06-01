@@ -7,8 +7,9 @@ from time import time, sleep
 
 import chaperone.cutil.syslog_info as syslog_info
 
+from chaperone.cutil.env import Environment
 from chaperone.cutil.logging import warn, info, debug, error
-from chaperone.cutil.misc import lazydict, Environment, lookup_user
+from chaperone.cutil.misc import lazydict, lookup_user
 from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
@@ -305,7 +306,10 @@ class SubProcess(object):
                 p.cancel()
 
     def terminate(self):
-        self._proc and self._proc.terminate()
+        proc = self._proc
+        if proc:
+            if proc.returncode is None:
+                proc.terminate()
 
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):

@@ -6,8 +6,9 @@ from copy import deepcopy
 import yaml
 import voluptuous as V
 
+from chaperone.cutil.env import Environment, ENV_CONFIG_DIR
 from chaperone.cutil.logging import info, warn, debug
-from chaperone.cutil.misc import lazydict, Environment, lookup_user
+from chaperone.cutil.misc import lazydict, lookup_user
 
 @V.message('not an executable file', cls=V.FileInvalid)
 @V.truth
@@ -19,15 +20,11 @@ def IsExecutable(v):
 def ValidServiceName(v):
     return str(v).upper() != str(v)
 
-_config_service = { V.Required('bin'): str }
-
 _config_schema = V.Any(
     { V.Match('^.+\.service$'): {
         'after': str,
-        'args': str,
         'before': str,
-        'bin': str,
-        'command': str,
+        V.Required('command'): str,
         'debug': bool,
         'enabled': bool,
         'env_inherit': [ str ],
@@ -103,20 +100,22 @@ class _BaseConfig(object):
                     if val is not None:
                         setattr(self, sd, val)
 
+        for k,v in initdict.items():
+            setattr(self, k, v)
+
+        # We can now use 'self' as our config, with all defaults
+
         if env:
             env = self.environment = Environment(env, 
                                                  config = self, 
-                                                 uid = initdict.get('uid'),
-                                                 gid = initdict.get('gid')).expanded()
-            expand = env.expand
-        else:
-            expand = lambda x: x
+                                                 uid = self.get('uid'),
+                                                 gid = self.get('gid')).expanded()
 
-        for k,v in initdict.items():
-            if k in self._expand_these:
-                setattr(self, k, env.expand(v))
-            else:
-                setattr(self, k, v)
+            for k in self._expand_these:
+                try:
+                    setattr(self, k, env.expand(getattr(self, k)))
+                except AttributeError:
+                    pass
 
         self.post_init()
 
@@ -135,9 +134,7 @@ class _BaseConfig(object):
 class ServiceConfig(_BaseConfig):
 
     after = None
-    args = None
     before = None
-    bin = None
     command = None
     debug = None
     enabled = True
@@ -162,17 +159,13 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'args', 'stdout', 'stderr', 'bin'}
+    _expand_these = {'command', 'stdout', 'stderr'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout'}
 
     def post_init(self):
         # Assure that exec_args is set to the actual arguments used for execution
         if self.command:
-            if self.bin or self.args:
-                raise Exception("bin/args and command config are mutually-exclusive")
             self.exec_args = shlex.split(self.command)
-        elif self.bin:
-            self.exec_args = [self.bin] + shlex.split(self.args or '')
 
         # Expand before and after into sets
         self.before = set(self.before.split()) if self.before is not None else set()
@@ -314,9 +307,8 @@ class Configuration(object):
 
         if not os.path.exists(trypath):
             return cls(default = default)
-
-        if os.path.exists(trypath):
-            os.environ['_CHAPERONE_CONFIG_DIR'] = os.path.dirname(trypath)
+        else:
+            os.environ[ENV_CONFIG_DIR] = os.path.dirname(trypath)
 
         if os.path.isdir(trypath):
             return cls(*[os.path.join(trypath, f) for f in sorted(os.listdir(trypath))

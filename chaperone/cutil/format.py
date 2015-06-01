@@ -7,6 +7,11 @@ def fstr(s):
 
 class TableFormatter(list):
 
+    """
+    A quick formatting class which allows you to build a table, then output it
+    neatly with columns and headings.
+    """
+
     attributes = None
     headings = None
     _sortfield = None

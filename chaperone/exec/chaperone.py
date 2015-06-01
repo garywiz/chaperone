@@ -42,6 +42,7 @@ from docopt import docopt
 from chaperone.cutil.config import Configuration, ServiceConfig
 from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cproc import TopLevelProcess
+from chaperone.cutil.env import ENV_INTERACTIVE
 
 MSG_PID1 = """Normally, chaperone expects to run as PID 1 in the 'init' role.
 If you want to go ahead anyway, use --force."""
@@ -63,7 +64,7 @@ def main_entry():
       exit(1)
 
    tty = sys.stdin.isatty()
-   os.environ["_CHAPERONE_INTERACTIVE"] = "1" if tty else "0"
+   os.environ[ENV_INTERACTIVE] = "1" if tty else "0"
 
    kill_switch = options['--exitkills'] or (False if options['--no-exitkills'] else tty)
 

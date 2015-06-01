@@ -16,8 +16,9 @@ from chaperone.cproc.version import DISPLAY_VERSION
 from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.subproc import SubProcess, SubProcessFamily
 from chaperone.cutil.config import ServiceConfig
+from chaperone.cutil.env import Environment
 from chaperone.cutil.logging import warn, info, debug, error, set_log_level, enable_syslog_handler
-from chaperone.cutil.misc import lazydict, Environment, objectplus
+from chaperone.cutil.misc import lazydict, objectplus
 from chaperone.cutil.syslog import SyslogServer
 
 class TopLevelProcess(objectplus):
