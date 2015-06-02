@@ -2,6 +2,7 @@
 
 SANDBOX=$PWD
 
-docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home --entrypoint $SANDBOX/chaperone bst/chapdev \
+docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home -p=8080:8080 \
+    --entrypoint $SANDBOX/chaperone bst/chapdev \
     --config apps/chaperone.d $* \
     --user garyw /bin/bash

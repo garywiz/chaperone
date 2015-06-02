@@ -1,0 +1,3 @@
+Put commands which need to be executed at the command line, or by application
+programs here.  This directory will automaticaly be included the path for all
+running services.

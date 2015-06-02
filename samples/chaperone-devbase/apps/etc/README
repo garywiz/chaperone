@@ -1,0 +1,9 @@
+This is a "mini etc" directory which, as much as possible, is where all normal application and service configuration
+files are stored.   For example, in the chaperone-lamp configuration, all MySQL and Apache configurations are stored
+here, but may make reference to other files on the system (such as modules and plugins).  However, the normal
+startup files in /etc/apache2 and /etc/mysql are not used, as they expect a normal fully-booted system.
+
+System start-up is controlled by the init.sh script, which reads additional startup files from ../init.d.
+
+This is not built into chaperone, but rather is a custom configuration defined within chaperone.d.  If you want,
+you can completely change the way things work and invent new startup schemes.  But, this is a good place to start.
