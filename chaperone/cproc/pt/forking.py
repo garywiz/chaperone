@@ -5,7 +5,9 @@ class ForkingProcess(SubProcess):
 
     @asyncio.coroutine
     def process_started_co(self):
-        yield from self.timed_wait(service.process_timeout, self._exit_timeout)
+        result = yield from self.timed_wait(self.service.process_timeout, self._exit_timeout)
+        if result is not None and result > 0:
+            yield from self._abnormal_exit(result)
         
     def _exit_timeout(self):
         service = self.service

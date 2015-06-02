@@ -3,7 +3,7 @@ Lightweight process and service manager
 
 Usage:
     chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
-              [--nodelay] [--debug] [--force] [--exitkills | --no-exitkills]
+              [--nodelay] [--debug] [--force] [--exitkills | --no-exitkills] [--ignore-failures]
               [--log-level=<level>]
               [<command> [<args> ...]]
 
@@ -16,6 +16,7 @@ Options:
     --force                  If chaperone normally refuses, do it anyway and take the risk.
     --exitkills              When given command exits, kill the system (default if container running interactive)
     --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
+    --ignore-failures        Assumes that "ignore_failures:true" was specified on all services (troubleshooting)
     --user=<name>            Start first process as user (else root)
     --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), then run as if --user
                              was specified.
@@ -97,8 +98,12 @@ def main_entry():
             exit(1)
          user = uargs[0]
 
+   extras = None
+   if options['--ignore-failures']:
+      extras = {'ignore_failures': True}
+
    try:
-      config = Configuration.configFromCommandSpec(options['--config'], user=user)
+      config = Configuration.configFromCommandSpec(options['--config'], user=user, extra_settings=extras)
       services = config.get_services()
    except Exception as ex:
       error(ex, "Configuration Error: {0}", ex)
@@ -120,6 +125,9 @@ def main_entry():
 
    @asyncio.coroutine
    def startup_done():
+
+      if options['--ignore-failures']:
+         warn("ignoring failures on all service startups due to --ignore-failures")
 
       extra_services = None
       if cmd:

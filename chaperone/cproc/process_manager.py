@@ -28,7 +28,7 @@ class TopLevelProcess(objectplus):
     send_sighup = False
 
     _ignore_signals = False
-    _enable_exit = False
+    _services_started = False
     _syslog = None
     _command = None
     _minimum_syslog_level = None
@@ -107,11 +107,12 @@ class TopLevelProcess(objectplus):
             self._syslog.reset_minimum_priority(levid)
         info("Forcing all log output to '{0}' or greater", level)
 
-    def _no_processes(self):
-        self._all_killed = True
-        if self._enable_exit and (self._killing_system or self.exit_when_no_processes):
+    def _no_processes(self, ignore_service_state = False):
+        if self._services_started:
+            self._all_killed = True
+        if (ignore_service_state or self._services_started) and (self._killing_system or self.exit_when_no_processes):
             debug("Final termination phase.")
-            self._enable_exit = False
+            self._services_started = False
             if self._kill_future and not self._kill_future.cancelled():
                 self._kill_future.cancel()
             self.loop.call_later(0.1, self._final_stop)
@@ -130,7 +131,7 @@ class TopLevelProcess(objectplus):
         
     def kill_system(self, force = False):
         if force:
-            self._enable_exit = True
+            self._services_started = True
         elif self._killing_system:
             return
 
@@ -151,7 +152,7 @@ class TopLevelProcess(objectplus):
                 os.kill(-1, signal.SIGHUP)
         except ProcessLookupError:
             debug("No processes remain when attempting to kill system, just stop.")
-            self._no_processes()
+            self._no_processes(True)
             return
 
         yield from asyncio.sleep(self.kill_all_timeout)
@@ -164,7 +165,7 @@ class TopLevelProcess(objectplus):
             os.kill(-1, signal.SIGKILL)
         except ProcessLookupError:
             debug("No processes when attempting to force quit")
-            self._no_processes()
+            self._no_processes(True)
             return
 
     def activate_result(self, future):
@@ -234,4 +235,4 @@ class TopLevelProcess(objectplus):
         try:
             yield from family.run()
         finally:
-            self._enable_exit = True
+            self._services_started = True

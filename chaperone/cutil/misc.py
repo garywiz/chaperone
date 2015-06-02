@@ -52,6 +52,24 @@ class lazydict(dict):
 
         return value
 
+    def smart_update(self, key, theirs):
+        """
+        Smart update replaces values in our dictionary with values from the other.  However,
+        in the case where both dictionaries contain sub-dictionaries, the sub-dictionaries
+        are updated rather than replaced.  (This makes things like env_set inheritance easier.)
+        """
+        ours = super().get(key)
+        if ours is None:
+            ours[key] = theirs
+            return
+
+        for k,v in theirs.items():
+            oursub = ours.get(k)
+            if isinstance(oursub, dict) and isinstance(v, dict):
+                oursub.update(v)
+            else:
+                ours[k] = v
+
     def deepcopy(self):
         return copy.deepcopy(self)
 
@@ -65,11 +83,21 @@ def maybe_remove(fn):
     except FileNotFoundError:
         pass
 
+
+_lookup_user_cache = {}
+
 def lookup_user(uid, gid = None):
     """
     Looks up a user using either a name or integer user value.  If a group is specified,
     Then set the group explicitly in the returned pwrec
     """
+    key = (uid, gid)
+    retval = _lookup_user_cache.get(key)
+    if retval:
+        return retval
+
+    # calculate the new entry
+
     intuid = None
 
     try:
@@ -85,7 +113,7 @@ def lookup_user(uid, gid = None):
     if gid is None:
         return pwrec
 
-    return type(pwrec)(
+    retval = _lookup_user_cache[key] = type(pwrec)(
         (pwrec.pw_name,
          pwrec.pw_passwd,
          pwrec.pw_uid,
@@ -94,6 +122,9 @@ def lookup_user(uid, gid = None):
          pwrec.pw_dir,
          pwrec.pw_shell)
     )
+
+    return retval
+
 
 def lookup_gid(gid):
     """
@@ -113,3 +144,40 @@ def lookup_gid(gid):
 
     return pwrec.gr_gid
 
+
+def _assure_dir_for(path, pwrec, gid):
+    # gid is present so we know if we need to set group modes, but
+    # we always use the one in pwrec
+
+    if os.path.exists(path):
+        return
+
+    _assure_dir_for(os.path.dirname(path), pwrec, gid)
+
+    os.mkdir(path, 0o755 if not gid else 0o775)
+    if pwrec:
+        print("CHOWN", path, pwrec.pw_uid, pwrec.pw_gid)
+        os.chown(path, pwrec.pw_uid, pwrec.pw_gid if gid else -1)
+    
+def open_foruser(filename, mode = 'r', uid = None, gid = None, exists_ok = True):
+    """
+    Similar to open(), but assures all directories exist (similar to os.makedirs)
+    and assures that all created objects are writable by the given user, and
+    optionally by the given group (causing mode to be set accordingly).
+    """
+    if uid:
+        pwrec = lookup_user(uid, gid)
+    else:
+        pwrec = None
+        gid = None
+
+    rp = os.path.realpath(filename)
+    _assure_dir_for(os.path.dirname(rp), pwrec, gid)
+
+    fobj = open(rp, mode)
+
+    if pwrec:
+        os.chown(rp, pwrec.pw_uid, pwrec.pw_gid if gid else -1)
+        os.chmod(rp, 0o644 if not gid else 0o664)
+
+    return fobj

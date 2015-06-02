@@ -107,7 +107,7 @@ class InitChildWatcher(BaseChildWatcher):
             collateral_victims = str(self._zombies)
             self._zombies.clear()
 
-        warn(
+        info(
             "Caught subprocesses termination from unknown pids: %s",
             collateral_victims)
 
@@ -169,7 +169,7 @@ class InitChildWatcher(BaseChildWatcher):
                     callback = None
 
             if callback is None:
-                warn(
+                info(
                     "Caught subprocess termination from unknown pid: "
                     "%d -> %d", pid, returncode)
             else:

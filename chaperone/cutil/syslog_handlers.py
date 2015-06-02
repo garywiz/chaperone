@@ -3,7 +3,7 @@ import os
 
 from time import time, localtime, strftime
 
-from chaperone.cutil.misc import lazydict
+from chaperone.cutil.misc import lazydict, open_foruser
 from chaperone.cutil.syslog_info import get_syslog_info
 
 class LogOutput:
@@ -114,11 +114,10 @@ class FileHandler(LogOutput):
             self.handle.flush()
             self.handle.close()
 
-        directory = os.path.dirname(new_filename)
-        os.makedirs(directory, exist_ok=True)
-
+        env = self.config.environment
         self._cur_filename = new_filename
-        self.handle = open(new_filename, 'w')
+
+        self.handle = open_foruser(new_filename, 'w', env.uid, env.gid)
         self._stat = os.fstat(self.handle.fileno())
 
     def close(self):

@@ -199,6 +199,7 @@ class SyslogServerProtocol(asyncio.Protocol):
             return
 
         messages = message.split("\0")
+
         for m in messages:
             if m:
                 self._parse_to_output(m)

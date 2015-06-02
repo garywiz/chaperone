@@ -1,4 +1,5 @@
 import os
+import re
 import pwd
 import shlex
 from copy import deepcopy
@@ -50,6 +51,7 @@ _config_schema = V.Any(
         'env_unset': [ str ],
         'gid': V.Any(str, int),
         'idle_delay': V.Any(float, int),
+        'ignore_failures': bool,
         'process_timeout': V.Any(float, int),
         'uid': V.Any(str, int),
       },
@@ -60,11 +62,24 @@ _config_schema = V.Any(
         'filter': str,
         'stderr': bool,
         'stdout': bool,
+        'uid': V.Any(str, int),
+        'gid': V.Any(str, int),
      },
    }
 )
     
 validator = V.Schema(_config_schema)
+
+_RE_LISTSEP = re.compile(r'\s*,\s*')
+
+def print_services(label, svlist):
+    # Useful for debugging startup order
+    print(label)
+    for s in svlist:
+        print(s)
+        p = getattr(s, 'prerequisites', None)
+        if p:
+            print('  prereq:', p)
 
 class _BaseConfig(object):
 
@@ -91,8 +106,6 @@ class _BaseConfig(object):
     def __init__(self, initdict, name = "MAIN", env = None, settings = None):
         self.name = name
 
-        #print("_BaseConfig init env user", env and env.user)
-
         if settings:
             for sd in self._settings_defaults:
                 if sd not in initdict:
@@ -103,14 +116,16 @@ class _BaseConfig(object):
         for k,v in initdict.items():
             setattr(self, k, v)
 
+        uid = self.get('uid')
+        gid = self.get('gid')
+
+        if gid is not None and uid is None:
+            raise Exception("cannot specify 'gid' without 'uid'")
+
         # We can now use 'self' as our config, with all defaults
 
         if env:
-            env = self.environment = Environment(env, 
-                                                 config = self, 
-                                                 uid = self.get('uid'),
-                                                 gid = self.get('gid')).expanded()
-
+            env = self.environment = Environment(env, uid=uid, gid=gid, config=self).expanded()
             for k in self._expand_these:
                 try:
                     setattr(self, k, env.expand(getattr(self, k)))
@@ -160,7 +175,7 @@ class ServiceConfig(_BaseConfig):
 
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'stdout', 'stderr'}
-    _settings_defaults = {'debug', 'idle_delay', 'process_timeout'}
+    _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'ignore_failures'}
 
     def post_init(self):
         # Assure that exec_args is set to the actual arguments used for execution
@@ -168,8 +183,8 @@ class ServiceConfig(_BaseConfig):
             self.exec_args = shlex.split(self.command)
 
         # Expand before and after into sets
-        self.before = set(self.before.split()) if self.before is not None else set()
-        self.after = set(self.after.split()) if self.after is not None else set()
+        self.before = set(_RE_LISTSEP.split(self.before)) if self.before is not None else set()
+        self.after = set(_RE_LISTSEP.split(self.after)) if self.after is not None else set()
 
         
 class LogConfig(_BaseConfig):
@@ -180,6 +195,8 @@ class LogConfig(_BaseConfig):
     stdout = False
     enabled = True
     extended = False            # include facility/priority information
+    uid = None                  # used to control permissions on logfile creation
+    gid = None
 
     _expand_these = {'filter', 'file'}
 
@@ -212,6 +229,8 @@ class ServiceDict(lazydict):
         for k,v in services.items():
             groups.setdefault(v.service_group, lambda: lazydict())[k] = v
 
+        #print_services('initial', services.values())
+
         # We want to only look at the "after:" attribute, so we will eliminate the relevance
         # of befores...
 
@@ -236,7 +255,6 @@ class ServiceDict(lazydict):
         # Before is now gone, make sure that all "after... groups" are translated into "after.... service"
 
         for group in groups.values():
-            #print(*[iter(item.after) for item in group.values()])
             afters = set()
             for item in group.values():
                 afters.update(item.after)
@@ -252,6 +270,8 @@ class ServiceDict(lazydict):
         afters = set(services.keys())
         for v in services.values():
             v.refs = tuple(map(lambda n: services[n], v.after.intersection(afters)))
+
+        #print_services('before add nodes', services.values())
 
         svlist = list()         # this will be our final list, containing original items
         svseen = set()
@@ -271,6 +291,8 @@ class ServiceDict(lazydict):
 
         add_nodes(services.values())
 
+        #print_services('final service list', svlist)
+
         self._ordered_startup = svlist
 
         return svlist
@@ -283,7 +305,7 @@ class Configuration(object):
     _env = None                 # calculated environment
 
     @classmethod
-    def configFromCommandSpec(cls, spec, user = None, default = None):
+    def configFromCommandSpec(cls, spec, user = None, default = None, extra_settings = None):
         """
         A command specification (typically specified with the --config=<file_or_dir> command
         line option) is used to create a configuration object.   The target may be either a file
@@ -313,12 +335,12 @@ class Configuration(object):
         if os.path.isdir(trypath):
             return cls(*[os.path.join(trypath, f) for f in sorted(os.listdir(trypath))
                          if f.endswith('.yaml') or f.endswith('.conf')],
-                       default = default, uid = user)
+                       default = default, uid = user, extra_settings = extra_settings)
 
 
-        return cls(trypath, default = default, uid = user)
+        return cls(trypath, default = default, uid = user, extra_settings = extra_settings)
         
-    def __init__(self, *args, default = None, uid = None):
+    def __init__(self, *args, default = None, uid = None, extra_settings = None):
         """
         Given one or more files, load our configuration.  If no configuration is provided,
         then use the configuration specified by the default.
@@ -326,16 +348,19 @@ class Configuration(object):
         debug("CONFIG INPUT (uid={1}): '{0}'".format(args, uid))
 
         self.uid = uid
-        self._conf = dict()
+        self._conf = lazydict()
 
         for fn in args:
             if os.path.exists(fn):
                 self._merge(yaml.load(open(fn, 'r').read().expandtabs()))
         
         if not self._conf and default:
-            self._conf = yaml.load(default)
+            self._conf = lazydict(yaml.load(default))
 
         validator(self._conf)
+
+        if extra_settings:
+            self.update_settings(extra_settings)
 
         s = self.get_settings()
         self.uid = s.get('uid', self.uid)
@@ -347,7 +372,7 @@ class Configuration(object):
         conf = self._conf
         for k,v in items.items():
             if k in conf and not k.endswith('.service'):
-                conf[k].update(v)
+                conf.smart_update(k,v)
             else:
                 conf[k] = v
 
@@ -368,6 +393,11 @@ class Configuration(object):
 
     def get_settings(self):
         return self._conf.get('settings') or {}
+
+    def update_settings(self, updates):
+        curset = self.get_settings()
+        curset.update(updates)
+        self._conf['settings'] = curset
 
     def get_environment(self):
         if not self._env:

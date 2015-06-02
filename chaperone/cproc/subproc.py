@@ -19,6 +19,8 @@ def _process_logger(stream, kind):
         if not data:
             return
         line = data.decode('ascii').rstrip()
+        if not line:
+            continue            # ignore blank lines in stdout/stderr
         if kind == 'stderr':
             # we map to warning because stderr output is "to be considered" and not strictly
             # erroneous
@@ -71,9 +73,8 @@ class SubProcess(object):
 
         self._pending = set()
 
-        # We manage restart counts so that multiple attempts to reset or restart
-        # don't result in constant resets.  We allow one extra for the initial start.
-        self._starts_allowed = self.service.restart_limit + 1
+        # Allow no auto-starts
+        self._starts_allowed = 0
 
         # The environment has already been modified to reflect our chosen service uid/gid
         uid = service.environment.uid
@@ -151,6 +152,8 @@ class SubProcess(object):
         if not service.enabled:
             debug("service {0} not enabled, will be skipped", service.name)
             return
+        else:
+            debug("service {0} enabled, recieved start request", service.name)
 
         if self.family:
             if service.prerequisites:
@@ -158,11 +161,16 @@ class SubProcess(object):
                 for p in prereq:
                     if p:
                         yield from p.start(enable)
+
             # idle only makes sense for families
             if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
                 self.family._idle_hit = True
                 debug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
                 yield from asyncio.sleep(service.idle_delay)
+
+            # STOP if the system is no longer alive because a prerequisite failed
+            if not self.family.controller.system_alive:
+                return
 
         try:
             yield from self._start_service()
@@ -221,6 +229,10 @@ class SubProcess(object):
             self.add_pending(asyncio.async(self._wait_kill_on_exit()))
 
         yield from self.process_started_co()
+
+        self._starts_allowed = self.service.restart_limit
+
+        debug("{0} successfully started", service.name)
 
     @asyncio.coroutine
     def process_prepare_co(self, environment):
@@ -314,18 +326,20 @@ class SubProcess(object):
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
         """
-        Timed wait waits for process completion.  If process completion occurs normally, None is returned.
+        Timed wait waits for process completion.  If process completion occurs normally, the
+        resultcode for process startup is returned.
 
         Upon timeout either:
         1.  asyncio.TimeoutError is raised if 'func' is not provided, or...
         2.  func is called and the result is returned from timed_wait().
         """
         try:
-            yield from asyncio.wait_for(asyncio.shield(self.wait()), timeout)
+            result =  yield from asyncio.wait_for(asyncio.shield(self.wait()), timeout)
         except asyncio.TimeoutError:
             if not func:
                 raise
-            return func()
+            result = func()
+        return result
 
     @asyncio.coroutine
     def wait(self):
