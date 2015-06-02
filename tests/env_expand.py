@@ -1,6 +1,6 @@
 from prefix import *
 
-from chaperone.cutil.misc import Environment
+from chaperone.cutil.env import Environment
 
 ENV1 = {
     "HOME": '/usr/garyw',
@@ -122,6 +122,16 @@ class TestEnvOrder(unittest.TestCase):
         envstr = str([(k,env[k]) for k in sorted(env.keys())])
         #print('RESULT4 = "' + envstr + '"')
         self.assertEqual(envstr, RESULT4)
+
+    def test_expand5(self):
+        "Try simple expansion"
+        env = Environment(from_env = ENV4).expanded()
+        self.assertEqual(env.expand("hello $(UBERNEST)"), 
+                         "hello nest:inside/usr/garyw and /usr/garyw/apps and:/usr/garyw/apps/theap")
+        self.assertEqual(env.expand("hello $(MAYBE5) and $(MAYBE4)"), "hello blach/foo and /usr/garyw/foo")
+        self.assertEqual(env.expand("hello $(MAYBE5:+$(MAYBE5)b) and $(MAYBE41)"), "hello blach/foob and $(MAYBE41)")
+        self.assertEqual(env.expand("hello $(MAYBE5:+$(MAYBE5)b) and $(MAYBE41:-gone$(MAYBE4))"), 
+                         "hello blach/foob and gone/usr/garyw/foo")
 
 if __name__ == '__main__':
     unittest.main()

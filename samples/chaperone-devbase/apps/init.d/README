@@ -2,12 +2,14 @@ Files in this directory are executed upon container startup by the ../etc/init.s
 
 There are two modes:
 
-1.  When the container is first set up, APPS_INIT=="1" and the script can use 'su' without a
+1.  When the container is first set up, CONTAINER_INIT=="1" and the script can use 'su' without a
     password.  This is so that any setup activities can be performed which require full access
     to the system.
 
 2.  On subsequent boots (if the container is stopped and started), the same scripts will be
-    run with APPS_INIT=="0".  However, root access is locked down.
+    run with CONTAINER_INIT=="0".  However, root access is locked down if env var SECURE_ROOT=1.
+
+Note that SECURE_ROOT is not defined by default.
 
 In all cases, scripts are run as either root, or the user specified by --user on the
 chaperone command line.

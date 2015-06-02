@@ -105,10 +105,13 @@ def lookup_user(uid, gid = None):
     except ValueError:
         pass
     
-    if intuid is not None:
-        pwrec = pwd.getpwuid(intuid)
-    else:
-        pwrec = pwd.getpwnam(uid)
+    try:
+        if intuid is not None:
+            pwrec = pwd.getpwuid(intuid)
+        else:
+            pwrec = pwd.getpwnam(uid)
+    except KeyError:
+        raise Exception("specified user ('{0}') does not exist".format(uid))
 
     if gid is None:
         return pwrec
@@ -140,7 +143,10 @@ def lookup_gid(gid):
     if intgid is not None:
         return intgid
 
-    pwrec = grp.getgrnam(gid)
+    try:
+        pwrec = grp.getgrnam(gid)
+    except KeyError:
+        raise Exception("specified group ('{0}') does not exist".format(gid))
 
     return pwrec.gr_gid
 
@@ -156,7 +162,6 @@ def _assure_dir_for(path, pwrec, gid):
 
     os.mkdir(path, 0o755 if not gid else 0o775)
     if pwrec:
-        print("CHOWN", path, pwrec.pw_uid, pwrec.pw_gid)
         os.chown(path, pwrec.pw_uid, pwrec.pw_gid if gid else -1)
     
 def open_foruser(filename, mode = 'r', uid = None, gid = None, exists_ok = True):

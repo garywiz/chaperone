@@ -1,22 +1,20 @@
 #!/bin/bash
 
 distdir=/var/lib/mysql
-appdbdir=$APPS_PATH/mysql
+appdbdir=$APPS_DIR/mysql
 
 function dolog() { logger -t mysql.sh -p info $*; }
 
-if [ "$APPS_INIT" == "0" ] ; then
-  exit
+if [ $CONTAINER_INIT == 1 ]; then
+    dolog "hiding distribution mysql files in /etc so no clients see them"
+    su -c "cd /etc; mv my.cnf my.cnf-dist; mv mysql mysql-dist; mv $distdir $distdir-dist"
 fi
 
-dolog "hiding distribution mysql files in /etc so no clients see them"
-
-su -c "cd /etc; mv my.cnf my.cnf-dist; mv mysql mysql-dist"
-
-dolog "copying distribution $distdir to $appdbdir"
-
-# Do this as su because we normally don't have access to the mysql directory
-# Note that root has no password during initialization, but will be locked down
-# on subsequent restarts (see init.sh)
-
-su -c "cp -a $distdir $appdbdir; chown -R $USER: $appdbdir"
+if [ $APPS_INIT == 1 ]; then
+    if [ ! -d $appdbdir ]; then
+	dolog "copying distribution $distdir to $appdbdir"
+	su -c "cp -a $distdir-dist $appdbdir; chown -R ${USER:-mysql} $appdbdir"
+    else
+	dolong "existing $appdbdir found when initializing $APPS_DIR for the first time, not changed."
+    fi
+fi

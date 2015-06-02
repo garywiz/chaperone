@@ -3,20 +3,20 @@ Lightweight process and service manager
 
 Usage:
     chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
-              [--nodelay] [--debug] [--force] [--exitkills | --no-exitkills] [--ignore-failures]
-              [--log-level=<level>]
+              [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
+              [--debug] [--force] [--disable-services]
               [<command> [<args> ...]]
 
 Options:
     -v                       Provide verbose messages
     --config=<file_or_dir>   Specifies file or directory for configuration [default: /etc/chaperone/config.d]
-    --nodelay                Eliminates delay before initial command prompt when there are services.
     --debug                  Turn on debugging features (same as --log-level=DEBUG)
     --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
     --force                  If chaperone normally refuses, do it anyway and take the risk.
     --exitkills              When given command exits, kill the system (default if container running interactive)
     --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
     --ignore-failures        Assumes that "ignore_failures:true" was specified on all services (troubleshooting)
+    --disable-services       Does not run any services, only the given command (troubleshooting)
     --user=<name>            Start first process as user (else root)
     --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), then run as if --user
                              was specified.
@@ -113,6 +113,10 @@ def main_entry():
       print(MSG_NOTHING_TO_DO)
       exit(1)
 
+   if not cmd and options['--disable-services']:
+      error("--disable-services not valid without specifying a command to run")
+      exit(1)
+
    if tlp.debug:
       config.dump()
 
@@ -129,6 +133,9 @@ def main_entry():
       if options['--ignore-failures']:
          warn("ignoring failures on all service startups due to --ignore-failures")
 
+      if options['--disable-services'] and services:
+         warn("services will not be configured due to --disable-services")
+
       extra_services = None
       if cmd:
          cmdsvc = ServiceConfig.createConfig(config=config,
@@ -142,7 +149,7 @@ def main_entry():
          extra_services = [cmdsvc]
 
       try:
-         yield from tlp.run_services(config, extra_services)
+         yield from tlp.run_services(config, extra_services, extra_only = options['--disable-services'])
       except Exception as ex:
          error(ex, "System startup cancelled due to error: {0}", ex)
          service_errors = True

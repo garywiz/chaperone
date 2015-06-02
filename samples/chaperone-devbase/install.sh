@@ -5,8 +5,10 @@
 # Does no harm if nothing is running on that port.
 /setup-bin/ct_setproxy
 
-# Normal install steps
+# see https://github.com/docker/docker/issues/1724
 apt-get update
+
+# Normal install steps
 apt-get -y install python3-pip
 
 # We install from the local directory rather than pip so we can test and develop.
@@ -24,3 +26,10 @@ chown root.syslog log
 
 # Customize some system files
 cp /setup-bin/dot.bashrc /root/.bashrc
+
+# Allow unfettered root access by users. This is done so that apps/init.d scripts can
+# have unfettered access to root on their first startup to configure userspace files
+# if needed (see mysql in chaperone-lamp for an example).  At the end of the first startup
+# this is then locked down by apps/etc/init.sh.
+passwd -d root
+sed -i 's/nullok_secure/nullok/' /etc/pam.d/common-auth

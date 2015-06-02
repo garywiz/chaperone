@@ -28,6 +28,11 @@ class Environment(lazydict):
     uid = None
     gid = None
 
+    # This is a small optimization to save extra expansion in the case where an expanded
+    # environment is immediately used for expand_attributes(), which expand the environment
+    # if needed.
+    _is_expanded = False
+
     def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
         """
         Create a new environment.  An environment may have a user associated with it.  If so,
@@ -70,6 +75,18 @@ class Environment(lazydict):
 
         #print('   DONE (.uid={0}): {1}\n'.format(self.uid, self))
 
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        self._is_expanded = False
+
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self._is_expanded = False
+
+    def clear(self):
+        super().clear()
+        self._is_expanded = False
+
     def _elookup(self, match):
         whole = match.group(0)
         return self.get(whole[2:-1], whole)
@@ -85,8 +102,22 @@ class Environment(lazydict):
         """
         if not isinstance(instr, str):
             return instr
-        return _RE_ENVVAR.sub(self._elookup, instr)
+        return _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)
 
+    def expand_attributes(self, obj, *args):
+        """
+        Given an object and a set of attributes, expands each and replaces the originals with
+        expanded versions.   Implicitly expands the environment to assure all variable substitutions
+        occur correctly.
+        """
+        explist = (k for k in args if hasattr(obj, k))
+        if not explist:
+            return
+
+        env = self if self._is_expanded else self.expanded()
+        for attr in explist:
+            setattr(obj, attr, env.expand(getattr(obj, attr)))
+            
     def expanded(self):
         """
         Does a recursive expansion on all variables until there are no matches.  Circular recursion
@@ -100,6 +131,8 @@ class Environment(lazydict):
         # own environment.
         result.uid = self.uid
         result.gid = self.gid
+        result._is_expanded = True
+
         return result
 
     def _expand_into(self, k, result, default = None):
@@ -125,12 +158,16 @@ class Environment(lazydict):
             else:
                 val = self[k]
 
+        recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0))
+
         if use_repl is not None:
-            val = _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0)), use_repl)
+            val = _RE_ENVVAR.sub(recurse, use_repl)
+        elif result is self:
+            val = _RE_ENVVAR.sub(recurse, val)
         else:
             # Looks odd, but needed to seed the result to assure we ignore recursion later
             result[k] = val
-            val = result[k] = _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0)), val)
+            val = result[k] = _RE_ENVVAR.sub(recurse, val)
 
         return val
     

@@ -116,6 +116,11 @@ class _BaseConfig(object):
         for k,v in initdict.items():
             setattr(self, k, v)
 
+        # UID and GID are expanded according to the incoming environment,
+        # since the new environment depends upon these.
+        if env:
+            env.expand_attributes(self, 'uid', 'gid')
+
         uid = self.get('uid')
         gid = self.get('gid')
 
@@ -126,11 +131,8 @@ class _BaseConfig(object):
 
         if env:
             env = self.environment = Environment(env, uid=uid, gid=gid, config=self).expanded()
-            for k in self._expand_these:
-                try:
-                    setattr(self, k, env.expand(getattr(self, k)))
-                except AttributeError:
-                    pass
+            if self._expand_these:
+                env.expand_attributes(self, *self._expand_these)
 
         self.post_init()
 
@@ -215,6 +217,10 @@ class ServiceDict(lazydict):
 
     def add(self, service):
         self[service.name] = service
+
+    def clear(self):
+        super().clear()
+        self._ordered_startup = None
 
     def get_startup_list(self):
         """

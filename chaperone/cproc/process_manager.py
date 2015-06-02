@@ -176,17 +176,6 @@ class TopLevelProcess(objectplus):
        future.add_done_callback(self.activate_result)
        return future
 
-    def run(self, args, user=None, wait=False, config=None):
-        sdict = {'stdout': 'inherit',
-                 'stderr': 'inherit'}
-        env = config.get_environment()
-        # Specifying a user overrides both the environment user as well
-        # as the exec user.
-        if user:
-            env = Environment(env, uid = user)
-        serv = ServiceConfig(sdict, env = env)
-        return SubProcess.spawn(serv, args, wait=wait)
-
     def _syslog_started(self, f):
         enable_syslog_handler()
         info("Switching all chaperone logging to /dev/log")
@@ -219,7 +208,7 @@ class TopLevelProcess(objectplus):
         self.loop.close()
 
     @asyncio.coroutine
-    def run_services(self, config, extra_services):
+    def run_services(self, config, extra_services, extra_only = False):
         "Run services from the speicified config (an instance of cutil.config.Configuration)"
 
         # First, determine our overall configuration for the services environment.
@@ -228,6 +217,8 @@ class TopLevelProcess(objectplus):
 
         if extra_services:
             services = services.deepcopy()
+            if extra_only:
+                services.clear()
             for s in extra_services:
                 services.add(s)
 
