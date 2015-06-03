@@ -4,22 +4,23 @@ Lightweight process and service manager
 Usage:
     chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
               [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
-              [--debug] [--force] [--disable-services]
+              [--debug] [--force] [--disable-services] [--no-defaults] [--version]
               [<command> [<args> ...]]
 
 Options:
-    -v                       Provide verbose messages
-    --config=<file_or_dir>   Specifies file or directory for configuration [default: /etc/chaperone/config.d]
+    --config=<file_or_dir>   Specifies file or directory for configuration (default is /etc/chaperone.d)
+    --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), 
+                             then run as if --user was specified.
     --debug                  Turn on debugging features (same as --log-level=DEBUG)
-    --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
-    --force                  If chaperone normally refuses, do it anyway and take the risk.
-    --exitkills              When given command exits, kill the system (default if container running interactive)
-    --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
-    --ignore-failures        Assumes that "ignore_failures:true" was specified on all services (troubleshooting)
     --disable-services       Does not run any services, only the given command (troubleshooting)
+    --exitkills              When given command exits, kill the system (default if container running interactive)
+    --force                  If chaperone normally refuses, do it anyway and take the risk.
+    --ignore-failures        Assumes that "ignore_failures:true" was specified on all services (troubleshooting)
+    --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
+    --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
+    --no-defaults            Ignores any default options in the CHAPERONE_OPTIONS environment variable
     --user=<name>            Start first process as user (else root)
-    --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), then run as if --user
-                             was specified.
+    --version                Display version and exit
 
 Notes:
   * If a user is specified, then the --config is relative to the user's home directory.
@@ -32,6 +33,7 @@ import chaperone.cutil.patches
 
 # regular code begins
 import sys
+import shlex
 import os
 import asyncio
 import subprocess
@@ -40,10 +42,11 @@ from setproctitle import setproctitle
 from functools import partial
 from docopt import docopt
 
-from chaperone.cutil.config import Configuration, ServiceConfig
-from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cproc import TopLevelProcess
+from chaperone.cproc.version import VERSION_MESSAGE
+from chaperone.cutil.config import Configuration, ServiceConfig
 from chaperone.cutil.env import ENV_INTERACTIVE
+from chaperone.cutil.logging import warn, info, debug, error
 
 MSG_PID1 = """Normally, chaperone expects to run as PID 1 in the 'init' role.
 If you want to go ahead anyway, use --force."""
@@ -52,7 +55,23 @@ MSG_NOTHING_TO_DO = """There are no services configured to run, nor is there a c
 on the command line to run as an application.  You need to do one or the other."""
 
 def main_entry():
-   options = docopt(__doc__, options_first=True)
+
+   # parse these first since we may disable the environment check
+   options = docopt(__doc__, options_first=True, version=VERSION_MESSAGE)
+
+   if not options['--no-defaults']:
+      envopts = os.environ.get('CHAPERONE_OPTIONS')
+      if envopts:
+         try:
+            defaults = docopt(__doc__, argv=(shlex.split(envopts)), options_first=True)
+         except SystemExit as ex:
+            print("Error occurred in CHAPERONE_OPTIONS environment variable: " + envopts)
+            raise
+         # Replace any "false" command option with the default version.
+         options.update({k:defaults[k] for k in options.keys() if not options[k]})
+
+   if options['--config'] is None:
+      options['--config'] = '/etc/chaperone.d'
 
    if options['--debug']:
       options['--log-level'] = "DEBUG"
@@ -101,7 +120,7 @@ def main_entry():
    extras = None
    if options['--ignore-failures']:
       extras = {'ignore_failures': True}
-
+      
    try:
       config = Configuration.configFromCommandSpec(options['--config'], user=user, extra_settings=extras)
       services = config.get_services()

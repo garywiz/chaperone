@@ -7,8 +7,8 @@
 exec /usr/sbin/mysqld \
    --defaults-file=$APPS_DIR/etc/mysql/my.cnf \
    --user ${USER:-mysql} \
-   --datadir=$APPS_DIR/mysql \
-   --socket=$APPS_DIR/run/mysqld.sock \
-   --pid-file=$APPS_DIR/run/mysqld.pid \
-   --log-error=$APPS_DIR/log/mysqld-error.log \
-   --plugin-dir=/usr/lib/mysql/plugin
+   --datadir=$APPS_DIR/var/mysql \
+   --socket=$APPS_DIR/var/run/mysqld.sock \
+   --pid-file=$APPS_DIR/var/run/mysqld.pid \
+   --log-error=$APPS_DIR/var/log/mysqld-error.log \
+   --plugin-dir=/usr/lib/var/mysql/plugin

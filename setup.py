@@ -26,7 +26,7 @@ setup(
     },
     license = "BSD 3",
     author = "Gary Wisniewski",
-    author_email = "pypi-garywiz@gw.spidereye.com",
+    author_email = "garyw@blueseastech.com",
     url = "http://github.com/garywiz/chaperone",
     keywords = "docker init systemd syslog",
 
@@ -34,9 +34,9 @@ setup(
                         'voluptuous>=0.8.7'],
 
     classifiers = [
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3",

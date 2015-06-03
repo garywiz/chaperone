@@ -11,7 +11,7 @@
 
 function dolog() { logger -t init.sh -p info $*; }
 
-apps_init_file="$APPS_DIR/run/apps_init.done"
+apps_init_file="$APPS_DIR/var/run/apps_init.done"
 cont_init_file="/container_init.done"
 
 export CONTAINER_INIT=0
@@ -26,8 +26,8 @@ fi
 if [ ! -f $apps_init_file ]; then
     dolog "initializing $APPS_DIR for the first time"
     APPS_INIT=1
-    mkdir -p $APPS_DIR/run $APPS_DIR/log
-    chmod 777 $APPS_DIR/run $APPS_DIR/log
+    mkdir -p $APPS_DIR/var/run $APPS_DIR/var/log
+    chmod 777 $APPS_DIR/var/run $APPS_DIR/var/log
     date >$apps_init_file
 fi
 

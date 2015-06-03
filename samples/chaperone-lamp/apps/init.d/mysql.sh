@@ -1,7 +1,7 @@
 #!/bin/bash
 
 distdir=/var/lib/mysql
-appdbdir=$APPS_DIR/mysql
+appdbdir=$APPS_DIR/var/mysql
 
 function dolog() { logger -t mysql.sh -p info $*; }
 

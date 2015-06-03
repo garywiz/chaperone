@@ -16,9 +16,10 @@ import shlex
 from docopt import docopt
 
 from chaperone.cproc.client import CommandClient
+from chaperone.cproc.version import VERSION_MESSAGE
 
 def main_entry():
-    options = docopt(__doc__, options_first=True)
+    options = docopt(__doc__, options_first=True, version=VERSION_MESSAGE)
     try:
         result = CommandClient.sendCommand(options['<command>'] + " " + " ".join([shlex.quote(a) for a in options['<args>']]))
     except (ConnectionRefusedError, FileNotFoundError) as ex:

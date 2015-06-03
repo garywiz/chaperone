@@ -28,3 +28,5 @@ apt-get install -y mysql-server
 # as.
 apt-get install -y phpmyadmin
 php5enmod mcrypt
+
+apt-get install -y php-pear
