@@ -3,6 +3,10 @@ import sys
 import subprocess
 from setuptools import setup, find_packages
 
+if sys.version_info < (3,):
+    print("You must run setup.py with Python 3 only.  Python 2 distributions are not supported.")
+    exit(1)
+
 ourdir = os.path.dirname(__file__)
 
 def read(fname):
