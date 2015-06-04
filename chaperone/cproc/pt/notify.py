@@ -114,6 +114,9 @@ class NotifyProcess(SubProcess):
         if value == "1" and self._ready_event:
             self._ready_event.set()
 
+    def notify_STATUS(self, value):
+        self.note = value
+
     @property
     def status(self):
         if self._ready_event:

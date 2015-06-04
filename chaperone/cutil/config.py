@@ -34,6 +34,7 @@ _config_schema = V.Any(
         'exit_kills': bool,
         'gid': V.Any(str, int),
         'ignore_failures': bool,
+        'interval': str,
         'optional': bool,
         'process_timeout': V.Any(float, int),
         'restart': bool,
@@ -41,7 +42,7 @@ _config_schema = V.Any(
         'service_group': str,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
-        'type': V.Any('oneshot', 'simple', 'forking', 'notify'),
+        'type': V.Any('oneshot', 'simple', 'forking', 'notify', 'cron'),
         'uid': V.Any(str, int),
       },
       V.Match('^settings$'): {
@@ -157,6 +158,7 @@ class ServiceConfig(_BaseConfig):
     enabled = True
     exit_kills = False
     gid = None
+    interval = None
     ignore_failures = False
     optional = False
     process_timeout = 10.0      # time to elapse before we decide a process has misbehaved
@@ -176,7 +178,7 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'stdout', 'stderr'}
+    _expand_these = {'command', 'stdout', 'stderr', 'interval'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'ignore_failures'}
 
     def post_init(self):

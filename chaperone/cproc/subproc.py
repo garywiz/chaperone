@@ -90,6 +90,13 @@ class SubProcess(object):
         "Proxies value from the service description if we don't override them."
         return getattr(self.service, name)
 
+    def __setattr__(self, name, value):
+        "Any service object attribute supercedes our own except for privates."
+        if name[0:0] != '_' and hasattr(self.service, name):
+            setattr(self.service, name, value)
+        else:
+            object.__setattr__(self, name, value)
+
     def _setup_subprocess(self):
         if self._pwrec:
             os.setgid(self._pwrec.pw_gid)
@@ -99,6 +106,13 @@ class SubProcess(object):
             except Exception as ex:
                 pass
         return
+
+    @property
+    def note(self):
+        return self._note
+    @note.setter
+    def note(self, value):
+        self._note = value
 
     @property
     def status(self):
@@ -123,7 +137,14 @@ class SubProcess(object):
         if rs:
             return rs
 
+        return self.default_status()
+
+    def default_status(self):
         return None
+
+    @property
+    def running(self):
+        return self._proc and self._proc.returncode is None
 
     @asyncio.coroutine
     def start(self, enable = True):
@@ -291,8 +312,8 @@ class SubProcess(object):
             if self._proc.returncode is None:
                 self.terminate()
                 yield from self.wait()
-                self._proc = None
-                self.pid = None
+            self.pid = None
+            self._proc = None
 
         self._started = False
 
@@ -303,10 +324,11 @@ class SubProcess(object):
         
     @asyncio.coroutine
     def stop(self):
-        if not (self._proc and self._proc.returncode is None):
+        self.service.enabled = False
+
+        if not self.running:
             return
 
-        self.service.enabled = False
         self._starts_allowed = 0
         yield from self.reset()
         
@@ -378,7 +400,7 @@ class SubProcessFamily(lazydict):
             yield from s.start(False)
 
     def get_status_formatter(self):
-        df = TableFormatter('pid', 'name', 'enabled', 'status', sort='name')
+        df = TableFormatter('pid', 'name', 'enabled', 'status', 'note', sort='name')
         df.add_rows(self.values())
         return df
 

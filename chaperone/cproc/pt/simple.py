@@ -9,7 +9,7 @@ class SimpleProcess(SubProcess):
 
     @asyncio.coroutine
     def process_started_co(self):
-        if self._fut_monitor:
+        if self._fut_monitor and not self._fut_monitor.cancelled():
             self._fut_monitor.cancel()
             self._fut_monitor = None
 
