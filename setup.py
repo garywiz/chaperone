@@ -35,7 +35,7 @@ setup(
     keywords = "docker init systemd syslog",
 
     install_requires = ['docopt>=0.6.2', 'setproctitle>=1.1.8', 'PyYAML>=3.1.1',
-                        'voluptuous>=0.8.7'],
+                        'voluptuous>=0.8.7', 'aiocron>=0.3'],
 
     classifiers = [
         "Development Status :: 3 - Alpha",

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+SANDBOX=$PWD
+
+myuid=`id -u`
+mygid=`id -g`
+
+# Copy the base-apps into this sandbox directory so we can work on it.
+
+if [ ! -d $SANDBOX/base-apps ]; then
+    docker run -i --rm=true -v /home:/home garywiz/chaperone-baseimage --disable --exitkills --log err \
+	/bin/bash -c "cp -a /apps $SANDBOX/base-apps; chown -R $myuid:$mygid $SANDBOX/base-apps"
+fi
+
+# Run the base image using our local copy of chaperone as well as the base-apps directory
+
+docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home \
+    --entrypoint $SANDBOX/chaperone garywiz/chaperone-baseimage \
+    --create $USER/$myuid \
+    --config $SANDBOX/base-apps/chaperone.d $* \
+     /bin/bash

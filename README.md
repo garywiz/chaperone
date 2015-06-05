@@ -1,7 +1,7 @@
 Chaperone: A lean init-style startup manager for Docker-like containers
 -----------------------------------------------------------------------
 
-*IMPORTANT*:  This project has just begun and is is PRE-ALPHA phase.  Explore at your own risk.
+*IMPORTANT*:  This project has just begun and is is pre-Beta phase.  Explore at your own risk.
 
 This is a lean, full-featured process which runs at the root of a docker
 container tree.  It provides:
@@ -16,6 +16,9 @@ container tree.  It provides:
 * The ability to start up system services, with options for per-service
   environment variables, restart options, and stdout/stderr capture either
   to the log service or stdout.
+* A built-in cron scheduling service.
+* Emultation of systemd notifications (sd_notify) so services can post
+  ready and status notifications to chaperone.
 * Process monitoring and zombie elimination, along with organized system
   shutdown to assure all daemons shut-down gracefully.
 * The ability to have an optional controlling process, specified on the 
