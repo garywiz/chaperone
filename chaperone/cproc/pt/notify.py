@@ -103,6 +103,8 @@ class NotifyProcess(SubProcess):
         self._close_notifier()
         if isinstance(result, int) and result > 0:
             yield from self._abnormal_exit(result)
+        else:
+            yield from self.reset()
             
     def have_notify(self, var, value):
         callfunc = getattr(self, "notify_" + var.upper(), None)

@@ -38,7 +38,6 @@ class CronProcess(SubProcess):
 
     @asyncio.coroutine
     def _cron_hit(self):
-        print("CRON_HIT", self)
         if self.enabled:
             if self.running:
                 warn("cron service {0} is still running when next interval expired, will not run again", self.name)
