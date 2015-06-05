@@ -13,7 +13,8 @@ from chaperone.cutil.misc import lazydict, lookup_user
 from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
-def _process_logger(stream, kind):
+def _process_logger(stream, kind, name):
+    name = name.replace('.service', '')
     while True:
         data = yield from stream.readline()
         if not data:
@@ -24,9 +25,9 @@ def _process_logger(stream, kind):
         if kind == 'stderr':
             # we map to warning because stderr output is "to be considered" and not strictly
             # erroneous
-            warn(line, facility=syslog_info.LOG_DAEMON)
+            warn("({0}) {1}".format(name, line), facility=syslog_info.LOG_DAEMON)
         else:
-            info(line, facility=syslog_info.LOG_DAEMON)
+            info("({0}) {1}".format(name, line), facility=syslog_info.LOG_DAEMON)
 
 
 class SubProcess(object):
@@ -101,10 +102,11 @@ class SubProcess(object):
         if self._pwrec:
             os.setgid(self._pwrec.pw_gid)
             os.setuid(self._pwrec.pw_uid)
-            try:
-                os.chdir(self._pwrec.pw_dir)
-            except Exception as ex:
-                pass
+            if not self.service.directory:
+                try:
+                    os.chdir(self._pwrec.pw_dir)
+                except Exception as ex:
+                    pass
         return
 
     @property
@@ -215,6 +217,8 @@ class SubProcess(object):
             kwargs['stdout'] = asyncio.subprocess.PIPE
         if service.stderr == 'log':
             kwargs['stderr'] = asyncio.subprocess.PIPE
+        if service.directory:
+            kwargs['cwd'] = service.directory
 
         env = service.environment
         if env:
@@ -242,9 +246,9 @@ class SubProcess(object):
         self.pid = proc.pid
 
         if service.stdout == 'log':
-            self.add_pending(asyncio.async(_process_logger(proc.stdout, 'stdout')))
+            self.add_pending(asyncio.async(_process_logger(proc.stdout, 'stdout', self.name)))
         if service.stderr == 'log':
-            self.add_pending(asyncio.async(_process_logger(proc.stderr, 'stderr')))
+            self.add_pending(asyncio.async(_process_logger(proc.stderr, 'stderr', self.name)))
 
         if service.exit_kills:
             self.add_pending(asyncio.async(self._wait_kill_on_exit()))
@@ -294,6 +298,7 @@ class SubProcess(object):
 
         if service.ignore_failures:
             debug("{0} abnormal process exit ignored due to ignore_failures=true", service.name)
+            yield from self.reset()
             return
 
         error("{0} terminated abnormally with {1}", service.name, code)
@@ -325,10 +330,6 @@ class SubProcess(object):
     @asyncio.coroutine
     def stop(self):
         self.service.enabled = False
-
-        if not self.running:
-            return
-
         self._starts_allowed = 0
         yield from self.reset()
         

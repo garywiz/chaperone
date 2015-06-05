@@ -26,6 +26,7 @@ _config_schema = V.Any(
         'after': str,
         'before': str,
         V.Required('command'): str,
+        'directory': str,
         'debug': bool,
         'enabled': bool,
         'env_inherit': [ str ],
@@ -63,6 +64,7 @@ _config_schema = V.Any(
         'filter': str,
         'stderr': bool,
         'stdout': bool,
+        'overwrite': bool,
         'uid': V.Any(str, int),
         'gid': V.Any(str, int),
      },
@@ -155,6 +157,7 @@ class ServiceConfig(_BaseConfig):
     before = None
     command = None
     debug = None
+    directory = None
     enabled = True
     exit_kills = False
     gid = None
@@ -178,7 +181,7 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'stdout', 'stderr', 'interval'}
+    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'ignore_failures'}
 
     def post_init(self):
@@ -198,6 +201,7 @@ class LogConfig(_BaseConfig):
     stderr = False
     stdout = False
     enabled = True
+    overwrite = False
     extended = False            # include facility/priority information
     uid = None                  # used to control permissions on logfile creation
     gid = None

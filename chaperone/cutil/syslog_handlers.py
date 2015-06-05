@@ -113,11 +113,12 @@ class FileHandler(LogOutput):
         if self._stat:
             self.handle.flush()
             self.handle.close()
+            self.handle = self._stat = None
 
         env = self.config.environment
         self._cur_filename = new_filename
 
-        self.handle = open_foruser(new_filename, 'w', env.uid, env.gid)
+        self.handle = open_foruser(new_filename, 'w' if self.config.overwrite else 'a', env.uid, env.gid)
         self._stat = os.fstat(self.handle.fileno())
 
     def close(self):
