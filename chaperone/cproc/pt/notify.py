@@ -67,7 +67,7 @@ class NotifyProcess(SubProcess):
         service = self.service
         message = "notify service '{1}' did not receieve ready notification after {2} second(s), {3}".format(
             service.type,
-            service.name, service.process_timeout, 
+            service.name, self.process_timeout, 
             "proceeding due to 'ignore_failures=True'" if service.ignore_failures else
             "terminating due to 'ignore_failures=False'")
         if not service.ignore_failures:
@@ -89,7 +89,7 @@ class NotifyProcess(SubProcess):
 
         if self._ready_event:
             try:
-                yield from asyncio.wait_for(self._ready_event.wait(), self.service.process_timeout)
+                yield from asyncio.wait_for(self._ready_event.wait(), self.process_timeout)
             except asyncio.TimeoutError:
                 self._ready_event = None
                 self._notify_timeout()

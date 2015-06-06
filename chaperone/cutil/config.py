@@ -164,7 +164,7 @@ class ServiceConfig(_BaseConfig):
     interval = None
     ignore_failures = False
     optional = False
-    process_timeout = 10.0      # time to elapse before we decide a process has misbehaved
+    process_timeout = None      # time to elapse before we decide a process has misbehaved
     restart = False
     restart_limit = 5           # number of times to invoke a restart before giving up
     restart_delay = 3           # number of seconds to delay between restarts

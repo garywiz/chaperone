@@ -19,7 +19,7 @@ def _process_logger(stream, kind, name):
         data = yield from stream.readline()
         if not data:
             return
-        line = data.decode('ascii').rstrip()
+        line = data.decode('ascii', 'ignore').rstrip()
         if not line:
             continue            # ignore blank lines in stdout/stderr
         if kind == 'stderr':
@@ -35,6 +35,8 @@ class SubProcess(object):
     pid = None
     service = None              # service object
     family = None
+    process_timeout = 30.0      # process_timeout will be set to this unless it is overridden by 
+                                # the service entry
 
     _proc = None
     _pwrec = None               # the pwrec looked up for execution user/group
@@ -73,6 +75,9 @@ class SubProcess(object):
         self.family = family
 
         self._pending = set()
+
+        if service.process_timeout is not None:
+            self.process_timeout = service.process_timeout
 
         # Allow no auto-starts
         self._starts_allowed = 0
@@ -396,9 +401,9 @@ class SubProcessFamily(lazydict):
         Runs the family, starting up services in dependency order.  If any problems
         occur, an exception is raised.
         """
-
-        for s in self.values():
-            yield from s.start(False)
+        # Note that all tasks are started simultaneously, but they resolve their
+        # interdependencies themselves.
+        yield from asyncio.gather(*[s.start(False) for s in self.values()])
 
     def get_status_formatter(self):
         df = TableFormatter('pid', 'name', 'enabled', 'status', 'note', sort='name')

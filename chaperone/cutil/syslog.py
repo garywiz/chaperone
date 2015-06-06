@@ -192,7 +192,7 @@ class SyslogServerProtocol(asyncio.Protocol):
 
     def data_received(self, data):
         try:
-            message = data.decode()
+            message = data.decode('ascii', 'ignore')
         except Exception as ex:
             self._output("Could not decode SYSLOG record data")
             sys.stdout.flush()
