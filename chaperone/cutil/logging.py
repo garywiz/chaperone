@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import traceback
+from time import strftime
 
 from logging.handlers import SysLogHandler
 from functools import partial
@@ -22,18 +23,35 @@ _root_logger.addHandler(_stderr_handler)
 def set_log_level(lev):
     logger.setLevel(syslog_info.syslog_to_python_lev(lev))
 
+
 class CustomSysLog(SysLogHandler):
 
     def emit(self, record):
         self.facility = getattr(record, '_facility', syslog_info.LOG_LOCAL5)
         super().emit(record)
 
+
+class SysLogFormatter(logging.Formatter):
+    """
+    Handles formatting Python output in the same format as normal syslog daemons.
+    """
+
+    def __init__(self, program, pid):
+        super().__init__('{asctime} %s[%d]: {message}' % (program, pid), style='{')
+
+    def formatTime(self, record, datefmt=None):
+        timestr = strftime('%b %d %H:%M:%S', self.converter(record.created))
+        # this may be picky, but people parse syslogs, let's not annoy them
+        if timestr[3:5] == ' 0':
+            return timestr.replace(' 0', '  ', 1)
+        return timestr
+
+        
 def enable_syslog_handler(enable = True):
     global _syslog_handler
     if enable:
         _syslog_handler = CustomSysLog('/dev/log')
-        sf = logging.Formatter('{asctime} %s[%d]: {message}' % (sys.argv[0] or '-', os.getpid()), 
-                               datefmt="%b %d %H:%M:%S", style='{')
+        sf = SysLogFormatter(sys.argv[0] or '-', os.getpid())
         _syslog_handler.setFormatter(sf)
         _root_logger.addHandler(_syslog_handler)
         _root_logger.removeHandler(_stderr_handler)

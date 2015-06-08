@@ -222,7 +222,7 @@ class TopLevelProcess(objectplus):
             for s in extra_services:
                 services.add(s)
 
-        family = self._family = SubProcessFamily(self, services.get_startup_list())
+        family = self._family = SubProcessFamily(self, services)
         try:
             yield from family.run()
         finally:

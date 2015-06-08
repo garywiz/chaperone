@@ -167,11 +167,6 @@ class _syslog_spec_matcher:
         return result
 
         
-def create_unix_datagram_server(proto, path):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    sock.bind(path)
-    return loop.create_unix_server(SyslogServerProtocol, sock=sock)
-
 class SyslogServerProtocol(asyncio.Protocol):
 
     def __init__(self, parent):

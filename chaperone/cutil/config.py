@@ -42,7 +42,7 @@ _config_schema = V.Any(
         'process_timeout': V.Any(float, int),
         'restart': bool,
         'restart_limit': int,
-        'service_group': str,
+        'service_groups': str,
         'setpgrp': bool,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
@@ -185,7 +185,7 @@ class ServiceConfig(_BaseConfig):
     restart_limit = 5           # number of times to invoke a restart before giving up
     restart_delay = 3           # number of seconds to delay between restarts
     setpgrp = True              # if this process should run in its own process group
-    service_group = "default"
+    service_groups = "default"  # will be transformed into a tuple() upon construction
     stderr = "log"
     stdout = "log"
     type = 'simple'
@@ -197,7 +197,7 @@ class ServiceConfig(_BaseConfig):
 
     prerequisites = None        # a list of service names which are prerequisites to this one
 
-    _repr_pat = "Service:{0.name}(service_group={0.service_group}, after={0.after}, before={0.before})"
+    _repr_pat = "Service:{0.name}(service_groups={0.service_groups}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'ignore_failures'}
 
@@ -218,9 +218,10 @@ class ServiceConfig(_BaseConfig):
         if self.kill_signal is not None:
             self.kill_signal = get_signal_number(self.kill_signal)
 
-        # Expand before and after into sets
+        # Expand before, after and service_groups into sets/tuples
         self.before = set(_RE_LISTSEP.split(self.before)) if self.before is not None else set()
         self.after = set(_RE_LISTSEP.split(self.after)) if self.after is not None else set()
+        self.service_groups = tuple(_RE_LISTSEP.split(self.service_groups)) if self.service_groups is not None else tuple()
 
         if 'IDLE' in self.after:
             raise Exception("{0} cannot specify services which start *after* service_group IDLE".format(self.name))
@@ -266,68 +267,12 @@ class ServiceDict(lazydict):
         super().clear()
         self._ordered_startup = None
 
-    def xxxget_dependency_graph(self):
-        """
-        Returns a set of dependency groups.  Each group represents a set of dependencies starting at the
-        root of the dependency tree.  This is valuable for debugging dependencies.
-        """
-        def _get_simul(node, seen = None):
-            if seen is None:
-                seen = {node}
-            elif node in seen:
-                return ()
-            else:
-                seen.add(node)
-            return sum((_get_simul(self[n], seen) for n in node.prerequisites), (node,))
-
-        return tuple(tuple(tuple(n.name for n in _get_simul(s))) for s in self.get_startup_list())
-
-    def yyyget_dependency_graph(self):
-        """
-        Returns a set of dependency groups.  Each group represents a set of dependencies starting at the
-        root of the dependency tree.  This is valuable for debugging dependencies.
-        """
-
-        nodes = dict()
-
-        def _setdist(nodelist, dist = -1):
-            dist += 1
-            for n in nodelist:
-                nodes[n] = max(dist, nodes.get(n, 0))
-                _setdist([self[name] for name in n.prerequisites], dist)
-
-        _setdist(self.get_startup_list())
-
-        changed = True
-        while changed:
-            changed = False
-            for k in nodes.keys():
-                if k.prerequisites:
-                    bestval = min(nodes[self[pr]] for pr in k.prerequisites) - 1
-                    if nodes[k] != bestval:
-                        changed = True
-                        nodes[k] = bestval
-
-        ncols = max(nodes.values()) + 1
-        cols = [['->'] for x in range(ncols)]
-        for k,v in nodes.items():
-            cols[ncols-v-1].append(k.shortname)
-
-        colwidth = max(len(k.shortname) for k in nodes.keys())
-        rows = max(len(c) for c in cols)
-
-        graph = list()
-        for row in range(rows):
-            graph.append(" | ".join(' ' * colwidth if row >= len(c) else c[row].ljust(colwidth) for c in cols))
-
-        print("\n".join(graph))
-
-        exit(0)
-
     def get_dependency_graph(self):
         """
         Returns a set of dependency groups.  Each group represents a set of dependencies starting at the
-        root of the dependency tree.  This is valuable for debugging dependencies.
+        root of the dependency tree.  This is valuable for debugging dependencies.   The output graph
+        is ascii-art which shows the earliest start times and latest stop times for each service,
+        roughly in order of start-up.
         """
 
         sep = ' | '
@@ -372,7 +317,8 @@ class ServiceDict(lazydict):
         services = self.deepcopy()
         groups = lazydict()
         for k,v in services.items():
-            groups.setdefault(v.service_group, lambda: lazydict())[k] = v
+            for g in v.service_groups:
+                groups.setdefault(g, lambda: lazydict())[k] = v
 
         #print_services('initial', services.values())
 
@@ -381,11 +327,11 @@ class ServiceDict(lazydict):
         # where all-others is an explicit list of all services NOT in the respective group
 
         if 'IDLE' in groups:
-            nonidle = set(k for k,v in services.items() if v.service_group != "IDLE")
+            nonidle = set(k for k,v in services.items() if "IDLE" not in v.service_groups)
             for s in groups['IDLE'].values():
                 s.after.update(nonidle)
         if 'INIT' in groups:
-            noninit = set(k for k,v in services.items() if v.service_group != "INIT")
+            noninit = set(k for k,v in services.items() if "INIT" not in v.service_groups)
             for s in groups['INIT'].values():
                 s.before.update(noninit)
 
@@ -415,6 +361,9 @@ class ServiceDict(lazydict):
                 
         # Now remove any undefined services or groups and turn the 'after' attribute into a definitive
         # graph.
+        #
+        # Note: sorted() occurs a couple times below.  The main reason is so that the results
+        #       are deterministic in cases where exact order is not defined.
 
         afters = set(services.keys())
         for v in services.values():

@@ -169,7 +169,7 @@ def main_entry():
                                              uid=user,
                                              setpgrp=not tty,
                                              exit_kills=kill_switch,
-                                             service_group="IDLE",
+                                             service_groups="IDLE",
                                              ignore_failures="true",
                                              stderr='inherit', stdout='inherit')
          extra_services = [cmdsvc]

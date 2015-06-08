@@ -175,14 +175,14 @@ class SubProcess(object):
         service = self.service
 
         if self._started:
-            debug("service {0} started.  further starts ignored.", service.name)
+            debug("service {0} already started.  further starts ignored.", service.name)
             return
 
         if not service.enabled:
             debug("service {0} not enabled, will be skipped", service.name)
             return
         else:
-            debug("service {0} enabled, recieved start request", service.name)
+            debug("service {0} enabled, queueing start request", service.name)
 
         # If this service is already starting, then just wait until it completes.
 
@@ -209,7 +209,7 @@ class SubProcess(object):
                     debug("service {0} prerequisites satisfied", service.name)
 
                 # idle only makes sense for families
-                if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
+                if "IDLE" in service.service_groups and service.idle_delay and not hasattr(self.family, '_idle_hit'):
                     self.family._idle_hit = True
                     debug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
                     yield from asyncio.sleep(service.idle_delay)
@@ -344,7 +344,7 @@ class SubProcess(object):
 
     @asyncio.coroutine
     def reset(self, restart = False):
-        debug("{0} receieved reset", self.name)
+        debug("{0} received reset", self.name)
 
         if self._proc:
             if self._proc.returncode is None:
@@ -419,8 +419,9 @@ class SubProcess(object):
 class SubProcessFamily(lazydict):
 
     controller = None           # top level system controller
+    services_config = None
 
-    def __init__(self, controller, startup_list):
+    def __init__(self, controller, services_config):
         """
         Given a pre-analyzed list of processes, complete with prerequisites, build a process
         family.
@@ -428,8 +429,9 @@ class SubProcessFamily(lazydict):
         super().__init__()
 
         self.controller = controller
+        self.services_config = services_config
 
-        for s in startup_list:
+        for s in services_config.get_startup_list():
             self[s.name] = SubProcess(s, family = self)
 
     @asyncio.coroutine

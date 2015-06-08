@@ -11,10 +11,10 @@ import chaperone.cutil.syslog_info as syslog_info
 
 COMMAND_DOC = """
 Usage: telchap status
-       telchap shutdown
        telchap loglevel [<level>]
        telchap stop [--ignore-errors] [--wait] [<servname> ...]
        telchap start [--ignore-errors] [--wait] [--enable] [<servname> ...]
+       telchap dependencies
 """
 
 CHAP_FIFO = "/dev/chaperone"
@@ -58,6 +58,16 @@ class statusCommand(_BaseCommand):
         msg = STMSG.format(controller, len(serv), len([s for s in serv.values() if s.enabled]))
         msg += "\nServices:\n\n" + str(serv.get_status_formatter().get_formatted_data()) + "\n"
         return msg
+
+class dependenciesCommand(_BaseCommand):
+
+    command_name = "dependencies"
+    interactive_only = True
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        graph = controller.services.services_config.get_dependency_graph()
+        return "\n".join(graph)
 
 class serviceStop(_BaseCommand):
 
@@ -114,6 +124,7 @@ COMMANDS = (
     statusCommand(),
     serviceStop(),
     serviceStart(),
+    dependenciesCommand(),
 )
 
 class CommandProtocol(ServerProtocol):
