@@ -12,7 +12,7 @@ import chaperone.cutil.syslog_info as syslog_info
 COMMAND_DOC = """
 Usage: telchap status
        telchap loglevel [<level>]
-       telchap stop [--force] [--wait] [<servname> ...]
+       telchap stop [--force] [--wait] [--disable] [<servname> ...]
        telchap start [--force] [--wait] [--enable] [<servname> ...]
        telchap reset [--force] [--wait] [<servname> ...]
        telchap enable [<servname> ...]
@@ -74,18 +74,6 @@ class dependenciesCommand(_BaseCommand):
         graph = controller.services.services_config.get_dependency_graph()
         return "\n".join(graph)
 
-class serviceStop(_BaseCommand):
-
-    command_name = 'stop'
-
-    @asyncio.coroutine
-    def do_exec(self, opts, controller):
-        wait = opts['--wait'] and self.interactive
-        yield from controller.services.stop(opts['<servname>'], force = opts['--force'], wait = wait)
-        if wait:
-            return "services stopped."
-        return "services stopping."
-
 class serviceReset(_BaseCommand):
 
     command_name = 'reset'
@@ -127,6 +115,20 @@ class serviceStart(_BaseCommand):
         if wait:
             return "services started."
         return "service start-up queued."
+
+class serviceStop(_BaseCommand):
+
+    command_name = 'stop'
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        wait = opts['--wait'] and self.interactive
+        yield from controller.services.stop(opts['<servname>'], force = opts['--force'], 
+                                            wait = wait,
+                                            disable = opts['--disable'])
+        if wait:
+            return "services stopped."
+        return "services stopping."
 
 class loglevelCommand(_BaseCommand):
 

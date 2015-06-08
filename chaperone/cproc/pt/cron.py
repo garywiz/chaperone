@@ -6,7 +6,6 @@ from chaperone.cproc.subproc import SubProcess
 class CronProcess(SubProcess):
 
     _cron = None
-    _force_enable = False
     _fut_monitor = None
 
     def __init__(self, service, family=None):
@@ -23,15 +22,12 @@ class CronProcess(SubProcess):
         return None
 
     @asyncio.coroutine
-    def start(self, enable = True):
+    def start(self):
         """
         Takes over startup and sets up our cron loop to handle starts instead.
         """
-        self._force_enable = enable
-        if not (self.enabled or enable):
+        if not self.enabled:
             return
-
-        self.enabled = True
 
         # Start up cron
         self._cron.start()
@@ -43,7 +39,7 @@ class CronProcess(SubProcess):
                 warn("cron service {0} is still running when next interval expired, will not run again", self.name)
             else:
                 info("cron service {0} starting", self.name)
-                yield from super().start(self._force_enable)
+                yield from super().start()
 
     @asyncio.coroutine
     def stop(self):

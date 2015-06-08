@@ -547,7 +547,7 @@ class SubProcessFamily(lazydict):
             started = [s for s in slist if s.started]
             if started:
                 raise Exception("can't restart services without stop/reset: " + ", ".join([s.shortname for s in started]))
-            notready = [s for s in slist if not s.ready]
+            notready = [s for s in slist if not s.ready and (s.enabled and not enable)]
             if notready:
                 raise Exception("services or their prerequisites are not ready: " + ", ".join([s.shortname for s in notready]))
 
@@ -577,7 +577,7 @@ class SubProcessFamily(lazydict):
             error("queued start (for {0}) failed: {1}", names, ex)
             
     @asyncio.coroutine
-    def stop(self, service_names, force = False, wait = False):
+    def stop(self, service_names, force = False, wait = False, disable = False):
         slist = self._lookup_services(service_names)
         started = [s for s in slist if s.started]
 
@@ -587,16 +587,20 @@ class SubProcessFamily(lazydict):
                                 ", ".join([s.shortname for s in slist if not s.started]))
 
         if not wait:
-            asyncio.async(self._queued_stop(slist, service_names))
+            asyncio.async(self._queued_stop(slist, service_names, disable))
         else:
             for s in slist:
                 yield from s.stop()
+                if disable:
+                    s.enabled = False
 
     @asyncio.coroutine
-    def _queued_stop(self, slist, names):
+    def _queued_stop(self, slist, names, disable):
         try:
             for s in slist:
                 yield from s.stop()
+                if disable:
+                    s.enabled = False
         except Exception as ex:
             error("queued stop (for {0}) failed: {1}", names, ex)
 
