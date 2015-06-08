@@ -40,6 +40,7 @@ _config_schema = V.Any(
         'kill_signal': str,
         'optional': bool,
         'process_timeout': V.Any(float, int),
+        'startup_pause': V.Any(float, int),
         'restart': bool,
         'restart_limit': int,
         'service_groups': str,
@@ -58,6 +59,7 @@ _config_schema = V.Any(
         'idle_delay': V.Any(float, int),
         'ignore_failures': bool,
         'process_timeout': V.Any(float, int),
+        'startup_pause': V.Any(float, int),
         'uid': V.Any(str, int),
       },
       V.Match('^.+\.logging'): {
@@ -181,6 +183,7 @@ class ServiceConfig(_BaseConfig):
     kill_signal = None
     optional = False
     process_timeout = None      # time to elapse before we decide a process has misbehaved
+    startup_pause = 0.5         # time to wait momentarily to see if a service starts (if needed)
     restart = False
     restart_limit = 5           # number of times to invoke a restart before giving up
     restart_delay = 3           # number of seconds to delay between restarts
@@ -199,7 +202,7 @@ class ServiceConfig(_BaseConfig):
 
     _repr_pat = "Service:{0.name}(service_groups={0.service_groups}, after={0.after}, before={0.before})"
     _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory'}
-    _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'ignore_failures'}
+    _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'startup_pause', 'ignore_failures'}
 
     @property
     def shortname(self):

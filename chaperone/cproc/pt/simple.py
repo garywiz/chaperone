@@ -5,8 +5,6 @@ class SimpleProcess(SubProcess):
 
     _fut_monitor = None
 
-    startup_pause = 0.5
-
     @asyncio.coroutine
     def process_started_co(self):
         if self._fut_monitor and not self._fut_monitor.cancelled():
@@ -21,7 +19,7 @@ class SimpleProcess(SubProcess):
                 result = yield from self.timed_wait(self.startup_pause)
             except asyncio.TimeoutError:
                 result = None
-            if result is not None and result > 0 and self._starts_allowed == 0:
+            if result is not None and result > 0:
                 raise Exception("{0} failed on start-up during {1}sec grace period".format(self.name, self.startup_pause))
                 yield from self._abnormal_exit(result)
 

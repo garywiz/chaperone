@@ -12,8 +12,11 @@ import chaperone.cutil.syslog_info as syslog_info
 COMMAND_DOC = """
 Usage: telchap status
        telchap loglevel [<level>]
-       telchap stop [--ignore-errors] [--wait] [<servname> ...]
-       telchap start [--ignore-errors] [--wait] [--enable] [<servname> ...]
+       telchap stop [--force] [--wait] [<servname> ...]
+       telchap start [--force] [--wait] [--enable] [<servname> ...]
+       telchap reset [--force] [--wait] [<servname> ...]
+       telchap enable [<servname> ...]
+       telchap disable [<servname> ...]
        telchap dependencies
 """
 
@@ -24,6 +27,7 @@ class _BaseCommand(object):
 
     command_name = "X"
     interactive_only = False
+    interactive = False
 
     def match(self, opts):
         if isinstance(self.command_name, tuple):
@@ -31,11 +35,12 @@ class _BaseCommand(object):
         return opts.get(self.command_name, False)
 
     @asyncio.coroutine
-    def exec(self, opts, controller):
+    def exec(self, opts, protocol):
         #result = yield from self.do_exec(opts, controller)
         #return str(result)
+        self.interactive = protocol.interactive
         try:
-            result = yield from self.do_exec(opts, controller)
+            result = yield from self.do_exec(opts, protocol.parent.controller)
             return str(result)
         except Exception as ex:
             return "Command error: " + str(ex)
@@ -75,11 +80,39 @@ class serviceStop(_BaseCommand):
 
     @asyncio.coroutine
     def do_exec(self, opts, controller):
-        yield from controller.services.stop(opts['<servname>'], ignore_errors = opts['--ignore-errors'],
-                                            wait = opts['--wait'])
-        if opts['--wait']:
+        wait = opts['--wait'] and self.interactive
+        yield from controller.services.stop(opts['<servname>'], force = opts['--force'], wait = wait)
+        if wait:
             return "services stopped."
         return "services stopping."
+
+class serviceReset(_BaseCommand):
+
+    command_name = 'reset'
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        wait = opts['--wait'] and self.interactive
+        yield from controller.services.reset(opts['<servname>'], force = opts['--force'], wait = wait)
+        return "services reset."
+
+class serviceEnable(_BaseCommand):
+
+    command_name = 'enable'
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        yield from controller.services.enable(opts['<servname>'])
+        return "services enabled."
+
+class serviceDisable(_BaseCommand):
+
+    command_name = 'disable'
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        yield from controller.services.disable(opts['<servname>'])
+        return "services disabled."
 
 class serviceStart(_BaseCommand):
 
@@ -87,10 +120,11 @@ class serviceStart(_BaseCommand):
 
     @asyncio.coroutine
     def do_exec(self, opts, controller):
-        yield from controller.services.start(opts['<servname>'], ignore_errors = opts['--ignore-errors'],
-                                             wait = opts['--wait'],
+        wait = opts['--wait'] and self.interactive
+        yield from controller.services.start(opts['<servname>'], force = opts['--force'],
+                                             wait = wait,
                                              enable = opts['--enable'])
-        if opts['--wait']:
+        if wait:
             return "services started."
         return "service start-up queued."
 
@@ -124,6 +158,9 @@ COMMANDS = (
     statusCommand(),
     serviceStop(),
     serviceStart(),
+    serviceReset(),
+    serviceEnable(),
+    serviceDisable(),
     dependenciesCommand(),
 )
 
@@ -145,7 +182,7 @@ class CommandProtocol(ServerProtocol):
             result = "?"
             for c in COMMANDS:
                 if c.match(options) and (not c.interactive_only or self.interactive):
-                    result = yield from c.exec(options, self.parent.controller)
+                    result = yield from c.exec(options, self)
                     break
             result = "RESULT\n" + result
         return result

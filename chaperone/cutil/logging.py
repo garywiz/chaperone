@@ -37,7 +37,18 @@ class SysLogFormatter(logging.Formatter):
     """
 
     def __init__(self, program, pid):
-        super().__init__('{asctime} %s[%d]: {message}' % (program, pid), style='{')
+
+        self.default_program = program
+        self.default_pid = pid
+
+        super().__init__('{asctime} {program_name}[{program_pid}]: {message}', style='{')
+
+    def format(self, record):
+        if not hasattr(record, 'program_name'):
+            setattr(record, 'program_name', self.default_program)
+        if not hasattr(record, 'program_pid'):
+            setattr(record, 'program_pid', self.default_pid)
+        return super().format(record)
 
     def formatTime(self, record, datefmt=None):
         timestr = strftime('%b %d %H:%M:%S', self.converter(record.created))
@@ -60,7 +71,9 @@ def enable_syslog_handler(enable = True):
         _syslog_handler = None
         _root_logger.addHandler(_stderr_handler)
 
-def _versatile_logprint(delegate, fmt, *args, facility=None, exceptions=False, **kwargs):
+def _versatile_logprint(delegate, fmt, *args, 
+                        facility=None, exceptions=False, 
+                        program=None, pid=None, **kwargs):
     """
     In addition to standard log formatting, the following two special cases are
     covered:
@@ -83,9 +96,16 @@ def _versatile_logprint(delegate, fmt, *args, facility=None, exceptions=False, *
     else:
         ex = None
 
-    if facility:
-        kwargs['extra'] = {'_facility': facility}
+    if facility or program or pid:
+        extra = kwargs['extra'] = {}
+        if facility:
+            extra['_facility'] = facility
+        if program:
+            extra['program_name'] = str(program)
+        if pid:
+            extra['program_pid'] = str(pid)
 
+    
     if ex and (exceptions or logger.level == logging.DEBUG): # use python level here
         trace = "\n" + traceback.format_exc()
     else:
