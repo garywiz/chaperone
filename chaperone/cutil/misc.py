@@ -2,7 +2,7 @@ import os
 import pwd
 import grp
 import copy
-
+import signal
 
 class objectplus:
     """
@@ -186,3 +186,25 @@ def open_foruser(filename, mode = 'r', uid = None, gid = None, exists_ok = True)
         os.chmod(rp, 0o644 if not gid else 0o664)
 
     return fobj
+
+
+SIGDICT = dict((v,k) for k,v in sorted(signal.__dict__.items())
+               if k.startswith('SIG') and not k.startswith('SIG_'))
+
+def get_signal_name(signum):
+    return SIGDICT.get(signum, "SIG%d" % signum)
+
+def get_signal_number(signame):
+    sup = signame.upper()
+    if sup.startswith('SIG') and not sup.startswith('SIG_'):
+        num = getattr(signal, sup, None)
+    else:
+        try:
+            num = int(signame)
+        except ValueError:
+            num = None
+    
+    if num is None:
+        raise Exception("Invalid signal specifier: " + str(signame))
+
+    return num

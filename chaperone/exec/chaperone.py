@@ -4,7 +4,7 @@ Lightweight process and service manager
 Usage:
     chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
               [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
-              [--debug] [--force] [--disable-services] [--no-defaults] [--version]
+              [--debug] [--force] [--disable-services] [--no-defaults] [--version] [--show-dependencies]
               [<command> [<args> ...]]
 
 Options:
@@ -20,6 +20,7 @@ Options:
     --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
     --no-defaults            Ignores any default options in the CHAPERONE_OPTIONS environment variable
     --user=<name>            Start first process as user (else root)
+    --show-dependencies      Shows a list of service dependencies then exits
     --version                Display version and exit
 
 Notes:
@@ -132,6 +133,11 @@ def main_entry():
       print(MSG_NOTHING_TO_DO)
       exit(1)
 
+   if options['--show-dependencies']:
+      dg = services.get_dependency_graph()
+      print("\n".join(dg))
+      exit(0)
+
    if not cmd and options['--disable-services']:
       error("--disable-services not valid without specifying a command to run")
       exit(1)
@@ -161,6 +167,7 @@ def main_entry():
                                              name="CONSOLE",
                                              exec_args=[cmd] + options['<args>'],
                                              uid=user,
+                                             setpgrp=not tty,
                                              exit_kills=kill_switch,
                                              service_group="IDLE",
                                              ignore_failures="true",

@@ -2,14 +2,15 @@ import os
 import re
 import pwd
 import shlex
+from operator import attrgetter
 from copy import deepcopy
 
 import yaml
 import voluptuous as V
 
-from chaperone.cutil.env import Environment, ENV_CONFIG_DIR
+from chaperone.cutil.env import Environment, ENV_CONFIG_DIR, ENV_SERVICE
 from chaperone.cutil.logging import info, warn, debug
-from chaperone.cutil.misc import lazydict, lookup_user
+from chaperone.cutil.misc import lazydict, lookup_user, get_signal_number
 
 @V.message('not an executable file', cls=V.FileInvalid)
 @V.truth
@@ -36,11 +37,13 @@ _config_schema = V.Any(
         'gid': V.Any(str, int),
         'ignore_failures': bool,
         'interval': str,
+        'kill_signal': str,
         'optional': bool,
         'process_timeout': V.Any(float, int),
         'restart': bool,
         'restart_limit': int,
         'service_group': str,
+        'setpgrp': bool,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
         'type': V.Any('oneshot', 'simple', 'forking', 'notify', 'cron'),
@@ -132,6 +135,12 @@ class _BaseConfig(object):
 
         # We can now use 'self' as our config, with all defaults
 
+        env = Environment(env, uid=uid, gid=gid, config=self)
+        self.augment_environment(env)
+        env = env.expanded()
+
+        if self._expand_these:
+            env.expand_attributes(self, *self._expand_these)
         if env:
             env = self.environment = Environment(env, uid=uid, gid=gid, config=self).expanded()
             if self._expand_these:
@@ -139,7 +148,13 @@ class _BaseConfig(object):
 
         self.post_init()
 
+    def shortname(self):
+        return self.name
+
     def post_init(self):
+        pass
+
+    def augment_environment(self, env):
         pass
 
     def get(self, attr, default = None):
@@ -163,11 +178,13 @@ class ServiceConfig(_BaseConfig):
     gid = None
     interval = None
     ignore_failures = False
+    kill_signal = None
     optional = False
     process_timeout = None      # time to elapse before we decide a process has misbehaved
     restart = False
     restart_limit = 5           # number of times to invoke a restart before giving up
     restart_delay = 3           # number of seconds to delay between restarts
+    setpgrp = True              # if this process should run in its own process group
     service_group = "default"
     stderr = "log"
     stdout = "log"
@@ -184,14 +201,31 @@ class ServiceConfig(_BaseConfig):
     _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'ignore_failures'}
 
+    @property
+    def shortname(self):
+        return self.name.replace('.service', '')
+
+    def augment_environment(self, env):
+        if self.name:
+            env[ENV_SERVICE] = self.name
+
     def post_init(self):
         # Assure that exec_args is set to the actual arguments used for execution
         if self.command:
             self.exec_args = shlex.split(self.command)
 
+        # Lookup signal number
+        if self.kill_signal is not None:
+            self.kill_signal = get_signal_number(self.kill_signal)
+
         # Expand before and after into sets
         self.before = set(_RE_LISTSEP.split(self.before)) if self.before is not None else set()
         self.after = set(_RE_LISTSEP.split(self.after)) if self.after is not None else set()
+
+        if 'IDLE' in self.after:
+            raise Exception("{0} cannot specify services which start *after* service_group IDLE".format(self.name))
+        if 'INIT' in self.before:
+            raise Exception("{0} cannot specify services which start *before* service_group INIT".format(self.name))
 
         
 class LogConfig(_BaseConfig):
@@ -207,6 +241,10 @@ class LogConfig(_BaseConfig):
     gid = None
 
     _expand_these = {'filter', 'file'}
+
+    @property
+    def shortname(self):
+        return self.name.replace('.logging', '')
 
 
 class ServiceDict(lazydict):
@@ -228,6 +266,101 @@ class ServiceDict(lazydict):
         super().clear()
         self._ordered_startup = None
 
+    def xxxget_dependency_graph(self):
+        """
+        Returns a set of dependency groups.  Each group represents a set of dependencies starting at the
+        root of the dependency tree.  This is valuable for debugging dependencies.
+        """
+        def _get_simul(node, seen = None):
+            if seen is None:
+                seen = {node}
+            elif node in seen:
+                return ()
+            else:
+                seen.add(node)
+            return sum((_get_simul(self[n], seen) for n in node.prerequisites), (node,))
+
+        return tuple(tuple(tuple(n.name for n in _get_simul(s))) for s in self.get_startup_list())
+
+    def yyyget_dependency_graph(self):
+        """
+        Returns a set of dependency groups.  Each group represents a set of dependencies starting at the
+        root of the dependency tree.  This is valuable for debugging dependencies.
+        """
+
+        nodes = dict()
+
+        def _setdist(nodelist, dist = -1):
+            dist += 1
+            for n in nodelist:
+                nodes[n] = max(dist, nodes.get(n, 0))
+                _setdist([self[name] for name in n.prerequisites], dist)
+
+        _setdist(self.get_startup_list())
+
+        changed = True
+        while changed:
+            changed = False
+            for k in nodes.keys():
+                if k.prerequisites:
+                    bestval = min(nodes[self[pr]] for pr in k.prerequisites) - 1
+                    if nodes[k] != bestval:
+                        changed = True
+                        nodes[k] = bestval
+
+        ncols = max(nodes.values()) + 1
+        cols = [['->'] for x in range(ncols)]
+        for k,v in nodes.items():
+            cols[ncols-v-1].append(k.shortname)
+
+        colwidth = max(len(k.shortname) for k in nodes.keys())
+        rows = max(len(c) for c in cols)
+
+        graph = list()
+        for row in range(rows):
+            graph.append(" | ".join(' ' * colwidth if row >= len(c) else c[row].ljust(colwidth) for c in cols))
+
+        print("\n".join(graph))
+
+        exit(0)
+
+    def get_dependency_graph(self):
+        """
+        Returns a set of dependency groups.  Each group represents a set of dependencies starting at the
+        root of the dependency tree.  This is valuable for debugging dependencies.
+        """
+
+        sep = ' | '
+        sulist = self.get_startup_list()
+        
+        curcol = 0
+        maxwidth = 0
+        for s in sulist:
+            ourlen = len(s.shortname)
+            s._column = curcol + ourlen - 1
+            curcol += ourlen + len(sep)
+            maxwidth = max(maxwidth, ourlen)
+
+        def histogram(serv):
+            # find the earliest prerequsite, or 0 if there is none
+            pcols = tuple(s._column for s in sulist if s.name in serv.prerequisites)
+            start = (pcols and max(pcols) + 1) or 0
+            return (' ' * start) + ('=' * (serv._column - start + 1))
+
+        lines = list()
+
+        lines.append(' ' * (maxwidth + len(sep)) + sep.join(s.shortname for s in sulist))
+
+        for s in sulist:
+            lines.append(s.shortname.ljust(maxwidth) + sep + histogram(s))
+
+        lines.append(('-' * (maxwidth)) + '-> depends on...')
+
+        for s in sulist:
+            lines.append(s.shortname.ljust(maxwidth) + sep + ', '.join(pr.replace('.service', '') for pr in s.prerequisites))
+
+        return lines
+
     def get_startup_list(self):
         """
         Returns the list of start-up items in priority order by examining before: and after: 
@@ -243,6 +376,19 @@ class ServiceDict(lazydict):
 
         #print_services('initial', services.values())
 
+        # The "IDLE" and "INIT" groups are special.  Revamp things so that any services in the "IDLE" group
+        # have an implicit "after: 'all-others'" and any services in "INIT" have an implicit "before: 'all-others'
+        # where all-others is an explicit list of all services NOT in the respective group
+
+        if 'IDLE' in groups:
+            nonidle = set(k for k,v in services.items() if v.service_group != "IDLE")
+            for s in groups['IDLE'].values():
+                s.after.update(nonidle)
+        if 'INIT' in groups:
+            noninit = set(k for k,v in services.items() if v.service_group != "INIT")
+            for s in groups['INIT'].values():
+                s.before.update(noninit)
+
         # We want to only look at the "after:" attribute, so we will eliminate the relevance
         # of befores...
 
@@ -254,15 +400,6 @@ class ServiceDict(lazydict):
                 elif bef in services:
                     services[bef].after.add(v.name)
             v.before = None
-
-        # The "IDLE" group is special.  Revamp things so that any services in the "IDLE" group
-        # have an implicit "after: 'all-others'" where all-others is an explicit list of all
-        # services NOT in the idle group
-
-        if 'IDLE' in groups:
-            nonidle = set(k for k,v in services.items() if v.service_group != "IDLE")
-            for s in groups['IDLE'].values():
-                s.after.update(nonidle)
 
         # Before is now gone, make sure that all "after... groups" are translated into "after.... service"
 
@@ -281,7 +418,7 @@ class ServiceDict(lazydict):
 
         afters = set(services.keys())
         for v in services.values():
-            v.refs = tuple(map(lambda n: services[n], v.after.intersection(afters)))
+            v.refs = sorted(map(lambda n: services[n], v.after.intersection(afters)), key=attrgetter('name'))
 
         #print_services('before add nodes', services.values())
 
@@ -299,9 +436,8 @@ class ServiceDict(lazydict):
                     svseen.add(item.name)
                     svlist.append(self[item.name])
                     # set startup prerequisite dependencies
-                    svlist[-1].prerequisites = tuple(r.name for r in item.refs)
-
-        add_nodes(services.values())
+                    svlist[-1].prerequisites = set(r.name for r in item.refs)
+        add_nodes(sorted(services.values(), key=attrgetter('name')))
 
         #print_services('final service list', svlist)
 

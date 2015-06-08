@@ -1,15 +1,12 @@
 import os
 import asyncio
 import threading
-import signal
 
 from functools import partial
 from asyncio.unix_events import BaseChildWatcher
 
 from chaperone.cutil.logging import warn, info, debug
-
-SIGDICT = dict((v,k) for k,v in sorted(signal.__dict__.items())
-               if k.startswith('SIG') and not k.startswith('SIG_'))
+from chaperone.cutil.misc import get_signal_name
 
 class ProcStatus(int):
     def __new__(cls, val):
@@ -36,6 +33,10 @@ class ProcStatus(int):
         return (os.WIFEXITED(self) or None) and os.WEXITSTATUS(self)
 
     @property
+    def normal_exit(self):
+        return self.exit_status == 0 and not (self.signaled or self.stopped)
+
+    @property
     def exit_message(self):
         es = self.exit_status
         if es is not None:
@@ -52,10 +53,10 @@ class ProcStatus(int):
 
     @property
     def briefly(self):
+        if self.signaled or self.stopped:
+            return get_signal_name(self.signal)
         if self.exited:
             return "exit({0})".format(self.exit_status)
-        if self.signaled or self.stopped:
-            return SIGDICT.get(self.signal, "SIG%d" % self.signal)
         return '?'
 
     def __format__(self, spec):

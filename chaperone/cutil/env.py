@@ -9,7 +9,7 @@ from chaperone.cutil.misc import lookup_user, lazydict
 
 ENV_CONFIG_DIR = '_CHAP_CONFIG_DIR'                           # directory which CONTAINS the config file *or* directory
 ENV_INTERACTIVE = '_CHAP_INTERACTIVE'                         # if this session is interactive (has a ptty attached)
-
+ENV_SERVICE = '_CHAP_SERVICE'                                 # name of the current service
 
 # Technically IEEE 1003.1-2001 states env vars can contain anything except '=' and NUL but we need to
 # obviously exclude the terminator!

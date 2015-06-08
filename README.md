@@ -72,7 +72,7 @@ are added in the next few weeks.
 Downloading and Installing
 --------------------------
 
-The easiest way to install `chaperone`` is using `pip` from the https://pypi.python.org/pypi/chaperone package:
+The easiest way to install `chaperone`` is using ``pip`` from the https://pypi.python.org/pypi/chaperone package:
 
     # Ubuntu or debian prerequisites...
     apt-get install python3-pip

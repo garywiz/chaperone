@@ -17,7 +17,8 @@ import os
 options = docopt(__doc__)
 
 if options['MESSAGE']:
-    print('proctool says: ', options['MESSAGE'])
+   sys.stdout.write('proctool says: ' + options['MESSAGE'] + "\n")
+   sys.stdout.flush()
 
 if options['--notify']:
    cmd = options['--notify']
@@ -32,6 +33,10 @@ if options['--ignore-signals']:
     signal.signal(signal.SIGTERM, lambda signum, frame: print("ignoring SIGTERM"))
     signal.signal(signal.SIGHUP, lambda signum, frame: print("ignoring SIGHUP"))
     signal.signal(signal.SIGINT, lambda signum, frame: print("ignoring SIGINT"))
+else:
+    signal.signal(signal.SIGTERM, lambda signum, frame: not print("received SIGTERM"))
+    signal.signal(signal.SIGHUP, lambda signum, frame: not print("received SIGHUP"))
+    signal.signal(signal.SIGINT, lambda signum, frame: not print("received SIGINT"))
 
 if len(sys.argv) > 1 and sys.argv[1] == 'NOWAIT':
     exit(0)

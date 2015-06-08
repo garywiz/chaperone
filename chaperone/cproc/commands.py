@@ -13,9 +13,8 @@ COMMAND_DOC = """
 Usage: telchap status
        telchap shutdown
        telchap loglevel [<level>]
-       telchap service <servname> stop
-       telchap service <servname> start
-       telchap service <servname> status
+       telchap stop [--ignore-errors] [--wait] [<servname> ...]
+       telchap start [--ignore-errors] [--wait] [--enable] [<servname> ...]
 """
 
 CHAP_FIFO = "/dev/chaperone"
@@ -33,6 +32,8 @@ class _BaseCommand(object):
 
     @asyncio.coroutine
     def exec(self, opts, controller):
+        #result = yield from self.do_exec(opts, controller)
+        #return str(result)
         try:
             result = yield from self.do_exec(opts, controller)
             return str(result)
@@ -58,36 +59,30 @@ class statusCommand(_BaseCommand):
         msg += "\nServices:\n\n" + str(serv.get_status_formatter().get_formatted_data()) + "\n"
         return msg
 
-class serviceCommandBase(_BaseCommand):
+class serviceStop(_BaseCommand):
+
+    command_name = 'stop'
 
     @asyncio.coroutine
     def do_exec(self, opts, controller):
-        servname = opts['<servname>']
-        serv = controller.services.get(servname)
-        if not serv:
-            serv = controller.services.get(servname + ".service")
-        if not serv:
-            raise Exception("no such service: " + servname)
-        result = yield from self.do_service_command(serv)
-        return result
+        yield from controller.services.stop(opts['<servname>'], ignore_errors = opts['--ignore-errors'],
+                                            wait = opts['--wait'])
+        if opts['--wait']:
+            return "services stopped."
+        return "services stopping."
 
-class serviceStop(serviceCommandBase):
+class serviceStart(_BaseCommand):
 
-    command_name = ('service', 'stop')
+    command_name = 'start'
 
     @asyncio.coroutine
-    def do_service_command(self, serv):
-        yield from serv.stop()
-        return "service {0} stopped".format(serv.name)
-
-class serviceStart(serviceCommandBase):
-
-    command_name = ('service', 'start')
-
-    @asyncio.coroutine
-    def do_service_command(self, serv):
-        yield from serv.start()
-        return "service {0} started".format(serv.name)
+    def do_exec(self, opts, controller):
+        yield from controller.services.start(opts['<servname>'], ignore_errors = opts['--ignore-errors'],
+                                             wait = opts['--wait'],
+                                             enable = opts['--enable'])
+        if opts['--wait']:
+            return "services started."
+        return "service start-up queued."
 
 class loglevelCommand(_BaseCommand):
 

@@ -9,7 +9,7 @@ import chaperone.cutil.syslog_info as syslog_info
 
 from chaperone.cutil.env import Environment
 from chaperone.cutil.logging import warn, info, debug, error
-from chaperone.cutil.misc import lazydict, lookup_user
+from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name
 from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
@@ -40,8 +40,8 @@ class SubProcess(object):
 
     _proc = None
     _pwrec = None               # the pwrec looked up for execution user/group
-    _started = False            # TRUE if the process is started, or disabled but start was attempted
-
+    _cond_starting = None       # a condition which, if present, indicates that this service is starting
+    _started = False            # true if a start has occurred, either successful or not
     _starts_allowed = 0         # number of starts permitted before we give up
 
     _pending = None             # pending futures
@@ -107,7 +107,9 @@ class SubProcess(object):
         if self._pwrec:
             os.setgid(self._pwrec.pw_gid)
             os.setuid(self._pwrec.pw_uid)
-            if not self.service.directory:
+            if self.setpgrp:
+                os.setpgrp()
+            if not self.directory:
                 try:
                     os.chdir(self._pwrec.pw_dir)
                 except Exception as ex:
@@ -130,13 +132,15 @@ class SubProcess(object):
         if serv.restart and self._starts_allowed > 0:
             rs = "+r#" + str(self._starts_allowed)
 
-        if self._started:
-            if proc:
-                rc = proc.returncode
-                if proc.returncode is None:
-                    return "running"
-                else:
-                    return proc.returncode.briefly + rs
+        if self._cond_starting:
+            return "starting"
+
+        if proc:
+            rc = proc.returncode
+            if proc.returncode is None:
+                return "running"
+            else:
+                return proc.returncode.briefly + rs
                     
         if not serv.enabled:
             return "disabled"
@@ -152,9 +156,13 @@ class SubProcess(object):
     @property
     def running(self):
         return self._proc and self._proc.returncode is None
+        
+    @property
+    def started(self):
+        return self._started
 
     @asyncio.coroutine
-    def start(self, enable = True):
+    def start(self):
         """
         Runs this service if it is enabled and has not already been started.  Starts
         prerequisite services first.  A service is considered started if
@@ -166,16 +174,9 @@ class SubProcess(object):
 
         service = self.service
 
-        if enable and not service.enabled:
-            if enable:
-                service.enabled = True
-                if not self._proc:
-                    self._started = False
-                debug("service {0} enabled upon start", service.name)
-
         if self._started:
+            debug("service {0} started.  further starts ignored.", service.name)
             return
-        self._started = True
 
         if not service.enabled:
             debug("service {0} not enabled, will be skipped", service.name)
@@ -183,32 +184,57 @@ class SubProcess(object):
         else:
             debug("service {0} enabled, recieved start request", service.name)
 
-        if self.family:
-            if service.prerequisites:
-                prereq = [self.family.get(p) for p in service.prerequisites]
-                for p in prereq:
-                    if p:
-                        yield from p.start(enable)
+        # If this service is already starting, then just wait until it completes.
 
-            # idle only makes sense for families
-            if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
-                self.family._idle_hit = True
-                debug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
-                yield from asyncio.sleep(service.idle_delay)
+        cond_starting = self._cond_starting
 
-            # STOP if the system is no longer alive because a prerequisite failed
-            if not self.family.controller.system_alive:
-                return
+        if cond_starting:
+            yield from cond_starting.acquire()
+            yield from cond_starting.wait()
+            cond_starting.release()
+            return
+
+        cond_starting = self._cond_starting = asyncio.Condition()
+
+        # Now we can procede
 
         try:
-            yield from self._start_service()
-        except Exception as ex:
-            if isinstance(ex, FileNotFoundError) and service.optional:
-                info("optional service {0} ignored due to exception: {1}", service.name, ex)
-            elif service.ignore_failures:
-                info("service {0} ignoring failures. Exception: {1}", service.name, ex)
-            else:
-                raise
+
+            if self.family:
+                if service.prerequisites:
+                    prereq = [self.family.get(p) for p in service.prerequisites]
+                    for p in prereq:
+                        if p:
+                            yield from p.start()
+                    debug("service {0} prerequisites satisfied", service.name)
+
+                # idle only makes sense for families
+                if service.service_group == 'IDLE' and service.idle_delay and not hasattr(self.family, '_idle_hit'):
+                    self.family._idle_hit = True
+                    debug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
+                    yield from asyncio.sleep(service.idle_delay)
+
+                # STOP if the system is no longer alive because a prerequisite failed
+                if not self.family.controller.system_alive:
+                    return
+
+            try:
+                yield from self._start_service()
+            except Exception as ex:
+                if isinstance(ex, FileNotFoundError) and service.optional:
+                    info("optional service {0} ignored due to exception: {1}", service.name, ex)
+                elif service.ignore_failures:
+                    info("service {0} ignoring failures. Exception: {1}", service.name, ex)
+                else:
+                    raise
+
+        finally:
+            self._started = True
+            yield from cond_starting.acquire()
+            cond_starting.notify_all()
+            cond_starting.release()
+            self._cond_starting = None
+            debug("{0} notified waiters upon completion", service.name)
 
     @asyncio.coroutine
     def _start_service(self):
@@ -298,7 +324,7 @@ class SubProcess(object):
                     yield from asyncio.sleep(service.restart_delay)
             if controller.system_alive:
                 yield from self.reset(True)
-                yield from self.start(False)
+                yield from self.start()
             return
 
         if service.ignore_failures:
@@ -318,6 +344,8 @@ class SubProcess(object):
 
     @asyncio.coroutine
     def reset(self, restart = False):
+        debug("{0} receieved reset", self.name)
+
         if self._proc:
             if self._proc.returncode is None:
                 self.terminate()
@@ -325,16 +353,15 @@ class SubProcess(object):
             self.pid = None
             self._proc = None
 
-        self._started = False
-
         if restart:
             self._starts_allowed -= 1
         else:
             self._starts_allowed = self.service.restart_limit + 1
+
+        self._started = False
         
     @asyncio.coroutine
     def stop(self):
-        self.service.enabled = False
         self._starts_allowed = 0
         yield from self.reset()
         
@@ -349,7 +376,11 @@ class SubProcess(object):
         proc = self._proc
         if proc:
             if proc.returncode is None:
-                proc.terminate()
+                if self.kill_signal is not None:
+                    debug("using {0} to terminate {1}", get_signal_name(self.kill_signal), self.name)
+                    proc.send_signal(self.kill_signal)
+                else:
+                    proc.terminate()
 
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
@@ -372,10 +403,16 @@ class SubProcess(object):
     @asyncio.coroutine
     def wait(self):
         proc = self._proc
+
         if not proc:
             raise Exception("Process not running, can't wait")
         yield from proc.wait()
-        info("Process exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode))
+
+        if proc.returncode is not None and proc.returncode.normal_exit:
+            debug("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))
+        else:
+            info("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))
+
         return proc.returncode
 
 
@@ -396,17 +433,66 @@ class SubProcessFamily(lazydict):
             self[s.name] = SubProcess(s, family = self)
 
     @asyncio.coroutine
-    def run(self):
+    def run(self, servicelist = None):
         """
         Runs the family, starting up services in dependency order.  If any problems
         occur, an exception is raised.
         """
         # Note that all tasks are started simultaneously, but they resolve their
         # interdependencies themselves.
-        yield from asyncio.gather(*[s.start(False) for s in self.values()])
+        yield from asyncio.gather(*[s.start() for s in servicelist or self.values()])
+
+    def _lookup_services(self, names):
+        result = set()
+        for name in names:
+            serv = self.get(name)
+            if not serv:
+                serv = self.get(name + ".service")
+            if not serv:
+                raise Exception("no such service: " + name)
+            result.add(serv)
+        return result
+
+    @asyncio.coroutine
+    def start(self, service_names, ignore_errors = False, wait = False, enable = False):
+        slist = self._lookup_services(service_names)
+
+        not_enab = [s for s in slist if not s.enabled]
+
+        if not ignore_errors:
+            if not_enab and not enable:
+                raise Exception("can only start services which have been enabled: " + ", ".join([s.name for s in not_enab]))
+            started = [s for s in slist if s.started]
+            if started:
+                raise Exception("can't restart services without stop/reset: " + ", ".join([s.name for s in started]))
+
+        if not_enab and enable:
+            for s in not_enab:
+                s.enable()
+
+        if not wait:
+            asyncio.async(self.run(slist))
+        else:
+            yield from self.run(slist)
+
+    @asyncio.coroutine
+    def stop(self, service_names, ignore_errors = False, wait = False):
+        slist = self._lookup_services(service_names)
+        started = [s for s in slist if s.started]
+
+        if not ignore_errors:
+            if len(started) != len(slist):
+                raise Exception("can't stop services which aren't started: " + 
+                                ", ".join([s.name for s in slist if not s.started]))
+
+        for s in slist:
+            if not wait:
+                asyncio.async(s.stop())
+            else:
+                yield from s.stop()
 
     def get_status_formatter(self):
         df = TableFormatter('pid', 'name', 'enabled', 'status', 'note', sort='name')
         df.add_rows(self.values())
         return df
-
+    
