@@ -1,0 +1,5 @@
+This is a basic documentation webserver that runs on port 8088 and points to the Sphinx
+documentation located in ../build/html.
+
+Built with chaperone-lamp, of course, in just a few minutes.
+
