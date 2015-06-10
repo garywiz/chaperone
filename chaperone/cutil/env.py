@@ -10,7 +10,7 @@ from chaperone.cutil.misc import lookup_user, lazydict
 ENV_CONFIG_DIR       = '_CHAP_CONFIG_DIR'          # directory which CONTAINS the config file *or* directory
 ENV_INTERACTIVE      = '_CHAP_INTERACTIVE'         # if this session is interactive (has a ptty attached)
 ENV_SERVICE          = '_CHAP_SERVICE'             # name of the current service
-ENV_COMMAND_MODE     = '_CHAP_COMMAND_MODE'        # if we are running in --command mode
+ENV_TASK_MODE        = '_CHAP_TASK_MODE'           # if we are running in --task mode
 
 ENV_CHAP_OPTIONS     = 'CHAP_OPTIONS'              # Preset before chaperone runs to set default options
 

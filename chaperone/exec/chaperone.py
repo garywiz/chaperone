@@ -5,11 +5,10 @@ Usage:
     chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
               [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
               [--debug] [--force] [--disable-services] [--no-defaults] [--version] [--show-dependencies]
-              [--command]
+              [--task]
               [<command> [<args> ...]]
 
 Options:
-    --command                Run in command mode (see below).
     --config=<file_or_dir>   Specifies file or directory for configuration (default is /etc/chaperone.d)
     --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), 
                              then run as if --user was specified.
@@ -23,13 +22,14 @@ Options:
     --no-defaults            Ignores any default options in the CHAPERONE_OPTIONS environment variable
     --user=<name>            Start first process as user (else root)
     --show-dependencies      Shows a list of service dependencies then exits
+    --task                   Run in task mode (see below).
     --version                Display version and exit
 
 Notes:
   * If a user is specified, then the --config is relative to the user's home directory.
   * Chaperone makes the assumption that an interactive command should shut down the system upon exit,
     but a non-interactive command should not.  You can reverse this assumption with options.
-  * --command is used in cases where you wish to execute a script in the container environment
+  * --task is used in cases where you wish to execute a script in the container environment
     for utility purposes, such as a script to extract data from the container, etc.  This switch
     is equivalent to "--log err --exitkills --disable-services" and also requires a command
     to be specified as usual.
@@ -52,7 +52,7 @@ from docopt import docopt
 from chaperone.cproc import TopLevelProcess
 from chaperone.cproc.version import VERSION_MESSAGE
 from chaperone.cutil.config import Configuration, ServiceConfig
-from chaperone.cutil.env import ENV_INTERACTIVE, ENV_COMMAND_MODE, ENV_CHAP_OPTIONS
+from chaperone.cutil.env import ENV_INTERACTIVE, ENV_TASK_MODE, ENV_CHAP_OPTIONS
 from chaperone.cutil.logging import warn, info, debug, error
 
 MSG_PID1 = """Normally, chaperone expects to run as PID 1 in the 'init' role.
@@ -66,11 +66,11 @@ def main_entry():
    # parse these first since we may disable the environment check
    options = docopt(__doc__, options_first=True, version=VERSION_MESSAGE)
 
-   if options['--command']:
+   if options['--task']:
       options['--log-level'] = 'err'
       options['--disable-services'] = True
       options['--exitkills'] = True
-      os.environ[ENV_COMMAND_MODE] = '1'
+      os.environ[ENV_TASK_MODE] = '1'
 
    if not options['--no-defaults']:
       envopts = os.environ.get(ENV_CHAP_OPTIONS)
@@ -107,8 +107,8 @@ def main_entry():
 
    cmd = options['<command>']
 
-   if options['--command'] and not cmd:
-      error("--command can only be used if a shell command is specified as an argument")
+   if options['--task'] and not cmd:
+      error("--task can only be used if a shell command is specified as an argument")
       exit(1)
 
    user = options['--user']
@@ -186,7 +186,7 @@ def main_entry():
                                              setpgrp=not tty,
                                              exit_kills=kill_switch,
                                              service_groups="IDLE",
-                                             ignore_failures=not options['--command'],
+                                             ignore_failures=not options['--task'],
                                              stderr='inherit', stdout='inherit')
          extra_services = [cmdsvc]
 
