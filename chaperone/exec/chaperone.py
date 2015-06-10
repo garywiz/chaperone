@@ -42,6 +42,7 @@ import chaperone.cutil.patches
 import sys
 import shlex
 import os
+import re
 import asyncio
 import subprocess
 
@@ -53,6 +54,7 @@ from chaperone.cproc import TopLevelProcess
 from chaperone.cproc.version import VERSION_MESSAGE
 from chaperone.cutil.config import Configuration, ServiceConfig
 from chaperone.cutil.env import ENV_INTERACTIVE, ENV_TASK_MODE, ENV_CHAP_OPTIONS
+from chaperone.cutil.misc import maybe_create_user
 from chaperone.cutil.logging import warn, info, debug, error
 
 MSG_PID1 = """Normally, chaperone expects to run as PID 1 in the 'init' role.
@@ -60,6 +62,12 @@ If you want to go ahead anyway, use --force."""
 
 MSG_NOTHING_TO_DO = """There are no services configured to run, nor is there a command specified
 on the command line to run as an application.  You need to do one or the other."""
+
+# We require usernames to start with a letter or underscore.  This is consistent with default Linux
+# rules.
+RE_CREATEUSER = (
+   re.compile(r'(?P<user>[a-z_][a-z0-9_-]*)(?:[:/]?(?P<uid>\d+)(?:[:/](?P<gid>[a-z_][a-z0-9_-]*|\d+))?)?$', re.IGNORECASE)
+)
 
 def main_entry():
 
@@ -114,25 +122,19 @@ def main_entry():
    user = options['--user']
 
    if user is None:
-      user = options['--create-user']
-      if user:
-         uargs = user.split('/')
-         ucmd = ["useradd"]
-         if len(uargs) > 2:
-            print("Invalid format for --create-user argument: {0}".format(user))
+      create = options['--create-user']
+      if create:
+         match = RE_CREATEUSER.match(create)
+         if not match:
+            print("Invalid format for --create-user argument: {0}".format(create))
             exit(1)
-         if len(uargs) > 1:
-            try:
-               uid = int(uargs[1])
-            except ValueError:
-               print("Specified UID is not a number: {0}".format(user))
-               exit(1)
-            ucmd += ['-u', str(uid)]
-         ucmd += [uargs[0]]
-         if subprocess.call(ucmd):
-            print("Error executing: {0}".format(' '.join(ucmd)))
+         udata = match.groupdict()
+         try:
+            maybe_create_user(udata['user'], udata['uid'], udata['gid'])
+         except Exception as ex:
+            print("--create-user failure: {0}".format(ex))
             exit(1)
-         user = uargs[0]
+         user = udata['user']
 
    extras = None
    if options['--ignore-failures']:

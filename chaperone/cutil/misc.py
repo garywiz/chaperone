@@ -3,6 +3,9 @@ import pwd
 import grp
 import copy
 import signal
+import subprocess
+
+from chaperone.cutil.errors import ChNotFoundError, ChParameterError, ChSystemError
 
 class objectplus:
     """
@@ -111,7 +114,7 @@ def lookup_user(uid, gid = None):
         else:
             pwrec = pwd.getpwnam(uid)
     except KeyError:
-        raise Exception("specified user ('{0}') does not exist".format(uid))
+        raise ChNotFoundError("specified user ('{0}') does not exist".format(uid))
 
     if gid is None:
         return pwrec
@@ -129,7 +132,7 @@ def lookup_user(uid, gid = None):
     return retval
 
 
-def lookup_gid(gid):
+def lookup_gid(gid, must_exist = False):
     """
     Looks up a user using either a name or integer user value.
     """
@@ -141,14 +144,82 @@ def lookup_gid(gid):
         pass
     
     if intgid is not None:
-        return intgid
+        if not must_exist:
+            return intgid
+        findit = grp.getgrgid
+    else:
+        findit = grp.getgrnam
 
     try:
-        pwrec = grp.getgrnam(gid)
+        pwrec = findit(gid)
     except KeyError:
-        raise Exception("specified group ('{0}') does not exist".format(gid))
+        raise ChNotFoundError("specified group ('{0}') does not exist".format(gid))
 
     return pwrec.gr_gid
+
+
+def maybe_create_user(user, uid = None, gid = None):
+    """
+    If the user does not exist, then create one with the given name, and optionally
+    the specified uid.  If a gid is specified, create a group with the same name as the 
+    user, and the given gid.
+
+    If the user does exist, then confirm that the uid and gid match, if either
+    or both are specified.
+    """
+
+    if uid is not None:
+        try:
+            uid = int(uid)
+        except ValueError:
+            raise ChParameterError("Specified UID is not a number: {0}".format(uid))
+        
+    try:
+        pwrec = lookup_user(user)
+    except ChNotFoundError:
+        pwrec = None
+
+    # If the user exists, we do nothing, but we do validate that their UID and GID
+    # exist.
+
+    if pwrec:
+        if uid is not None and uid != pwrec.pw_uid:
+            raise ChParameterError("User {0} exists, but does not have expected UID={1}".format(user, uid))
+        if gid is not None and lookup_gid(gid, True) != pwrec.pw_gid:
+            raise ChParameterError("User {0} exists, but does not have expected GID={1}".format(user, gid))
+        return
+
+    # Now, we need to create the user, and optionally the group
+
+    ucmd = ['useradd', '--no-create-home']
+    if uid is not None:
+        ucmd += ['-u', str(uid)]
+
+    if gid is not None:
+
+        create_group = False
+        try:
+            newgid = lookup_gid(gid, must_exist = True) # name or number
+        except ChNotFoundError:
+            create_group = True
+            try:
+                newgid = int(gid)   # must be a number at this point
+            except ValueError:
+                # We don't report the numeric error, because we *know* there is no such group
+                # and we won't create a symbolic group with a randomly-created number.
+                raise ChParameterError("Group does not exist: {0}".format(gid))
+
+        if create_group:
+            if subprocess.call(['groupadd', '-g', str(newgid), user]):
+                raise ChSystemError("Unable to add a group with name={0} and GID={1}".format(user, newgid))
+            newgid = lookup_gid(user, must_exist = True)
+            
+        ucmd += ['-g', str(newgid)]  # use this gid to create our user
+
+    ucmd += [user]
+
+    if subprocess.call(ucmd):
+        raise ChSystemError("Error while trying to add user: {0}".format(' '.join(ucmd)))
 
 
 def _assure_dir_for(path, pwrec, gid):
@@ -205,6 +276,6 @@ def get_signal_number(signame):
             num = None
     
     if num is None:
-        raise Exception("Invalid signal specifier: " + str(signame))
+        raise ChParameterError("Invalid signal specifier: " + str(signame))
 
     return num
