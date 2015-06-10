@@ -137,16 +137,11 @@ class _BaseConfig(object):
 
         # We can now use 'self' as our config, with all defaults
 
-        env = Environment(env, uid=uid, gid=gid, config=self)
+        env = self.environment = Environment(env, uid=uid, gid=gid, config=self)
         self.augment_environment(env)
-        env = env.expanded()
 
         if self._expand_these:
             env.expand_attributes(self, *self._expand_these)
-        if env:
-            env = self.environment = Environment(env, uid=uid, gid=gid, config=self).expanded()
-            if self._expand_these:
-                env.expand_attributes(self, *self._expand_these)
 
         self.post_init()
 

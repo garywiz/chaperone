@@ -7,9 +7,12 @@ from chaperone.cutil.misc import lookup_user, lazydict
 ##
 ## ALL chaperone configuration variables defined here for easy reference
 
-ENV_CONFIG_DIR = '_CHAP_CONFIG_DIR'                           # directory which CONTAINS the config file *or* directory
-ENV_INTERACTIVE = '_CHAP_INTERACTIVE'                         # if this session is interactive (has a ptty attached)
-ENV_SERVICE = '_CHAP_SERVICE'                                 # name of the current service
+ENV_CONFIG_DIR       = '_CHAP_CONFIG_DIR'          # directory which CONTAINS the config file *or* directory
+ENV_INTERACTIVE      = '_CHAP_INTERACTIVE'         # if this session is interactive (has a ptty attached)
+ENV_SERVICE          = '_CHAP_SERVICE'             # name of the current service
+ENV_COMMAND_MODE     = '_CHAP_COMMAND_MODE'        # if we are running in --command mode
+
+ENV_CHAP_OPTIONS     = 'CHAP_OPTIONS'              # Preset before chaperone runs to set default options
 
 # Technically IEEE 1003.1-2001 states env vars can contain anything except '=' and NUL but we need to
 # obviously exclude the terminator!
@@ -176,14 +179,13 @@ class Environment(lazydict):
         Public variables are those which are exported to the application and do NOT start with an
         underscore.  All underscore names will be kept private.
         """
-        privkeys = [k for k in self.keys() if k.startswith('_')]
-        if not privkeys:
-            return self
-
-        newenv = Environment(self)
+        newenv = Environment(self).expanded()
     
-        for k in privkeys:
-            del newenv[k]
+        # collect private or blanks, then delete them
+        delkeys = [k for k in newenv.keys() if k.startswith('_') or newenv[k] in (None, '')]
+        if delkeys:
+            for k in delkeys:
+                del newenv[k]
 
         return newenv
 

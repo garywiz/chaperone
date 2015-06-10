@@ -5,9 +5,11 @@ Usage:
     chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
               [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
               [--debug] [--force] [--disable-services] [--no-defaults] [--version] [--show-dependencies]
+              [--command]
               [<command> [<args> ...]]
 
 Options:
+    --command                Run in command mode (see below).
     --config=<file_or_dir>   Specifies file or directory for configuration (default is /etc/chaperone.d)
     --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), 
                              then run as if --user was specified.
@@ -27,6 +29,10 @@ Notes:
   * If a user is specified, then the --config is relative to the user's home directory.
   * Chaperone makes the assumption that an interactive command should shut down the system upon exit,
     but a non-interactive command should not.  You can reverse this assumption with options.
+  * --command is used in cases where you wish to execute a script in the container environment
+    for utility purposes, such as a script to extract data from the container, etc.  This switch
+    is equivalent to "--log err --exitkills --disable-services" and also requires a command
+    to be specified as usual.
 """
 
 # perform any patches first
@@ -46,7 +52,7 @@ from docopt import docopt
 from chaperone.cproc import TopLevelProcess
 from chaperone.cproc.version import VERSION_MESSAGE
 from chaperone.cutil.config import Configuration, ServiceConfig
-from chaperone.cutil.env import ENV_INTERACTIVE
+from chaperone.cutil.env import ENV_INTERACTIVE, ENV_COMMAND_MODE, ENV_CHAP_OPTIONS
 from chaperone.cutil.logging import warn, info, debug, error
 
 MSG_PID1 = """Normally, chaperone expects to run as PID 1 in the 'init' role.
@@ -60,13 +66,19 @@ def main_entry():
    # parse these first since we may disable the environment check
    options = docopt(__doc__, options_first=True, version=VERSION_MESSAGE)
 
+   if options['--command']:
+      options['--log-level'] = 'err'
+      options['--disable-services'] = True
+      options['--exitkills'] = True
+      os.environ[ENV_COMMAND_MODE] = '1'
+
    if not options['--no-defaults']:
-      envopts = os.environ.get('CHAPERONE_OPTIONS')
+      envopts = os.environ.get(ENV_CHAP_OPTIONS)
       if envopts:
          try:
             defaults = docopt(__doc__, argv=(shlex.split(envopts)), options_first=True)
          except SystemExit as ex:
-            print("Error occurred in CHAPERONE_OPTIONS environment variable: " + envopts)
+            print("Error occurred in {0} environment variable: {1}".format(ENV_CHAP_OPTIONS, envopts))
             raise
          # Replace any "false" command option with the default version.
          options.update({k:defaults[k] for k in options.keys() if not options[k]})
@@ -94,6 +106,10 @@ def main_entry():
       tlp.force_log_level(options['--log-level'])
 
    cmd = options['<command>']
+
+   if options['--command'] and not cmd:
+      error("--command can only be used if a shell command is specified as an argument")
+      exit(1)
 
    user = options['--user']
 
@@ -170,7 +186,7 @@ def main_entry():
                                              setpgrp=not tty,
                                              exit_kills=kill_switch,
                                              service_groups="IDLE",
-                                             ignore_failures="true",
+                                             ignore_failures=not options['--command'],
                                              stderr='inherit', stdout='inherit')
          extra_services = [cmdsvc]
 
