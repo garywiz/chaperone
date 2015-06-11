@@ -42,6 +42,15 @@ process detection so that applications know when they are being run interactivel
 Any bugs should be reported as issues at https://github.com/garywiz/chaperone/issues.
 
 
+Contents
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+   ch/command-line.rst
+   ch/config.rst
+
 Downloading and Installing
 --------------------------
 

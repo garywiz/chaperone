@@ -4,11 +4,13 @@ import pwd
 import shlex
 from operator import attrgetter
 from copy import deepcopy
+from itertools import chain
 
 import yaml
 import voluptuous as V
 
 from chaperone.cutil.env import Environment, ENV_CONFIG_DIR, ENV_SERVICE
+from chaperone.cutil.errors import ChParameterError
 from chaperone.cutil.logging import info, warn, debug
 from chaperone.cutil.misc import lazydict, lookup_user, get_signal_number
 
@@ -17,11 +19,6 @@ from chaperone.cutil.misc import lazydict, lookup_user, get_signal_number
 def IsExecutable(v):
     return os.path.isfile(v) and os.access(v, os.X_OK)
     
-@V.message('all-uppercase service_groups and service names are reserved for the system')
-@V.truth
-def ValidServiceName(v):
-    return str(v).upper() != str(v)
-
 _config_schema = V.Any(
     { V.Match('^.+\.service$'): {
         'after': str,
@@ -100,7 +97,7 @@ class _BaseConfig(object):
     _repr_pat = None
     _expand_these = {}
     _settings_defaults = {}
-
+    
     @classmethod
     def createConfig(cls, config=None, **kwargs):
         """
@@ -123,6 +120,13 @@ class _BaseConfig(object):
 
         for k,v in initdict.items():
             setattr(self, k, v)
+
+        # User names always have .xxx qualifier because of schema restrictions.  Otherwise, it's a user
+        # defined name subject to restrictions.
+
+        splitname = self.name.rsplit('.', 1)
+        if len(splitname) == 2 and splitname[0] == splitname[0].upper():
+            raise ChParameterError("All uppercase names such as '{0}' are reserved for the system.".format(self.name))
 
         # UID and GID are expanded according to the incoming environment,
         # since the new environment depends upon these.
@@ -199,6 +203,9 @@ class ServiceConfig(_BaseConfig):
     _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'startup_pause', 'ignore_failures'}
 
+    system_group_names = ('IDLE', 'INIT')
+    system_service_names = ('CONSOLE', 'MAIN')
+
     @property
     def shortname(self):
         return self.name.replace('.service', '')
@@ -220,6 +227,15 @@ class ServiceConfig(_BaseConfig):
         self.before = set(_RE_LISTSEP.split(self.before)) if self.before is not None else set()
         self.after = set(_RE_LISTSEP.split(self.after)) if self.after is not None else set()
         self.service_groups = tuple(_RE_LISTSEP.split(self.service_groups)) if self.service_groups is not None else tuple()
+
+        for sname in chain(self.before, self.after):
+            if sname.upper() == sname and sname not in chain(self.system_group_names, self.system_service_names):
+                raise ChParameterError("{0} dependency reference not valid; '{1}' is not a recognized system name"
+                                       .format(self.name, sname))
+
+        for sname in self.service_groups:
+            if sname.upper() == sname and sname not in self.system_group_names:
+                raise ChParameterError("{0} contains an unrecognized system group name '{1}'".format(self.name, sname))
 
         if 'IDLE' in self.after:
             raise Exception("{0} cannot specify services which start *after* service_group IDLE".format(self.name))
