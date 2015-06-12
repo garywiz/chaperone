@@ -4,7 +4,55 @@
 Chaperone Command Reference
 ===========================
 
+Command Quick Reference
+-----------------------
+
+Chaperone is usually executed as a container entrypoint and has the following syntax::
+
+  chaperone [options] [initial-command [args...]]
+
+The initial command is optional.  If provided, it will be run as an "IDLE" oneshot service, running after all
+other services have been started.
+
+Options are described in the table below, followed by more extensive reference information.
+
+=============================================================  =================================================================================
+command-line switch                	       		       function
+=============================================================  =================================================================================
+:ref:`--config=config-location <option.config>`                Specifies a file or directory where configuration information is found.
+                                   	       		       Default is ``/etc/chaperone.d``.
+:ref:`--debug <option.debug>`				       Turns debugging features.  (Implies ``--log-level=debug`` as well)
+:ref:`--disable-services <option.disable-services>`	       No services will be started.  Only the command-line command will execute.
+:ref:`--exitkills <option.exitkills>`			       When the command specified on the command line terminates, the chaperone
+                                   	       		       will execute a normal shutdown operation.
+:ref:`--no-exitkills <option.no-exitkills>`		       Reverses the effect of ``--exitkills``.  Useful when the ``--exitkills`` is
+                                   	       		       implied or specified as a default.
+:ref:`--force <option.force>`				       If chaperone refuses to do something, tell it to try anyway.
+--help                             	       		       Displays command and option help.
+:ref:`--ignore-failures <option.ignore-failures>`	       Run as if :ref:`ignore_failures <config.ignore_failures>` were true for all
+                                   	       		       services.
+:ref:`--log-level=level <option.log-level>`		       Force the syslog log output level to this value.  (one of 'emerg', 'alert', 'crit',
+                                   	       		       'err', 'warn', 'notice', 'info', or 'debug).
+:ref:`--no-defaults <option.no-defaults>`		       Ignore the :ref:`_CHAP_OPTIONS <env.CHAP_OPTIONS>` environment variable,
+                                   	       		       if present.
+:ref:`--user=username <option.user>`			       Run all processes as ``user`` (uid number or name).  The user must exist.
+                                   	       		       By default, all processes run as ``root``.
+:ref:`--create-user=newuser[/uid/gid] <option.create-user>`    Create a new user upon start-up with optional ``uid`` and ``gid``.  Then
+                                   	       		       run as if ``--user=<user>`` was specified.
+:ref:`--show-dependencies <option.show-dependencies>`	       Display service dependency graph, then exit.
+:ref:`--task <option.task>`				       Run in "task mode".  This implies ``--log-level=err``, ``--disable-services``,
+                                   	       		       and ``--exit-kills``.  This switch is useful when the container publishes
+                                   	       		       commands which must run in isolation, such as displaying container internal
+                                   	       		       information such as version information.
+--version                          	       		       Displays the chaperone version number.
+=============================================================  =================================================================================
+                                                 
+Option Reference Information
+----------------------------
+
 .. program:: chaperone
+
+.. _option.config:
 
 .. option:: --config <file-or-directory>
 
@@ -27,6 +75,39 @@ Chaperone Command Reference
    If not specified, defaults to ``/etc/chaperone.d``, or uses the default option set in
    the ``CHAP_OPTIONS`` (see :ref:`ch.env`) environment variable.
 
+.. _option.debug:
+
+.. option:: --debug
+
+   Enables debugging features.   When debugging is enabled:
+
+   * chaperone will print out a raw dump of all command line options (including those derived from defaults),
+     as well as configuration information.
+   * Internal debugging messages will be turned on, describing service start-up in more detail.
+   * Traceback for internal errors will be enabled, making it easier to report bugs.
+   * syslog logging will be forced to output all log levels (the same as using ``filter: '*.debug'`` in all
+     logging entries.
+
+.. _option.disable-services:
+
+.. option:: --disable-services
+
+   When set to 'true', then no services will be started or configured, though dependencies and configuration
+   syntax will be checked normally.
+
+   This switch can be useful in cases where services do not start correctly, or you want to enter a fresh
+   container for inspection or other purposes.  For example::
+
+     chaperone --disable-services /bin/bash
+
+   will run ``bash`` alone as a child of chaperone, or in the case of using chaperone-enabled Docker images::
+
+     docker run -t -i chapdev/chaperone-lamp --disable-services /bin/bash
+
+   creates a fresh LAMP container running only ``bash`` so you can inspect the contents of the container without
+   enabling any of the services.
+
+
 .. _ch.env:
 
 Environment Variables
@@ -43,6 +124,8 @@ Chaperone uses environment variables in two ways:
 
 Variables Used at Startup
 *************************
+
+.. _env.CHAP_OPTIONS:
 
 .. envvar:: CHAP_OPTIONS
 

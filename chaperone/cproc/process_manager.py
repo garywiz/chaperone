@@ -180,7 +180,7 @@ class TopLevelProcess(objectplus):
         enable_syslog_handler()
         info("Switching all chaperone logging to /dev/log")
 
-    def _system_started(self, f, startup):
+    def _system_started(self, startup, future=None):
         info(self.version + ", ready.")
         if startup:
             self.activate(startup)
@@ -192,17 +192,33 @@ class TopLevelProcess(objectplus):
         to tailor the environment and start up other services as needed.
         """
 
+        futures = list()
+
         self._syslog = SyslogServer()
         self._syslog.configure(config, self._minimum_syslog_level)
 
-        syf = self._syslog.run()
-        syf.add_done_callback(self._syslog_started)
+        try:
+            syf = self._syslog.run()
+            syf.add_done_callback(self._syslog_started)
+            futures.append(syf)
+        except PermissionError as ex:
+            self._syslog = None
+            warn("syslog service cannot be started: {0}", ex)
 
         self._command = CommandServer(self)
-        cmdf = self._command.run()
 
-        f = asyncio.gather(syf, cmdf)
-        f.add_done_callback(lambda f: self._system_started(f, startup_coro))
+        try:
+            cmdf = self._command.run()
+            futures.append(cmdf)
+        except PermissionError as ex:
+            self._command = None
+            warn("command  service cannot be started: {0}", ex)
+
+        if futures:
+            f = asyncio.gather(*futures)
+            f.add_done_callback(lambda f: self._system_started(startup_coro, f))
+        else:
+            self._system_started(startup_coro)
 
         self.loop.run_forever()
         self.loop.close()

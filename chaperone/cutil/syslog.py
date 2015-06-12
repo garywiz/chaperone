@@ -204,7 +204,11 @@ class SyslogServer:
 
     _loglist = list()
     _server = None
+    _log_socket = None
 
+    def __init__(self, logsock = "/dev/log"):
+        self._log_socket = logsock
+        
     def run1(self):  # alternative additional datagram endpoint (experimental, probably not needed)
         loop = asyncio.get_event_loop()
         listen = loop.create_datagram_endpoint(SyslogServerProtocol, local_addr = ('127.0.0.1', SYSLOG_PORT))
@@ -212,8 +216,8 @@ class SyslogServer:
 
     def run(self):
         loop = asyncio.get_event_loop()
-        maybe_remove("/dev/log")
-        listen = loop.create_unix_server(partial(SyslogServerProtocol, self), path="/dev/log")
+        maybe_remove(self._log_socket)
+        listen = loop.create_unix_server(partial(SyslogServerProtocol, self), path=self._log_socket)
         future = asyncio.async(listen)
         future.add_done_callback(self._run_done)
         return future
@@ -221,12 +225,12 @@ class SyslogServer:
     def _run_done(self, f):
         # TODO: HANDLE ERRORS HERE IF FUTURE EXCEPTION
         self._server = f.result()
-        os.chmod("/dev/log", 0o777)
+        os.chmod(self._log_socket, 0o777)
 
     def close(self):
         if self._server:
             self._server.close()
-            maybe_remove("/dev/log")
+            maybe_remove(self._log_socket)
 
     def configure(self, config, minimum_priority = None):
         loglist = self._loglist = list()
