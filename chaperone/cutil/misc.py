@@ -87,6 +87,32 @@ def maybe_remove(fn):
         pass
 
 
+        
+def is_exe(p):
+    return os.path.isfile(p) and os.access(p, os.X_OK)
+
+def executable_path(fn, env = os.environ):
+    """
+    Returns the fully qualified pathname to an executable.  The PATH is searched, and
+    any tilde expansions are performed.  Exceptions are raised as usual.
+    """
+    penv = env.get("PATH")
+    newfn = os.path.expanduser(fn)
+    path,prog = os.path.split(newfn)
+    
+    if not path and penv:
+        for path in penv.split(os.pathsep):
+            if is_exe(os.path.join(path, prog)):
+                newfn = os.path.join(path, prog)
+                break
+
+    if not os.path.isfile(newfn):
+        raise FileNotFoundError(fn)
+    if not os.access(newfn, os.X_OK):
+        raise PermissionError(fn)
+
+    return newfn
+                
 _lookup_user_cache = {}
 
 def lookup_user(uid, gid = None):

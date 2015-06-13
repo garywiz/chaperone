@@ -47,6 +47,61 @@ command-line switch                	       		       function
 --version                          	       		       Displays the chaperone version number.
 =============================================================  =================================================================================
                                                  
+Chaperone Command Execution
+---------------------------
+
+Chaperone goes through a set of startup phases in order to establish a working environment.
+
+1.  Chaperone first examines the environment looking for the :ref:`CHAP_OPTIONS <env.CHAP_OPTIONS>` variable.
+    If found, Chaperone uses it to establish default values.  The remaining environment variables will be passed to
+    running services depending upon the both global and per-service setetings.
+
+2.  Command line options are read and combined with any default options to form the final command option set.
+    Configuration information is optional, and if no configuration is found, it is not considered an error.
+
+3.  Once configuration information is present, chaperone proceeds to start it's internal ``syslog`` service,
+    creating sockets such as ``/dev/log`` and starts it's internal command processor which accepts
+    commands at ``/dev/chaperone`` or interactive commands (via :ref:`telchap <telchap>`) at
+    ``/dev/chaperone.sock``.  Chaperone also sets up utility envionment variables such as
+    :ref:`env._CHAP_INTERACTIVE` so that they can be used in service configurations.
+
+4.  If a command and arguments are provided on the command line, an "IDLE" oneshot service is configured
+    so that it runs after all other services are started.  If chaperone is running interactively,
+    :option:`--exitkills <chaperone --exitkills>` is implied, otherwise, termination of this service
+    will leave the system running just as if any other oneshot service exited normally.
+
+5.  Services in the "INIT" service group (if any) are executed and must start successfully before other services
+    are started.
+
+6.  All other services are started in dependency order.  Failures during startup comprise a system
+    failure unless :option:`--ignore-failures <chaperone --ignore-failures>` is used on the command line, or
+    the service is declared with :ref:`ignore_failures <service.ignore_failures>` set to "true".
+
+7.  Services in the "IDLE" service group (if any) are executed (which includes any command specified on the
+    command line).
+
+Once started, Chaperone monitors all services, performs logging, and cleans up zombie processes when
+they exit.   When it receives a ``SIGTERM`` it will shutdown all processes in an orderly fashion.
+
+
+Start-up Environment Variables
+------------------------------
+
+.. _env.CHAP_OPTIONS:
+
+.. envvar:: CHAP_OPTIONS
+
+   When Chaperone starts, it reads options both from the command line and from this environment
+   variable.  The environment variable provides defaults which should be used if they are 
+   not present on the command line.
+
+   For example, in the ``chaperone-baseimage`` image configuration, the default value
+   for ``--config`` is set::
+
+	    ENV CHAP_OPTIONS --config apps/chaperone.d
+	    ENTRYPOINT ["/usr/local/bin/chaperone"]
+
+
 Option Reference Information
 ----------------------------
 
@@ -106,91 +161,3 @@ Option Reference Information
 
    creates a fresh LAMP container running only ``bash`` so you can inspect the contents of the container without
    enabling any of the services.
-
-
-.. _ch.env:
-
-Environment Variables
----------------------
-
-Chaperone uses environment variables in two ways:
-
-1.  When the `chaperone` command first executes, environment variables are read and passed
-    to the environment of any running services.  While this is the default, this can be
-    changed using the :ref:`config.settings` section.
-2.  Chaperone also sets "internal" environment variables which can be used within
-    configuration files, but are not passed down to services.  Internal environment
-    variables start with an underscore (`_`) character. 
-
-Variables Used at Startup
-*************************
-
-.. _env.CHAP_OPTIONS:
-
-.. envvar:: CHAP_OPTIONS
-
-   When Chaperone starts, it reads options both from the command line and from this environment
-   variable.  The environment variable provides defaults which should be used if they are 
-   not present on the command line.
-
-   For example, in the ``chaperone-baseimage`` image configuration, the default value
-   for ``--config`` is set::
-
-	    ENV CHAP_OPTIONS --config apps/chaperone.d
-	    ENTRYPOINT ["/usr/local/bin/chaperone"]
-
-Internal Variables
-******************
-
-As described above, internal variables are available for use within configuration directives such as
-:ref:`config.env_set`, but are not automatically passed down to services.  If you want to make these
-available to services, simply define an environment variable which expands to one of the internal variables::
-
-  settings: {
-    env_set: {
-      # Make the relevant service name available to all processes
-      'SERVICE_NAME': '$(_CHAP_SERVICE)',
-    }
-  }
-
-.. envvar:: _CHAP_CONFIG_DIR
-
-   This is the path to the directory which *contains* the target specified by 
-   the :option:`--config <chaperone --config>` option.
-
-   For example, if you start Chaperone with the following command::
-
-     chaperone --config /home/appsuser/firstapp/chaperone.conf
-
-   then this environment variable will be set to ``/home/appsuser/firstapp``.  Note that
-   the method is the same *even if a configuration directory is specified*.  Thus, this
-   command::
-
-     chaperone --config /home/appsuser/firstapp/chaperone.d
-
-   would set ``_CHAP_CONFIG_DIR`` to exactly the same value even though the target
-   is a directory rather than a file.
-
-   One very useful application of this variable is to define "self-relative" execution
-   environments where all application files are stored relative to the location of the
-   configuration directory.  The ``chaperone-baseimage`` does this with the following
-   declaration::
-
-     settings: {
-       env_set: {
-         'APPS_DIR': '$(_CHAP_CONFIG_DIR:-/)',
-       }
-     }
-
-   Then, all other files, commands and configurations operate relative to the ``APPS_DIR``
-   environment variable.   If this principle is observed carefully you can easily run::
-
-     docker run --config /myapps/prerelease/chaperone.d
-
-   to run an isolated set of applications stored in ``/myapps/prerelease`` and another
-   set of isolated applications in the same image like this::
-
-     docker run --config /myapps/stable/chaperone.d
-
-
-     

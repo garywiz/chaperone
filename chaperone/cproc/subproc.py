@@ -10,7 +10,8 @@ import chaperone.cutil.syslog_info as syslog_info
 
 from chaperone.cutil.env import Environment
 from chaperone.cutil.logging import warn, info, debug, error
-from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name
+from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name, executable_path
+from chaperone.cutil.errors import ChNotFoundError
 from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
@@ -45,6 +46,7 @@ class SubProcess(object):
     _started = False            # true if a start has occurred, either successful or not
     _starts_allowed = 0         # number of starts permitted before we give up
     _prereq_cache = None
+    _xenv = None                # expanded environment
 
     _pending = None             # pending futures
     _note = None
@@ -85,15 +87,30 @@ class SubProcess(object):
         # Allow no auto-starts
         self._starts_allowed = 0
 
-        # The environment has already been modified to reflect our chosen service uid/gid
-        uid = service.environment.uid
-        gid = service.environment.gid
+        if service.environment:
+            # The environment has already been modified to reflect our chosen service uid/gid
+            self._xenv = service.environment.expanded()
 
-        if uid is not None:
-            self._pwrec = lookup_user(uid, gid)
+            uid = service.environment.uid
+            gid = service.environment.gid
+
+            if uid is not None:
+                self._pwrec = lookup_user(uid, gid)
 
         if not service.exec_args:
             raise Exception("No command or arguments provided for service")
+
+        # We translate the executable into a valid path now so we can handle optional
+        # services
+
+        try:
+            service.exec_args[0] = executable_path(service.exec_args[0], self._xenv)
+        except FileNotFoundError:
+            if service.optional:
+                service.enabled = False
+                info("optional service {0} disabled since '{1}' is not present".format(self.name, service.exec_args[0]))
+                return
+            raise ChNotFoundError("executable '{0}' not found".format(service.exec_args[0]))
 
     def __getattr__(self, name):
         "Proxies value from the service description if we don't override them."
@@ -277,9 +294,7 @@ class SubProcess(object):
             try:
                 yield from self._start_service()
             except Exception as ex:
-                if isinstance(ex, FileNotFoundError) and service.optional:
-                    info("optional service {0} ignored due to exception: {1}", service.name, ex)
-                elif service.ignore_failures:
+                if service.ignore_failures:
                     info("service {0} ignoring failures. Exception: {1}", service.name, ex)
                 else:
                     raise
@@ -307,7 +322,7 @@ class SubProcess(object):
         if service.directory:
             kwargs['cwd'] = service.directory
 
-        env = service.environment
+        env = self._xenv
         if env:
             env = env.get_public_environment()
 
