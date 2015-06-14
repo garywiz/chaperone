@@ -165,7 +165,7 @@ def main_entry():
 
    proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
    if cmd:
-      proctitle += " " + cmd  + " " + " ".join(options['<args>'])
+      proctitle += " " + cmd
    setproctitle(proctitle)
 
    # Define here so we can share scope

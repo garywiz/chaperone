@@ -3,6 +3,6 @@
 SANDBOX=$PWD
 
 docker run -t -i -e "TERM=$TERM" --rm=true -v /home:/home -p=8080:8080 \
-    --entrypoint $SANDBOX/chaperone garywiz/chaperone-lamp \
+    --entrypoint $SANDBOX/chaperone chapdev/chaperone-lamp \
     --config /home/garyw/apps/chaperone.d $* \
      /bin/bash

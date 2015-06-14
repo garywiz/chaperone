@@ -340,7 +340,7 @@ class SubProcess(object):
         create = asyncio.create_subprocess_exec(*service.exec_args, preexec_fn=self._setup_subprocess,
                                                 env=env, **kwargs)
         if service.exit_kills:
-            warn("system wll be killed when '{0}' exits", " ".join(service.exec_args))
+            warn("system wll be killed when '{0}' exits", service.exec_args[0])
             yield from asyncio.sleep(0.2)
 
         proc = self._proc = yield from create
