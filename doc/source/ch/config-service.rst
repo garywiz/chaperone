@@ -17,11 +17,11 @@ services have been launched::
     service_groups: IDLE,
   }
 
-Multiple services can be declared in a single file.  Order within a configuration file is not important,
-however, if several configuration files are involved, services in subsequent files (alphabetically) will
+Multiple services can be declared in a single file.  Order within a configuration file is not important.
+However, if several configuration files are involved, services in subsequent files (alphabetically) will
 replace earlier services defined with the same name.
 
-Each service starts with the environment defined by the :ref:``settings directive <config.settings>`` and
+Each service starts with the environment defined by the :ref:`settings directive <config.settings>` and
 can be tailored separately for each service.
 
 ================================================  =============================================================================
@@ -294,14 +294,185 @@ Service Config Reference
    the service has failed.   This value is meaningful for process types `oneshot`, `forking`, and `notify` only
    and is ignored for other types:
 
-   for `forking` services:
-      this happens
+   For `oneshot` services:
+      Chaperone assumes that a oneshot service is only started once it completes its task succesfully, and
+      therefore waits ``process_timeout`` seconds before allowing dependent services ot start.  For oneshot
+      services the default process timeout is *60 seconds*.
 
-   for `oneshot` services:
-      that happens
+   For `forking` services:
+      Chaperone assumes a forking service does set-up, then proceeds to launch subprocesses to provide
+      services.   The default process timeout for a forking service is *30 seconds*.
 
-   for `notify` services:
-      these happen
+   For `notify` services:
+      Since a notify service has an explicit means to tell chaperone about it's status, the process timeout
+      defaults to *300 seconds* to provide the service with a greater amount of startup time.
+
+.. _service.restart:
+
+.. describe:: restart: ( false | true )
+
+   By default, chaperone will not restart a service once it has failed.  Setting this to 'true' will tell chaperone
+   to wait :ref:`restart_delay <service.restart_delay>` seconds after a failure, then restart the service until the
+   :ref:`restart_limit <service.restart_limit>` is reached.   If all restarts fail, the chaperone considers
+   the service to be failed.
+
+   Note that restarts do *not* happen during system startup.  If a service fails during system startup, the
+   failure is considered a system failure (unless :ref:`ignore_failures <service.ignore_failures>` is 'true')
+
+.. _service.restart_delay:
+
+.. describe:: restart_delay: seconds
+
+   When a service fails and is about to be restarted, chaperone delays for this interval before attempting
+   restart.   By default, this value is *0.5 seconds*.
+
+   Consider increasing the restart delay for services which may fail because of network issues, since network
+   issues may be transient (such as routers rebooting).
+
+.. _service.restart_limit:
+
+.. describe:: restart_limit: number-of-retries
+
+   This value indicate the number of restarts which will be performed when a service fails.  Once the service
+   starts sucessfully, the restart counter is reset.
+
+.. _service.service_groups:
+
+.. describe:: service_groups: "group[,group,...]"
+
+   This directive declares that the service has membership in one or more service groups.  If not specified,
+   all services have membership in the group "default".
+
+   There are also two system-defined groups which have special meaning:
+
+   ``INIT``
+     This group will be started first, before any other service that is *not a member of the INIT group* itself.  
+     The order in which services will start within the INIT group is unspecified unless services make explicit
+     :ref:`before <service.before>` or :ref:`after <service.after>` declarations.
+
+   ``IDLE``
+     This group will be started after all other services that are *not a member of the IDLE group* itself.
+     The order in which services will start within the IDLE group is unspecified unless services make explicit
+     :ref:`before <service.before>` or :ref:`after <service.after>` declarations.
+
+   User-defined groups can be defined and used for any purpose, but must not have names which are all
+   uppercase, as these are reserved for system groups.
+
+   Group membership does *not* imply that the group will be started as a unit, or that the entire group
+   will complete startup before other groups start.  For example, consider these service declarations::
+
+     one.service:    { service_group: "setup", command: "echo one" }
+     two.service:    { service_group: "setup", command: "echo two" }
+     three.service:  { service_group: "sanity_checks", command: "echo three" }
+     four.service:   { service_group: "sanity_checks", command: "echo four" }
+
+   Chaperone does not consider members of the same group to be related in any way, and will start them
+   randomly in parallel at start-up.  Assuring a sequence of start-up operations *must* be done using
+   :ref:`before <service.before>` or :ref:`after <service.after>`, as follows::
+
+     one.service:    { service_group: "setup", command: "echo one" }
+     two.service:    { service_group: "setup", command: "echo two" }
+     three.service:  { service_group: "sanity_checks", after: "setup" command: "echo three" }
+     four.service:   { service_group: "sanity_checks", command: "echo four" }
+
+   The "after" declaration assures that "three.service" will start only once all services in the "setup"
+   group have successfully started.  *But*, "four.service" is still indpeendent and can start at any time.
+
+   So, for "four.service" there are two options.  By declaring "four.service" like this::
+
+     four.service:   { service_group: "sanity_checks", after: "setup", command: "echo four" }
+
+   it will also wait for all "setup" services, *but* it will start in parallel with "three.service",
+   whereas the declaration::
+
+     four.service:   { service_group: "sanity_checks", after: "three.service", command: "echo four" }
+
+   achieves two goals: it assures the "four.service" starts after "three.service" but also assures
+   all "setup" services will be completed, since "three.service" already expresses such a dependency.
+
+.. note::
+   In all cases, references to a service group operate identically to explicit references to all
+   group members.  Group references are merely a shortcut.  Therefore::
+
+     four.service:   { service_group: "sanity_checks", after: "setup", command: "echo four" }
+
+   is functionally identical to::
+
+     four.service:   { service_group: "sanity_checks", 
+                       after: "one.service,two.service,three.service",
+		       command: "echo four" }
+
+
+.. _service.setpgrp:
+
+.. describe:: setpgrp ( true | false )
+
+   By default, chaperone places makes each newly created service the parent of it's own process group.  This has the advantage
+   of providing partial isolation for the service, and assures that if signals are sent to the group, no other processes
+   are affected.  It also provides a poor man's method of tracking service groupings. [#f5]_
+
+   While this is a reasonable default, some interactive processes (such as shells like ``/bin/bash``) should be executed with
+   ``setpgrp: false``, since they use process groups extensively themselves and will want to set up process groups
+   according to their job control strategy.
+
+
+.. _service.startup_pause:
+
+.. describe:: startup_pause seconds
+
+   When Chaperone starts a service, it waits a short time to determine whether the service fails immediately.  This
+   is the "startup_pause" and defaults to 0.5 seconds.
+
+   Currently, Chaperone only uses this technique for ``type=simple`` services, so it will have no impact on other
+   service types.  Because "simple" services are considered started as soon as process execution begins, the
+   this short pause catches errors which occur within the first few moments of process initialization (such as
+   unexpected permission problems) rather than allowing dependent services to start immediately.
+
+.. _service.uid:
+
+.. describe:: uid user-name-or-number
+
+   Chaperone will run the service as the user specified by ``uid``.  If ``uid`` is not specified for the service,
+   the :ref:`settings uid <settings.uid>` will be used, and finally the user specified on the command
+   like with :option:`--user <chaperone --user>` or :option:`--create-user <chaperone --create-user>`.
+
+   When Chaperone is told to use a particular user account, it also sets the ``HOME``, ``USER``, and
+   ``LOGNAME`` environment variables to reflect those associated with the user.
+
+   If none of the above are specified, the Chaperone runs the service normally under its own account
+   without specifying a new user.
+
+   Specifying a user requires root privileges.  Within containers like Docker, chaperone usually runs
+   as root, so service configurations can specify alternate users even if they are run under a
+   different user account.
+
+   For example, if Chaperone were run from docker using the :ref:`chaperone-baseimage` image like this::
+
+     docker run -d chapdev/chaperone-baseimage \
+                 --user wwwuser --config /home/wwwuser/chaperone.conf
+      
+   there is no reason that ``chaperone.conf`` could not contain the following service definitions::
+
+     mysql.service: {
+       uid: root, command: "/etc/init.d/mysql start"
+     }
+     myapp.service: {
+       command: "~/bin/my_application"
+     }
+
+   In this case, "myapp.service" would run as user "wwwuser" becaues no ``uid`` was specified.  However
+   because Docker runs chaperone as root, it is perfectly valid for the configuration file to tell
+   Chaperone to run the "mysql" startup command as root.
+
+.. _service.gid:
+
+.. describe:: gid group-name-or-number
+
+   When :ref:`uid <service.uid>` is specified (either explicitly or implicitly inherited), the ``gid``
+   directive can be used to specify an alternate group to be used for execution.  If not specified,
+   then the user's primary group will be used.
+
+   As with :ref:`uid <service.uid>` specifying a group requires root priviliges.
 
 .. rubric:: Notes
 
@@ -330,3 +501,14 @@ Service Config Reference
    Yes, the seconds field appears at the *end*.  This is inherited from the `croniter package <https://github.com/kiorky/croniter>`_
    which we use to parse and manage the internal cron intervals.  We considered not documenting it because it seems
    a bit non-standard, then figured... hey, could be useful.
+
+.. [#f5]
+
+   There is really only one bulletproof way to manage isolated groups of processes:
+   `control groups (or groups) <https://en.wikipedia.org/wiki/Cgroups>`_.  Chaperone intentionally avoids using
+   control groups for a number of reasons, but mostly because they require privileges which make containers
+   less secure.  In addition, despite their power and utility, control groups are have become a contentious
+   feature right now, being used extensively, and often in incompatible ways, by
+   both `Docker <docker.com>`_  and `systemd <http://www.freedesktop.org/wiki/Software/systemd/>`_.  Chaperone
+   is intended to be lean, simple and compatible with containers.  For now, avoiding cgroups we believe will
+   keep Chaperone a more useful and simple accessory.

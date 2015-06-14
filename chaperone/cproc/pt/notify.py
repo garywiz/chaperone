@@ -29,6 +29,8 @@ class NotifyListener(Server):
 
 class NotifyProcess(SubProcess):
 
+    process_timeout = 300
+
     _fut_monitor = None
     _notifier = None
     _ready_event = None
