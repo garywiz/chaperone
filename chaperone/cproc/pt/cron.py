@@ -2,6 +2,16 @@ import asyncio
 from aiocron import crontab
 from chaperone.cutil.logging import error, warn, debug, info
 from chaperone.cproc.subproc import SubProcess
+from chaperone.cutil.errors import ChParameterError
+
+_CRON_SPECIALS = {
+    '@yearly':      '0 0 1 1 *',
+    '@annually':    '0 0 1 1 *',
+    '@monthly':     '0 0 1 * *',
+    '@weekly':      '0 0 * * 0',
+    '@daily':       '0 0 * * *',
+    '@hourly':      '0 * * * *',
+}
 
 class CronProcess(SubProcess):
 
@@ -13,8 +23,13 @@ class CronProcess(SubProcess):
         if not self.interval:
             raise Exception("interval= property missing, required for cron service '{0}'".format(self.name))
 
-        self.note = self.interval
-        self._cron = crontab(self.interval, func=self._cron_hit, start=False)
+        # Support specials with or without the @
+        real_interval = _CRON_SPECIALS.get(self.interval) or _CRON_SPECIALS.get('@'+self.interval) or self.interval
+
+        # make a status note
+        self.note = "{0} ({1})".format(self.interval, real_interval) if self.interval != real_interval else real_interval
+
+        self._cron = crontab(real_interval, func=self._cron_hit, start=False)
 
     def default_status(self):
         if self._cron.handle:
@@ -30,7 +45,10 @@ class CronProcess(SubProcess):
             return
 
         # Start up cron
-        self._cron.start()
+        try:
+            self._cron.start()
+        except:
+            raise ChParameterError("not a valid cron interval specification, '{0}'".format(self.interval))
 
     @asyncio.coroutine
     def _cron_hit(self):

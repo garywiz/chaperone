@@ -135,7 +135,7 @@ cron              The cron type schedules a script or program for periodic    Se
 Service Config Reference
 ------------------------
 
-.. describe:: type
+.. describe:: type: ( simple | forking | oneshot | notify | cron )
 
    The ``type`` option defines how the service will be treated, when it is considered active, and what happens
    when the service terminates either normally, or abnormally.  See the :ref:`separate section on service types <service.type>` for
@@ -143,7 +143,9 @@ Service Config Reference
 
    This setting is optional.  If omitted, the default is "simple".
 
-.. describe:: command
+.. _service.command:
+
+.. describe:: command: "executable args ..."
 
    The ``command`` option defines the command and arguments which will be executed when the service is started.  Both
    :ref:`environment variable expansion <env.expansion>` and "tilde" expansion for user names are supported, though
@@ -161,6 +163,145 @@ Service Config Reference
    In all cases, the environment that is used for ``PATH`` and expansions is the same environment that would be
    passed to the service.  If the executable is not available in the service's ``PATH`` then a fully qualified
    pathname should be used.
+
+.. _service.enabled:
+
+.. describe:: enabled: ( true | false )
+
+   If enabled is 'true' (the default), then the service will start normally as per its type.  If it is
+   set to 'false', then the service will be ignored upon start-up, and any dependencies will
+   be considered satisfied.
+
+   Services can be enabled and disabled dynamically while Chaperone is running using the
+   :ref:`telchap command <telchap>`.
+
+.. _service.stdout:
+
+.. describe:: stdout: ( 'log' | 'inherit' )
+
+   Can be set to 'log' to output service `stdout` to syslog (the default) or 'inherit' to output service messages
+   directly to the container's stdout.   While it may be tempting to use 'inherit', we suggest you use the syslog
+   service instead, then tailor :ref:`logging <logging>` entries accordingly if console output desired.  
+   This will provide much more flexibility.
+
+   Messages from the process `stdout` will be logged as syslog facility and severity of `daemon.info`. [#f3]_
+   
+.. _service.stderr:
+
+.. describe:: stderr: ( 'log' | 'inherit' )
+
+   Can be set to 'log' to output service `stderr` to syslog (the default) or 'inherit' to output service messages
+   directly to the container's stderr.   While it may be tempting to use 'inherit', we suggest you use the syslog
+   service instead, then tailor :ref:`logging <logging>` entries accordingly if console output desired.  
+   This will provide much more flexibility.
+
+   Messages from the process `stderr` will be logged as syslog facility and severity of `daemon.warn`. [#f3]_
+
+.. _service.after:
+
+.. describe:: after: "service-or-group, ..."
+
+   Specifies one or more services or service groups which will not be started until this service starts
+   successfully.  For more information XXX.
+
+.. _service.before:
+
+.. describe:: before: "service-or-group, ..."
+
+   Specifies one or more services or service groups which must be started sucessfully before this service
+   will start.  For more information XXX.
+
+.. _service.directory:
+
+.. describe:: directory: "directory-path"
+
+   Specifies the start-up directory for this service.  If not provided, then the start-up directory is
+   the home directory for the user under which the service will run.
+
+.. _service.exit_kills:
+
+.. describe:: exit_kills ( false | true )
+
+   If set to 'true', then when this service terminates, Chaperone will initiate an orderly system shutdown.
+   This is useful in cases where the lifetime of a controlling service, such as a shell or main application should
+   dictate the lifetime of the container.
+
+.. _service.ignore_failures:
+
+.. describe:: ignore_failures ( false | true )
+
+   If set to 'true', then any failure by the service will be logged but ignored.  Service failures are logged
+   using syslog facility `local5.info` (`local5` is the facility used for all messages that originate from
+   Chaperone itself.
+
+.. _service.interval:
+
+.. describe:: interval: "cron-interval-spec"
+
+   This is required for service ``type=cron`` and contains the cron specification which indicates the interval
+   for period execution.  Nearly all features documented in `this crontab man page <http://unixhelp.ed.ac.uk/CGI/man-cgi?crontab+5>`_
+   are supported, including extensions for ranges and special keywords such as ``@hourly`` which can be specified
+   with or without the leading ``@``.  So, a simple hourly cron service can be defined like this::
+
+     cleanup_cookies.service: {
+       type: cron,
+       interval: hourly,
+       command: "/opt/superapp/bin/clean_temp_cookies --silent",
+     }
+
+   which is equivalent to::
+
+     cleanup_cookies.service: {
+       type: cron,
+       interval: "0 * * * *",
+       command: "/opt/superapp/bin/clean_temp_cookies --silent",
+     }
+
+   Chaperone also supports an optional sixth field [#f4]_ for seconds so that seconds can be provided, so the following runs
+   every 15 seconds::
+
+     pingit.service: {
+       type: cron,
+       interval: "* * * * * * */15"
+       command: "/opt/superapp/bin/ping_central_hub",
+     }
+
+   Note that the ``@reboot`` special nickname is not supported, since Chaperone provides similar features using
+   the ``INIT`` service group.
+
+.. _service.kill_signal:
+
+.. describe:: kill_signal: ( name | number )
+
+   Specifies the signal which is sent to the process for normal termination.  By default, Chaperone sends ``SIGTERM``.
+
+.. _service.optional:
+
+.. describe:: optional: ( false | true )
+
+   If 'true', then this service is considered optional and will be disabled upon start-up if the executable is not
+   found.   Only a "file not found" error triggers optional service behavior.  If the executable file exists,
+   but permissions are incorrect, it is still considered a failure.
+
+   Optional services may be started manually later if, for example, the executable should become available after
+   system start-up.
+
+.. _service.process_timeout:
+
+.. describe:: process_timeout: seconds
+
+   When Chaperone is waiting for a service to start, it will wait for this number of seconds before it considers that
+   the service has failed.   This value is meaningful for process types `oneshot`, `forking`, and `notify` only
+   and is ignored for other types:
+
+   for `forking` services:
+      this happens
+
+   for `oneshot` services:
+      that happens
+
+   for `notify` services:
+      these happen
 
 .. rubric:: Notes
 
@@ -181,3 +322,11 @@ Service Config Reference
    it's PID is in case of a crash or internal notification.  However, it's likely that a future version of chaperone
    will introduce a "pid_file" directive to allow forking services a way to provide information about their 
    controlling PID.
+
+.. [#f3] Syslog facilities and severity levels are documented `on Wikipedia <https://en.wikipedia.org/wiki/Syslog>`_.
+
+.. [#f4] 
+
+   Yes, the seconds field appears at the *end*.  This is inherited from the `croniter package <https://github.com/kiorky/croniter>`_
+   which we use to parse and manage the internal cron intervals.  We considered not documenting it because it seems
+   a bit non-standard, then figured... hey, could be useful.
