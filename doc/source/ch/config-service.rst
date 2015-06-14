@@ -101,7 +101,7 @@ forking           A forking service is expected to set up all	              Serv
 		  before the
 		  :ref:`process_timeout <service.process_timeout>`
 		  expires.  *Note*: The default process timeout for
-		  forking services is 30 seconds.
+		  forking services is 300 seconds.
 oneshot           A oneshot service is designed to execute scripts which      Service terminates        Service terminates
 		  complete an operation and are considered started once       abnormally during         abnormally during a
 		  they run successfully.  *Note*: The default process         the process timeout.      manual "start"
@@ -201,15 +201,35 @@ Service Config Reference
 
 .. describe:: after: "service-or-group, ..."
 
-   Specifies one or more services or service groups which will not be started until this service starts
-   successfully.  For more information XXX.
+   Specifies one or more services or service groups which must be started sucessfully before this service
+   will start.
+
+   The value specified is a comma-separated list of services or service groups.  Services are always
+   identified with a ``.service`` suffix.  Otherwise, the reference is to a service group.  Thus::
+
+     some.service: { after: "one.service, setup", command: "echo some" }
+
+   defines a service which will start only after the service "one.service" and all services which
+   are members of the "setup" group.
+
+   For more information see :ref:`service_groups <service.service_groups>`.
 
 .. _service.before:
 
 .. describe:: before: "service-or-group, ..."
 
-   Specifies one or more services or service groups which must be started sucessfully before this service
-   will start.  For more information XXX.
+   Specifies one or more services or service groups which will not be started until this service starts
+   successfully. 
+
+   The value specified is a comma-separated list of services or service groups.  Services are always
+   identified with a ``.service`` suffix.  Otherwise, the reference is to a service group.  Thus::
+
+     some.service: { before: "one.service, application", command: "echo some" }
+
+   defines a service which will start before "one.service" and any services which
+   are members of the "application" group.
+
+   For more information see :ref:`service_groups <service.service_groups>`.
 
 .. _service.directory:
 
@@ -376,7 +396,7 @@ Service Config Reference
      four.service:   { service_group: "sanity_checks", command: "echo four" }
 
    The "after" declaration assures that "three.service" will start only once all services in the "setup"
-   group have successfully started.  *But*, "four.service" is still indpeendent and can start at any time.
+   group have successfully started.  *But*, "four.service" is still independent and can start at any time.
 
    So, for "four.service" there are two options.  By declaring "four.service" like this::
 
