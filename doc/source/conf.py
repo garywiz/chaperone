@@ -255,6 +255,9 @@ texinfo_documents = [
 
 trim_footnote_reference_space = True
 
+numfig = True
+numfig_secnum = 1
+
 def setup(app):
     #app.add_javascript("custom.js")
     app.add_stylesheet("custom.css")

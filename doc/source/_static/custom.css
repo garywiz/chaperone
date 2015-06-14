@@ -5,3 +5,7 @@
 .wy-table-responsive {
   overflow: visible !important;
 }
+
+table .caption-number:after {
+    content: ": "
+}

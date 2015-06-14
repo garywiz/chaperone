@@ -24,55 +24,59 @@ replace earlier services defined with the same name.
 Each service starts with the environment defined by the :ref:`settings directive <config.settings>` and
 can be tailored separately for each service.
 
-================================================  =============================================================================
-service variable                                  meaning
-================================================  =============================================================================
-:ref:`type <service.type>`                        Defines the service type: 'oneshot', 'simple', forking', 'notify',
-                                                  or 'cron'.  Default is 'simple'.
-:ref:`command <service.command>`                  Specifies the command to execute.  The command is not processed by a shell,
-                                                  but environment variable expansion is supported.
-                                                  (See :ref:``config.environment_expansion``)
-:ref:`enabled <service.enabled>`                  If 'false', the service will not be started, nor will it be required by
-                                                  any dependents.  Default is 'true'.
-:ref:`stderr <service.stderr>`                    Either 'log' to write stderr to the syslog, or 'inherit' to write stderr
-                                                  to the container's stderr file handle.   Default is 'log'.
-:ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
-                                                  to the container's stdout file handle.   Default is 'log'.
+.. _table.service-quick:
 
-:ref:`after <service.after>`                      A comma-separated list of services or service groups which cannot start
-                                                  until after this service has started.
-:ref:`before <service.before>`                    A comma-separated list of services or service groups which must start
-                                                  before this service.
-:ref:`directory <service.directory>`              The directory where the command will be executed.  Otherwise, the account
-                                                  home directory will be used.
-:ref:`exit_kills <service.exit_kills>`            If 'true' the entire system should be shut down when this service stops.
-                                                  Default is 'false'.
-:ref:`ignore_failures <service.ignore_failures>`  If 'true', failures of this service will be ignored but logged.
-                                                  Dependent services are still allowed to start.
-:ref:`interval <service.interval>`                For `type=cron` services, specifies the crontab-compatible interval
-                                                  in standard ``M H DOM MON DOW`` format.
-:ref:`kill_signal <service.kill_signal>`          The signal used to kill this process.  Default is ``SIGTERM``.
-:ref:`optional <service.optional>`                If 'true', then if the command file is not present on the system,
-                                                  the service will act as if it were not enabled.
-:ref:`process_timeout <service.process_timeout>`  Specifies the amount of time Chaperone will wait for a service to start.
-                                                  The default varies for each type of service.
-                                                  See :ref:``service types <config.sect.service_types>`` for more
-                                                  information.
-:ref:`restart <service.restart>`                  If 'true', then chaperone will restart this service if it fails (but
-                                                  not if it terminates normally).  Default is 'false'.
-:ref:`restart_delay <service.restart_delay>`      The number of seconds to pause between restarts.  Default is 3 seconds.
-:ref:`restart_limit <service.restart_limit>`      The maximum number of restart attempts.  Default is 5.
-:ref:`service_groups <service.service_groups>`    A comma-separatedlist of service groups this service belongs to.  All
-                                                  uppercase services are reserved by the system.
-:ref:`setpgrp <service.setpgrp>`                  If 'true', then the service will be isolated in its own process
-                                                  group upon startup.  This is the default.
-:ref:`startup_pause <service.startup_pause>`      The amount of time Chaperone will wait to see if a service fails
-                                                  immediately upon startup.  Defaults is 0.5 seconds.
-:ref:`uid <service.uid>`                          The uid (name or number) of the user for this service.
-:ref:`gid <service.gid>`                          The gid (name or number) of the group for this service.
-================================================  =============================================================================
+.. table::  Service Directives Quick Reference
 
-.. _service.type:
+   ================================================  =============================================================================
+   service variable                                  meaning
+   ================================================  =============================================================================
+   :ref:`type <service.type>`                        Defines the service type: 'oneshot', 'simple', forking', 'notify',
+						     or 'cron'.  Default is 'simple'.
+   :ref:`command <service.command>`                  Specifies the command to execute.  The command is not processed by a shell,
+						     but environment variable expansion is supported.
+						     (See :ref:``config.environment_expansion``)
+   :ref:`enabled <service.enabled>`                  If 'false', the service will not be started, nor will it be required by
+						     any dependents.  Default is 'true'.
+   :ref:`stderr <service.stderr>`                    Either 'log' to write stderr to the syslog, or 'inherit' to write stderr
+						     to the container's stderr file handle.   Default is 'log'.
+   :ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
+						     to the container's stdout file handle.   Default is 'log'.
+
+   :ref:`after <service.after>`                      A comma-separated list of services or service groups which cannot start
+						     until after this service has started.
+   :ref:`before <service.before>`                    A comma-separated list of services or service groups which must start
+						     before this service.
+   :ref:`directory <service.directory>`              The directory where the command will be executed.  Otherwise, the account
+						     home directory will be used.
+   :ref:`exit_kills <service.exit_kills>`            If 'true' the entire system should be shut down when this service stops.
+						     Default is 'false'.
+   :ref:`ignore_failures <service.ignore_failures>`  If 'true', failures of this service will be ignored but logged.
+						     Dependent services are still allowed to start.
+   :ref:`interval <service.interval>`                For `type=cron` services, specifies the crontab-compatible interval
+						     in standard ``M H DOM MON DOW`` format.
+   :ref:`kill_signal <service.kill_signal>`          The signal used to kill this process.  Default is ``SIGTERM``.
+   :ref:`optional <service.optional>`                If 'true', then if the command file is not present on the system,
+						     the service will act as if it were not enabled.
+   :ref:`process_timeout <service.process_timeout>`  Specifies the amount of time Chaperone will wait for a service to start.
+						     The default varies for each type of service.
+						     See :ref:``service types <config.sect.service_types>`` for more
+						     information.
+   :ref:`restart <service.restart>`                  If 'true', then chaperone will restart this service if it fails (but
+						     not if it terminates normally).  Default is 'false'.
+   :ref:`restart_delay <service.restart_delay>`      The number of seconds to pause between restarts.  Default is 3 seconds.
+   :ref:`restart_limit <service.restart_limit>`      The maximum number of restart attempts.  Default is 5.
+   :ref:`service_groups <service.service_groups>`    A comma-separatedlist of service groups this service belongs to.  All
+						     uppercase services are reserved by the system.
+   :ref:`setpgrp <service.setpgrp>`                  If 'true', then the service will be isolated in its own process
+						     group upon startup.  This is the default.
+   :ref:`startup_pause <service.startup_pause>`      The amount of time Chaperone will wait to see if a service fails
+						     immediately upon startup.  Defaults is 0.5 seconds.
+   :ref:`uid <service.uid>`                          The uid (name or number) of the user for this service.
+   :ref:`gid <service.gid>`                          The gid (name or number) of the group for this service.
+   ================================================  =============================================================================
+
+.. _service.sect.type:
 
 Service Types
 -------------
@@ -84,61 +88,68 @@ Valid service types are: *simple* (the default), *oneshot*, *forking*, *notify*,
 are patterned loosely after service types defined by `systemd <http://www.freedesktop.org/software/systemd/man/systemd.service.html>`_,
 but there are important differences [#f1]_ , so this section should be read carefully before making any assumptions.
 
-Here is a summary of the behavior of different types:
+As shown in :numref:`table.service-types`, each service type has a different behavior.   In the event the service's process reports
+an error, it is either a *system failure* or *service failure*.  A system failure results in an immediate, orderly shutdown of
+any services which have been started, along with logging an error report and termination of the system.  A service failure is
+an isolated situation affecting only the service itself.
 
-================  ==========================================================  ========================= =========================
-type              behavior                                                    system failure            service failure
-================  ==========================================================  ========================= =========================
-simple            This is the default type.  Chaperone considers a service    Service terminates        Service terminates
-		  "started" as soon as the startup grace period               abnormally during grace   abnormally later despite
-		  (defined by :ref:`startup_pause <service.startup_pause>`)   period.                   retries.
-		  elapses.                                                 
-		  If the service terminates normally at any time, the      
-		  service is considered "started" until reset.	      
-forking           A forking service is expected to set up all	              Service terminates	Never. [#f2]_
-		  communications channels and assure that the service         abnormally during the
-		  is ready for application use, then exit normally            process timeout.
-		  before the
-		  :ref:`process_timeout <service.process_timeout>`
-		  expires.  *Note*: The default process timeout for
-		  forking services is 300 seconds.
-oneshot           A oneshot service is designed to execute scripts which      Service terminates        Service terminates
-		  complete an operation and are considered started once       abnormally during         abnormally during a
-		  they run successfully.  *Note*: The default process         the process timeout.      manual "start"
-		  timeout for oneshot services is 60 seconds.                                           operation.
-notify            A notify service is expected to establish communication     Service terminates	Service sends a
-		  with chaperone using the *sd_notify* protcol.  The	      abnormally during the     failure notification.
-		  :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`	    	      process timeout
-		  environment variable will be set, and chaperone will
-		  consider the service started only when notified
-		  appropriately. *Note*: The default process timeout
-		  for a notify service is 30 seconds.
-cron              The cron type schedules a script or program for periodic    Service executable	Never.  Failures of
-		  execution.  The service is considered started once          is missing or invalid     isolated executions
-		  successfully scheduled.  Both scheduling parameters         but not optional.         do not constitute
-		  (specified using :ref:`interval <service.interval>`)                                  a permanent service
-		  as well as the presence of the executable specified                                   failure.
-		  in :ref:`command <service.command>` will be checked
-		  before scheduling is considered successful.  Cron
-		  services which are declared as
-		  :ref:`optional <service.optional>` will not be
-		  scheduled and will be treated as if they were disabled.
-================  ==========================================================  ========================= =========================
+.. _table.service-types:
 
-"considered started"
-"system failure"
-"service faiure"
-"sd_notify protocol"
-"idle service"
+.. table::  Service Types
+
+   ================  ==========================================================  ========================= =========================
+   type              behavior                                                    system failure            service failure
+   ================  ==========================================================  ========================= =========================
+   simple            This is the default type.  Chaperone considers a service    Service terminates        Service terminates
+		     "started" as soon as the startup grace period               abnormally during grace   abnormally later despite
+		     (defined by :ref:`startup_pause <service.startup_pause>`)   period.                   retries.
+		     elapses.                                                 
+		     If the service terminates normally at any time, the      
+		     service is considered "started" until reset.        
+   forking           A forking service is expected to set up all                 Service terminates        Never. [#f2]_
+		     communications channels and assure that the service         abnormally during the
+		     is ready for application use, then exit normally            process timeout.
+		     before the
+		     :ref:`process_timeout <service.process_timeout>`
+		     expires.  *Note*: The default process timeout for
+		     forking services is 300 seconds.
+   oneshot           A oneshot service is designed to execute scripts which      Service terminates        Service terminates
+		     complete an operation and are considered started once       abnormally during         abnormally during a
+		     they run successfully.  *Note*: The default process         the process timeout.      manual "start"
+		     timeout for oneshot services is 60 seconds.                                           operation.
+   notify            A notify service is expected to establish communication     Service terminates        Service sends a
+		     with chaperone using the *sd_notify* protcol.  The          abnormally during the     failure notification.
+		     :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`                    process timeout
+		     environment variable will be set, and chaperone will
+		     consider the service started only when notified
+		     appropriately. *Note*: The default process timeout
+		     for a notify service is 30 seconds.
+   cron              The cron type schedules a script or program for periodic    Service executable        Never.  Failures of
+		     execution.  The service is considered started once          is missing or invalid     isolated executions
+		     successfully scheduled.  Both scheduling parameters         but not optional.         do not constitute
+		     (specified using :ref:`interval <service.interval>`)                                  a permanent service
+		     as well as the presence of the executable specified                                   failure.
+		     in :ref:`command <service.command>` will be checked
+		     before scheduling is considered successful.  Cron
+		     services which are declared as
+		     :ref:`optional <service.optional>` will not be
+		     scheduled and will be treated as if they were disabled.
+   ================  ==========================================================  ========================= =========================
+
+Note: Unlike ``systemd``, Chaperone does not have an "idle" service type.  This is accomplished instead using a special
+system-defined service group called "IDLE", thereby permitting any service type to be activated when startup is
+complete.   See :ref:`service_groups <service.service_groups>` for more information.
 
 
 Service Config Reference
 ------------------------
 
+.. _service.type:
+
 .. describe:: type: ( simple | forking | oneshot | notify | cron )
 
    The ``type`` option defines how the service will be treated, when it is considered active, and what happens
-   when the service terminates either normally, or abnormally.  See the :ref:`separate section on service types <service.type>` for
+   when the service terminates either normally, or abnormally.  See the :ref:`separate section on service types <service.sect.type>` for
    a full description of what chaperone service types are and how they behave.
 
    This setting is optional.  If omitted, the default is "simple".
@@ -420,7 +431,7 @@ Service Config Reference
 
      four.service:   { service_group: "sanity_checks", 
                        after: "one.service,two.service,three.service",
-		       command: "echo four" }
+                       command: "echo four" }
 
 
 .. _service.setpgrp:
@@ -529,6 +540,6 @@ Service Config Reference
    control groups for a number of reasons, but mostly because they require privileges which make containers
    less secure.  In addition, despite their power and utility, control groups are have become a contentious
    feature right now, being used extensively, and often in incompatible ways, by
-   both `Docker <docker.com>`_  and `systemd <http://www.freedesktop.org/wiki/Software/systemd/>`_.  Chaperone
+   both `Docker <docker.com>`_  and `systemd <http://www.freedesktop.org/software/systemd/man/systemd.service.html>`_.  Chaperone
    is intended to be lean, simple and compatible with containers.  For now, avoiding cgroups we believe will
    keep Chaperone a more useful and simple accessory.
