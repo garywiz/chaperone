@@ -12,7 +12,7 @@ ENV_INTERACTIVE      = '_CHAP_INTERACTIVE'         # if this session is interact
 ENV_SERVICE          = '_CHAP_SERVICE'             # name of the current service
 ENV_TASK_MODE        = '_CHAP_TASK_MODE'           # if we are running in --task mode
 
-ENV_CHAP_OPTIONS     = 'CHAP_OPTIONS'              # Preset before chaperone runs to set default options
+ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone runs to set default options
 
 # Technically IEEE 1003.1-2001 states env vars can contain anything except '=' and NUL but we need to
 # obviously exclude the terminator!

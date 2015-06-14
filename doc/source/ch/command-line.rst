@@ -33,7 +33,7 @@ command-line switch                	       		       function
                                    	       		       services.
 :ref:`--log-level=level <option.log-level>`		       Force the syslog log output level to this value.  (one of 'emerg', 'alert', 'crit',
                                    	       		       'err', 'warn', 'notice', 'info', or 'debug).
-:ref:`--no-defaults <option.no-defaults>`		       Ignore the :ref:`_CHAP_OPTIONS <env.CHAP_OPTIONS>` environment variable,
+:ref:`--no-defaults <option.no-defaults>`		       Ignore the :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>` environment variable,
                                    	       		       if present.
 :ref:`--user=username <option.user>`			       Run all processes as ``user`` (uid number or name).  The user must exist.
                                    	       		       By default, all processes run as ``root``.
@@ -52,7 +52,7 @@ Chaperone Command Execution
 
 Chaperone goes through a set of startup phases in order to establish a working environment.
 
-1.  Chaperone first examines the environment looking for the :ref:`CHAP_OPTIONS <env.CHAP_OPTIONS>` variable.
+1.  Chaperone first examines the environment looking for the :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>` variable.
     If found, Chaperone uses it to establish default values.  The remaining environment variables will be passed to
     running services depending upon the both global and per-service setetings.
 
@@ -87,9 +87,9 @@ they exit.   When it receives a ``SIGTERM`` it will shutdown all processes in an
 Start-up Environment Variables
 ------------------------------
 
-.. _env.CHAP_OPTIONS:
+.. _env._CHAP_OPTIONS:
 
-.. envvar:: CHAP_OPTIONS
+.. envvar:: _CHAP_OPTIONS
 
    When Chaperone starts, it reads options both from the command line and from this environment
    variable.  The environment variable provides defaults which should be used if they are 
@@ -98,7 +98,7 @@ Start-up Environment Variables
    For example, in the ``chaperone-baseimage`` image configuration, the default value
    for ``--config`` is set::
 
-	    ENV CHAP_OPTIONS --config apps/chaperone.d
+	    ENV _CHAP_OPTIONS --config apps/chaperone.d
 	    ENTRYPOINT ["/usr/local/bin/chaperone"]
 
 
@@ -128,7 +128,7 @@ Option Reference Information
    files, see :ref:`config.sect.files`.
 
    If not specified, defaults to ``/etc/chaperone.d``, or uses the default option set in
-   the ``CHAP_OPTIONS`` (see :ref:`ch.env`) environment variable.
+   the ``_CHAP_OPTIONS`` (see :ref:`ch.env`) environment variable.
 
 .. _option.debug:
 
