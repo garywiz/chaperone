@@ -21,8 +21,8 @@ Multiple services can be declared in a single file.  Order within a configuratio
 However, if several configuration files are involved, services in subsequent files (alphabetically) will
 replace earlier services defined with the same name.
 
-Each service starts with the environment defined by the :ref:`settings directive <config.settings>` and
-can be tailored separately for each service.
+Each service inherits the environment defined by the :ref:`settings directive <config.settings>` and
+can be tailored separately for the needs of each service.
 
 .. _table.service-quick:
 
@@ -421,17 +421,19 @@ Service Config Reference
    achieves two goals: it assures the "four.service" starts after "three.service" but also assures
    all "setup" services will be completed, since "three.service" already expresses such a dependency.
 
-.. note::
-   In all cases, references to a service group operate identically to explicit references to all
-   group members.  Group references are merely a shortcut.  Therefore::
+   .. note::
+      In all cases, references to a service group operate identically to explicit references to all
+      group members.  Group references are merely a shortcut.  Therefore::
 
-     four.service:   { service_group: "sanity_checks", after: "setup", command: "echo four" }
+	four.service:   { service_group: "sanity_checks", 
+	                  after: "setup", 
+			  command: "echo four" }
 
-   is functionally identical to::
+      is functionally identical to::
 
-     four.service:   { service_group: "sanity_checks", 
-                       after: "one.service,two.service,three.service",
-                       command: "echo four" }
+	four.service:   { service_group: "sanity_checks", 
+			  after: "one.service,two.service,three.service",
+			  command: "echo four" }
 
 
 .. _service.setpgrp:
@@ -536,7 +538,7 @@ Service Config Reference
 .. [#f5]
 
    There is really only one bulletproof way to manage isolated groups of processes:
-   `control groups (or groups) <https://en.wikipedia.org/wiki/Cgroups>`_.  Chaperone intentionally avoids using
+   `control groups (or cgroups) <https://en.wikipedia.org/wiki/Cgroups>`_.  Chaperone intentionally avoids using
    control groups for a number of reasons, but mostly because they require privileges which make containers
    less secure.  In addition, despite their power and utility, control groups are have become a contentious
    feature right now, being used extensively, and often in incompatible ways, by

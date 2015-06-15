@@ -109,10 +109,6 @@ def main_entry():
 
    kill_switch = options['--exitkills'] or (False if options['--no-exitkills'] else tty)
 
-   tlp = TopLevelProcess.sharedInstance()
-   if options['--log-level']:
-      tlp.force_log_level(options['--log-level'])
-
    cmd = options['<command>']
 
    if options['--task'] and not cmd:
@@ -160,6 +156,13 @@ def main_entry():
       error("--disable-services not valid without specifying a command to run")
       exit(1)
 
+   # Now, create the tlp and proceed
+
+   tlp = TopLevelProcess(config)
+
+   if options['--log-level']:
+      tlp.force_log_level(options['--log-level'])
+
    if tlp.debug:
       config.dump()
 
@@ -193,10 +196,10 @@ def main_entry():
          extra_services = [cmdsvc]
 
       try:
-         yield from tlp.run_services(config, extra_services, extra_only = options['--disable-services'])
+         yield from tlp.run_services(extra_services, extra_only = options['--disable-services'])
       except Exception as ex:
          error(ex, "System startup cancelled due to error: {0}", ex)
          service_errors = True
          tlp.kill_system()
 
-   tlp.run_event_loop(config, startup_done())
+   tlp.run_event_loop(startup_done())

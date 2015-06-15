@@ -7,7 +7,7 @@ Configuration File Format
 =========================
 
 Chaperone's configuration is contained either in a single file, or a directory of configuration.
-You specify the configuration with the :ref:`--config <chaperone --config>` switch on the command line.
+You specify the configuration with the :ref:`--config <option.config>` switch on the command line.
 If none is specified, the default `/etc/chaperone.d` is used.  If a directory is chosen, then only the
 top-level of the directory will be searched, and only files ending in ``.conf`` or ``.yaml`` will be
 recognised and read in alphabetic order.
@@ -34,7 +34,7 @@ looks very similar to JSON.  In flow format, the above looks like this::
     after: mysql.service,
   }
 
-The flow style is bother easy to read, and works better when configurations become more complex. [#f2]_  So, throughout
+The flow style is both easy to read, and works better when configurations become more complex. [#f2]_  So, throughout
 the chaperone documentation, we'll stick to the flow format.
 
 Comments can be included both between lines and at the end of lines using the hash symbol (``#``).  Here is a complete well-commented

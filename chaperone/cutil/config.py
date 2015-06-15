@@ -57,6 +57,7 @@ _config_schema = V.Any(
         'ignore_failures': bool,
         'process_timeout': V.Any(float, int),
         'startup_pause': V.Any(float, int),
+        'shutdown_timeout': V.Any(float, int),
         'uid': V.Any(str, int),
       },
       V.Match('^.+\.logging'): {

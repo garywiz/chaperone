@@ -41,7 +41,7 @@ command-line switch                	       		       function
                                    	       		       run as if ``--user=<user>`` was specified.
 :ref:`--show-dependencies <option.show-dependencies>`	       Display service dependency graph, then exit.
 :ref:`--task <option.task>`				       Run in "task mode".  This implies ``--log-level=err``, ``--disable-services``,
-                                   	       		       and ``--exit-kills``.  This switch is useful when the container publishes
+                                   	       		       and ``--exitkills``.  This switch is useful when the container publishes
                                    	       		       commands which must run in isolation, such as displaying container internal
                                    	       		       information such as version information.
 --version                          	       		       Displays the chaperone version number.
@@ -63,7 +63,7 @@ Chaperone goes through a set of startup phases in order to establish a working e
     creating sockets such as ``/dev/log`` and starts it's internal command processor which accepts
     commands at ``/dev/chaperone`` or interactive commands (via :ref:`telchap <telchap>`) at
     ``/dev/chaperone.sock``.  Chaperone also sets up utility envionment variables such as
-    :ref:`env._CHAP_INTERACTIVE` so that they can be used in service configurations.
+    :ref:`_CHAP_INTERACTIVE <env._CHAP_INTERACTIVE>` so that they can be used in service configurations.
 
 4.  If a command and arguments are provided on the command line, an "IDLE" oneshot service is configured
     so that it runs after all other services are started.  If chaperone is running interactively,
@@ -161,3 +161,259 @@ Option Reference Information
 
    creates a fresh LAMP container running only ``bash`` so you can inspect the contents of the container without
    enabling any of the services.
+
+.. _option.exitkills:
+
+.. option:: --exitkills
+
+   This option works in conjunction with an ``initial-command`` specified on the command line, and will cause
+   the entire container to shut down when the command completes.
+
+   Chaperone attempts to anticipate what is needed automatically, and if run in an interactive container,
+   will default to ``--exitkills`` or when run as a daemon defaults to ``--no-exitkills``.  For example,
+   the following docker command will cause an exit after ``bash`` completes::
+
+     docker run -t -i --rm=true chapdev/chaperone-baseimage /bin/bash
+
+   whereas the following command will not exit upon bash's completion::
+
+     docker run -d chapdev/chaperone-baseimage /bin/bash
+
+   Both this option as well as :ref:`--no-exitkills <option.no-exitkills>` are provided when Chaperone's
+   default behavior is not desired.
+
+.. _option.no-exitkills:
+
+.. option:: --no-exitkills
+
+   Will not shutdown the system when the ``initial-command`` exits.  See :ref:`--exitkills <option.exitkills>`.
+
+.. _option.force:
+
+.. option:: --force
+
+   This option can be used to force Chaperone to attempt an operation even though it typically
+   would refuse.  At present, there are not many situations where this command is useful, but that may
+   change.  In cases where it can be used, Chaperone will display an alert, for example::
+
+     wheezy:~$ chaperone
+     Normally, chaperone expects to run as PID 1 in the 'init' role.
+     If you want to go ahead anyway, use --force.
+     wheezy:~$
+
+.. _option.ignore-failures:
+
+.. option:: --ignore-failures
+
+   Running with this option causes Chaperone to run as if the global setting :ref:`ignore_failures <settings.ignore_failures>` were
+   set to "true".
+
+   This can be useful when a service is failing on startup and causes sytem failure (as described in the :ref:`table.service-types` table).
+   In such situations, troubleshooting can be difficult since the container may be transient and failure information may be lost.
+
+   For example, to run a shell in a container even if it is failing on startup::
+
+     docker run -t -i --rm=true chapdev/chaperone-lamp --ignore-failures /bin/bash
+
+ 
+.. _option.log-level:
+
+.. option:: --log-level level-name
+
+   Normally, Chaperone should be configured to do logging with :ref:`logging directives <logging>`.  However, at times, more
+   detail is needed in the logs for troubleshooting purposes.  
+
+   This option should be followed by one of the log levels: **emerg**, **alert**, **crit**, **err**, **warn**, **notice**,
+   **info**, or **debug**.  When specified, it forces the logging system to behave as if *all* log definitions have a minimum
+   severity of ``level-name``.
+
+   For example, ``--log-level info`` assures that all types messages except debugging messages will be displayed in all logs;
+   ``--log-level debug`` assures that all types of messages are displayed.
+
+   Note that logging still must be configured so that syslog messages have some destination.  By default, log messages
+   are captured but not directed to 'stdout' or a file.  Most configurations include at least a simple logging directive like this::
+
+     console.logging: {
+       selector: '*.warn',
+       stdout: true,
+     }
+
+   which tells Chaperone to direct any messages of warning level or greater severity to 'stdout'.  Including ``--log-level info``,
+   for example, would cause Chaperone to behave as if the declaration looked like this::
+
+     console.logging: {
+       selector: '*.info',
+       stdout: true,
+     }
+
+   Note also that using the :ref:`--debug <option.debug>` switch automatically sets the log level to 'debug', so use of this
+   switch in such cases is redundant.
+
+.. _option.no-defaults:
+
+.. option:: --no-defaults
+
+   Using this switch causes Chaperone to ignore any configuration defaults set in the :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>`
+   environment variable.  Only the options provided on the command line itself will be recognized when this switch is used.
+
+.. _option.user:
+
+.. option:: --user name-or-number
+
+   Normally, when Chaperone is started, it runs as the same user which executed the ``chaperone`` command.  However, in many
+   cases, it is desirable to have Chaperone spawn all services and use permissions of a different user.  This switch
+   specifies the user account under which Chaperone will start all processes and logging services.  For example, 
+   assume you have an account within a container called ``appuser`` and all services should run under that user account.
+   You would simply do this::
+
+     docker run -d my_chaperone_image --user appuser
+
+   Chaperone will automatically assure that ``HOME``, ``LOGIN`` and ``LOGNAME`` are set correctly so that the
+   application make sure all files are located relative to the application home directory.
+
+   Typically, a production container would be built with this switch incorporated into the built image itself.
+   (Such as using Docker's ``CMD`` or ``ENTRYPOINT`` directives in a `Dockerfile <https://docs.docker.com/reference/builder/>`_.
+
+   Note the user *must exist* already inside the container's configuration.  If not, you can 
+   use :ref:`--create-user <options.create-user>` to dynamically create a new user inside the container upon startup.
+
+.. _option.create-user:
+
+.. option:: --create-user name[/uid[:gid]]
+
+   Often, a generic container can be designed to allow userspace mount points, isolating persistent data
+   outside the container so that the container becomes entirely transient.   Because containers have a
+   set of isolated user credentials, sharing files and permissions with the host volumes can often
+   lead to difficulties.
+
+   The ``--create-user`` switch allows you to "match" the host user (and optionally group) to the running
+   process tree within the container so that file permissions are consistent.
+
+   This switch accepts the following:
+
+   * A ``name`` parameter which should be the name of a user that will be created the first time
+     the container runs.
+   * An optional ``uid`` which must be the numeric user ID of the user to be created.  If omitted,
+     a new user ID will be assigned.
+   * An optional ``gid`` which can be the name or number of an existing group, or the number
+     of a new group to be created specifically for the new user.
+
+   When ``uid`` and ``gid`` are omitted, Chaperone will use the container's installed OS policy
+   to determine how to assign user credentials.
+
+   This feature can be used to create generic start-up scripts for containers so that they
+   share the credentials of whatever user created them.  Here is an example::
+
+     #!/bin/bash
+     # Extract host user UID/GID
+     myuid=`id -u`
+     mygid=`id -g`
+     # Run the daemon
+     docker run -d -v /home:/home my-app-image --create-user $USER/$myuid:$mygid
+
+   Once started, the image can now be stopped and restarted while retaining
+   the credential relationship with the host.
+
+   .. note::
+      Because containers are often *not* transient, and can be restarted, Chaperone is a bit
+      smart about interpreting this switch, which usually be present both when the container
+      is first started and when it is started again.  So, if the user name specified by
+      ``--create-user`` already exists, Chaperone will check to assure that any
+      ``uid`` or ``gid`` are correct, and proceed silently.
+
+      If the user credentials are defined differently, then an error will occur.
+
+
+.. _option.show-dependencies:
+
+.. option:: --show-dependencies
+
+   More complex service scenrios which use service directives :ref:`before <service.before>`,
+   :ref:`after <service.after>` and :ref:`service_groups <service.service_groups>` can sometimes
+   require debugging to assure the startup sequence is correct.
+
+   This switch provides some assistance by creating an ASCII dependency graph which
+   shows the relationship between services after Chaperone analyzes service
+   dependencies.
+
+   Here is how you can see a sample::
+
+     $ docker run -i --rm=true chapdev/chaperone-lamp --show-dependencies
+     init | mysql | apache2 | logrotate | sample
+     init      | ====
+     mysql     |     ========
+     apache2   |             ==========
+     logrotate |             ======================
+     sample    |                                   =========
+     ----------> depends on...
+     init      | 
+     mysql     | init
+     apache2   | mysql, init
+     logrotate | mysql, init
+     sample    | logrotate, apache2, mysql, init
+
+   The output consists of two sections.  The top section shows the earliest
+   start time for each service, relative to other defined services, rougly
+   in the order Chaperone will start them.  The lower section contains
+   the explicit dependencies after they have been resolved.
+
+   You can also obtain this information from inside the container using
+   the ":ref:`telchap dependencies <telchap.dependencies>`" command::
+
+      rbunion@69c0e692d78c:~$ telchap dependencies
+      telchap dependencies
+                  init | mysql | apache2 | logrotate | sample | CONSOLE
+      init      | ====
+      mysql     |     ========
+      apache2   |             ==========
+      logrotate |             ======================
+      sample    |                                   =========
+      CONSOLE   |                                            ==========
+      ----------> depends on...
+      init      | 
+      mysql     | init
+      apache2   | init, mysql
+      logrotate | init, mysql
+      sample    | apache2, logrotate, init, mysql
+      CONSOLE   | apache2, logrotate, init, mysql, sample
+
+   If the container is running with a command-line command (such as ``bash``)
+   you will also see the ``CONSOLE`` service listed, which is the service
+   which was created internally to manage the interactive console.  Because
+   the console is part of the :ref:`IDLE group <service.service_groups>`,
+   you can see that it depends upon all other services before it will
+   start.
+
+.. _option.task:
+
+.. option:: --task
+
+   This is a convience switch which is presently equivalent to combining:
+
+     * :ref:`--log-level err <option.log-level>`,
+     * :ref:`--disable-services <option.disable-services>`, and
+     * :ref:`--exitkills <option.exitkills>`.
+
+   It is useful when the command provided on the command line does
+   some utility task which circumvents the normal operation of the
+   container.
+
+   For example, imagine that you create a complex container with
+   several internal components, and want to provide an easy way
+   to report on the versions of software inside the container.
+   You could write a simple script, perhaps called ``/app/bin/report-versions``
+   then run it like this::
+
+     $ docker run -i --rm=true my-app-image --task /app/bin/report-versions
+     ngnnx: 1.9.1
+     cluster-supervisor: git tag = 'production-1.22'
+     replicator: 0.1
+     $
+
+   The ``--task`` switch attempts to silence any other output,
+   and assure the container does nothing except start the command-line
+   command (using the configured Chaperone environment), then exit.
+
+   See the :ref:`get-chaplocal <get-chaplocal>` task for an example
+   of how this switch has been used in practice.
+

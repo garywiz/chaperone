@@ -34,11 +34,13 @@ idle_delay         The "grace period" after all services have started before
 ignore_failures    Specifies the ``ignore_failures`` default for services.
 process_timeout    Specifies the amount of time Chaperone will wait for a service to start.
 		   The default varies for each type of service.
-		   See :ref:``service types <config.sect.service_types>`` for more
+		   See :ref:`service process_timeout <service.process_timeout>` for more
 		   information.
+shutdown_timeout   The amount of time Chaperone will wait for services to complete shutdown
+                   before forcing a kill with SIGKILL.  Default is 10 seconds.
 startup_pause      Specifies the ``startup_pause`` default for services.
 uid                The default uid (name or number) for all services and logging tasks.
-		   Overrides the value specified by :option:``--user <chaperone --user>`` or
-		   ``--create-user <chaperone --create-user>``.
+		   Overrides the value specified by :ref:`--user <option.user>` or
+		   :ref:`--create-user <option.create-user>`.
 gid                The default gid (name or number) for all services and logging tasks.
 =================  =============================================================================

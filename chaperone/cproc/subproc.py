@@ -499,6 +499,8 @@ class SubProcess(object):
         2.  func is called and the result is returned from timed_wait().
         """
         try:
+            if not timeout:
+                raise asyncio.TimeoutError() # funny situation, but settings can cause this if users attempt it
             result =  yield from asyncio.wait_for(asyncio.shield(self.wait()), timeout)
         except asyncio.TimeoutError:
             if not func:

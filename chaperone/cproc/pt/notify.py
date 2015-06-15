@@ -91,6 +91,8 @@ class NotifyProcess(SubProcess):
 
         if self._ready_event:
             try:
+                if not self.process_timeout:
+                    raise asyncio.TimeoutError()
                 yield from asyncio.wait_for(self._ready_event.wait(), self.process_timeout)
             except asyncio.TimeoutError:
                 self._ready_event = None

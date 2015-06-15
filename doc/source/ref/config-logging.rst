@@ -1,6 +1,8 @@
 .. chapereone documentation
    configuration directives
 
+.. _logging:
+
 Configuration: Logging Declarations
 ===================================
 

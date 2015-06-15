@@ -24,9 +24,9 @@ from chaperone.cutil.syslog import SyslogServer
 class TopLevelProcess(objectplus):
              
     exit_when_no_processes = True
-    kill_all_timeout = 5
     send_sighup = False
 
+    _shutdown_timeout = 5
     _ignore_signals = False
     _services_started = False
     _syslog = None
@@ -38,9 +38,15 @@ class TopLevelProcess(objectplus):
     _all_killed = False
     _killing_system = False
     _kill_future = None
+    _config = None
 
-    def __init__(self):
+    def __init__(self, config):
+        self._config = config
         self._start_time = time()
+
+        # wait at least 0.5 seconds, zero is totally pointless
+        self._shutdown_timeout = config.get_settings().get('shutdown_timeout', 10) or 0.5
+
         policy = asyncio.get_event_loop_policy()
         w = self._watcher = InitChildWatcher()
         policy.set_child_watcher(w)
@@ -155,11 +161,11 @@ class TopLevelProcess(objectplus):
             self._no_processes(True)
             return
 
-        yield from asyncio.sleep(self.kill_all_timeout)
+        yield from asyncio.sleep(self._shutdown_timeout)
         if self._all_killed:
             return
 
-        info("Some processes remain after {0}secs.  Forcing kill".format(self.kill_all_timeout))
+        info("Some processes remain after {0}secs.  Forcing kill".format(self._shutdown_timeout))
 
         try:
             os.kill(-1, signal.SIGKILL)
@@ -185,7 +191,7 @@ class TopLevelProcess(objectplus):
         if startup:
             self.activate(startup)
 
-    def run_event_loop(self, config, startup_coro = None):
+    def run_event_loop(self, startup_coro = None):
         """
         Sets up the event loop and runs it, setting up basic services such as syslog
         as well as the command services sockets.   Then, calls the startup coroutine (if any)
@@ -195,7 +201,7 @@ class TopLevelProcess(objectplus):
         futures = list()
 
         self._syslog = SyslogServer()
-        self._syslog.configure(config, self._minimum_syslog_level)
+        self._syslog.configure(self._config, self._minimum_syslog_level)
 
         try:
             syf = self._syslog.run()
@@ -224,12 +230,12 @@ class TopLevelProcess(objectplus):
         self.loop.close()
 
     @asyncio.coroutine
-    def run_services(self, config, extra_services, extra_only = False):
-        "Run services from the speicified config (an instance of cutil.config.Configuration)"
+    def run_services(self, extra_services, extra_only = False):
+        "Run all services."
 
         # First, determine our overall configuration for the services environment.
 
-        services = config.get_services()
+        services = self._config.get_services()
 
         if extra_services:
             services = services.deepcopy()
