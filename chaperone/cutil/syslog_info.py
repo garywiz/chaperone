@@ -6,7 +6,7 @@ for k,v in SysLogHandler.__dict__.items():
     if k.startswith('LOG_'):
         globals()[k] = v
     
-FACILITY = ('kern', 'user', 'mail', 'daemon', 'auth', 'syslog', 'lpr', 'news', 'uucp', 'clock', 'authpriv',
+FACILITY = ('kern', 'user', 'mail', 'daemon', 'auth', 'syslog', 'lpr', 'news', 'uucp', 'cron', 'authpriv',
              'ftp', 'ntp', 'audit', 'alert', 'cron', 'local0', 'local1', 'local2', 'local3', 'local4',
              'local5', 'local6', 'local7')
 FACILITY_DICT = {FACILITY[i]:i for i in range(len(FACILITY))}

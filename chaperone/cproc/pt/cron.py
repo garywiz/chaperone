@@ -1,6 +1,7 @@
 import asyncio
 from aiocron import crontab
 from chaperone.cutil.logging import error, warn, debug, info
+from chaperone.cutil.syslog_info import LOG_CRON
 from chaperone.cproc.subproc import SubProcess
 from chaperone.cutil.errors import ChParameterError
 
@@ -14,6 +15,8 @@ _CRON_SPECIALS = {
 }
 
 class CronProcess(SubProcess):
+
+    syslog_facility = LOG_CRON
 
     _cron = None
     _fut_monitor = None

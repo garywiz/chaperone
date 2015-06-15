@@ -61,7 +61,7 @@ class _syslog_spec_matcher:
     1.  Basic cases are pretty easy to read and understand.
     2.  Negations can be understood if documented, and are useful.
     3.  I don't want to introduce a completely new syntax.
-    3.  Somewhere out here, there is some nerdy OCD guy who will say "But wait, your filter format is so CLOSE
+    3.  Somewhere out here, there is some nerdy OCD guy who will say "But wait, your selector format is so CLOSE
         to the syslog format that you MUST support it with the same semantics or you're going to alienate [me]."  
         Just nipping that in the bud.
     """
@@ -121,7 +121,7 @@ class _syslog_spec_matcher:
         elif gdict['prog'] is not None:
             c1 = '(g and "%s" == g.lower())' % gdict['prog'].lower()
         elif gdict['fac'] != '*':
-            faclist = [FACILITY_DICT.get(f) for f in gdict.get('fac', '').split(',')]
+            faclist = [FACILITY_DICT.get(f) for f in gdict.get('fac', '').lower().split(',')]
             if None in faclist:
                 raise Exception("Invalid logging facility code, %s: %s" % (gdict['fac'], spec))
             c1 = '(' + ' or '.join(['f==%d' % f for f in faclist]) + ')'
@@ -134,7 +134,7 @@ class _syslog_spec_matcher:
         if pri == '*':
             c2 = 'True'
         else:
-            prival = PRIORITY_DICT.get(pri)
+            prival = PRIORITY_DICT.get(pri.lower())
             if prival == None:
                 raise Exception("Invalid logging priority, %s: %s" % (pri, spec))
             if minpri is not None and minpri > prival:
@@ -236,7 +236,7 @@ class SyslogServer:
         loglist = self._loglist = list()
         lc = config.get_logconfigs()
         for k,v in lc.items():
-            matcher = _syslog_spec_matcher(v.filter or '*.*', minimum_priority)
+            matcher = _syslog_spec_matcher(v.selector or '*.*', minimum_priority)
             loglist.append( (matcher, LogOutput.getOutputHandlers(v)) )
 
     def reset_minimum_priority(self, minimum_priority = None):

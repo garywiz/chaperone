@@ -25,10 +25,9 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   chap-intro.rst
-   chap-docker.rst
-   ch/command-line.rst
-   ch/config.rst
+   guide/chap-intro.rst
+   guide/chap-docker.rst
+   ref/index.rst
 
 Downloading and Installing
 --------------------------

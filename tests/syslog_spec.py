@@ -7,7 +7,7 @@ SPECS = (
     ('[crond].*',                              '((g and "crond" == g.lower()))'),
     ('.*',                                     'Invalid log spec syntax: .*'),
     ('kern.*;kern.!=crit',                     '((not (f==0) or not p==2)) and (((f==0)))'),
-    ('kern.*;kern.!crit',                      '((not (f==0) or not p<=2)) and (((f==0)))'),
+    ('KERN.*;kern.!crit',                      '((not (f==0) or not p<=2)) and (((f==0)))'),
     ('kern.crit',                              '((f==0) and p<=2)'),
     ('*.=emerg;*.=crit',                       '(p==0) or (p==2)'),
     ('/not and\/or able/.*',                   '(bool(s._regexes[0].search(buf)))'),
@@ -35,8 +35,8 @@ class TestSyslogSpec(unittest.TestCase):
                 sm = ex
                 if 'unexpected' in str(sm):
                     raise
-            Uncomment to generate the test table, but CHECK IT carefully!
-            print("('{0:40} '{1}'),".format(s[0]+"',", sm))
+            #Uncomment to generate the test table, but CHECK IT carefully!
+            #print("('{0:40} '{1}'),".format(s[0]+"',", sm))
             self.assertEqual(str(sm), s[1])
 
 if __name__ == '__main__':

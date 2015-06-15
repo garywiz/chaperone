@@ -63,7 +63,7 @@ _config_schema = V.Any(
         'enabled': bool,
         'extended': bool,
         'file': str,
-        'filter': str,
+        'selector': str,
         'stderr': bool,
         'stdout': bool,
         'overwrite': bool,
@@ -245,7 +245,7 @@ class ServiceConfig(_BaseConfig):
         
 class LogConfig(_BaseConfig):
 
-    filter = '*.*'
+    selector = '*.*'
     file = None
     stderr = False
     stdout = False
@@ -255,7 +255,7 @@ class LogConfig(_BaseConfig):
     uid = None                  # used to control permissions on logfile creation
     gid = None
 
-    _expand_these = {'filter', 'file'}
+    _expand_these = {'selector', 'file'}
 
     @property
     def shortname(self):

@@ -465,7 +465,7 @@ Service Config Reference
 
    Chaperone will run the service as the user specified by ``uid``.  If ``uid`` is not specified for the service,
    the :ref:`settings uid <settings.uid>` will be used, and finally the user specified on the command
-   like with :option:`--user <chaperone --user>` or :option:`--create-user <chaperone --create-user>`.
+   line with :option:`--user <chaperone --user>` or :option:`--create-user <chaperone --create-user>`.
 
    When Chaperone is told to use a particular user account, it also sets the ``HOME``, ``USER``, and
    ``LOGNAME`` environment variables to reflect those associated with the user.

@@ -1,7 +1,7 @@
 .. chapereone documentation
    configuration directives
 
-.. _config:
+.. _config.file-format:
 
 Configuration File Format
 =========================

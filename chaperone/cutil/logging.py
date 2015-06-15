@@ -86,6 +86,7 @@ def _versatile_logprint(delegate, fmt, *args,
         log item.
     2.  A traceback will be printed in the case where the logger priority level is set to debug.
     """
+
     if isinstance(fmt, Exception):
         ex = fmt
         args = list(args)
@@ -96,7 +97,7 @@ def _versatile_logprint(delegate, fmt, *args,
     else:
         ex = None
 
-    if facility or program or pid:
+    if facility is not None or program or pid:
         extra = kwargs['extra'] = {}
         if facility:
             extra['_facility'] = facility

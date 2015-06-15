@@ -39,6 +39,8 @@ class SubProcess(object):
     family = None
     process_timeout = 30.0      # process_timeout will be set to this unless it is overridden by 
                                 # the service entry
+    syslog_facility = None      # specifies any additional syslog facility to use when using
+                                # logerror, logdebug, logwarn, etc...
 
     _proc = None
     _pwrec = None               # the pwrec looked up for execution user/group
@@ -108,7 +110,7 @@ class SubProcess(object):
         except FileNotFoundError:
             if service.optional:
                 service.enabled = False
-                info("optional service {0} disabled since '{1}' is not present".format(self.name, service.exec_args[0]))
+                self.loginfo("optional service {0} disabled since '{1}' is not present".format(self.name, service.exec_args[0]))
                 return
             raise ChNotFoundError("executable '{0}' not found".format(service.exec_args[0]))
 
@@ -147,6 +149,20 @@ class SubProcess(object):
         if self.running:
             states.append('running')
         return ' '.join(states)
+
+    # Logging methods which may do special things for this service
+
+    def loginfo(self, *args, **kwargs):
+        info(*args, facility=self.syslog_facility, **kwargs)
+
+    def logerror(self, *args, **kwargs):
+        error(*args, facility=self.syslog_facility, **kwargs)
+
+    def logwarn(self, *args, **kwargs):
+        warn(*args, facility=self.syslog_facility, **kwargs)
+
+    def logdebug(self, *args, **kwargs):
+        debug(*args, facility=self.syslog_facility, **kwargs)
 
     @property
     def note(self):
@@ -250,14 +266,14 @@ class SubProcess(object):
         service = self.service
 
         if self._started:
-            debug("service {0} already started.  further starts ignored.", service.name)
+            self.logdebug("service {0} already started.  further starts ignored.", service.name)
             return
 
         if not service.enabled:
-            debug("service {0} not enabled, will be skipped", service.name)
+            self.logdebug("service {0} not enabled, will be skipped", service.name)
             return
         else:
-            debug("service {0} enabled, queueing start request", service.name)
+            self.logdebug("service {0} enabled, queueing start request", service.name)
 
         # If this service is already starting, then just wait until it completes.
 
@@ -278,13 +294,13 @@ class SubProcess(object):
             if prereq:
                 for p in prereq:
                     yield from p.start()
-                debug("service {0} prerequisites satisfied", service.name)
+                self.logdebug("service {0} prerequisites satisfied", service.name)
 
             if self.family:
                 # idle only makes sense for families
                 if "IDLE" in service.service_groups and service.idle_delay and not hasattr(self.family, '_idle_hit'):
                     self.family._idle_hit = True
-                    debug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
+                    self.logdebug("IDLE transition hit.  delaying for {0} seconds", service.idle_delay)
                     yield from asyncio.sleep(service.idle_delay)
 
                 # STOP if the system is no longer alive because a prerequisite failed
@@ -295,7 +311,7 @@ class SubProcess(object):
                 yield from self._start_service()
             except Exception as ex:
                 if service.ignore_failures:
-                    info("service {0} ignoring failures. Exception: {1}", service.name, ex)
+                    self.loginfo("service {0} ignoring failures. Exception: {1}", service.name, ex)
                 else:
                     raise
 
@@ -305,13 +321,13 @@ class SubProcess(object):
             cond_starting.notify_all()
             cond_starting.release()
             self._cond_starting = None
-            debug("{0} notified waiters upon completion", service.name)
+            self.logdebug("{0} notified waiters upon completion", service.name)
 
     @asyncio.coroutine
     def _start_service(self):
         service = self.service
 
-        debug("{0} attempting start '{1}'... ".format(service.name, " ".join(service.exec_args)))
+        self.logdebug("{0} attempting start '{1}'... ".format(service.name, " ".join(service.exec_args)))
 
         kwargs = dict()
 
@@ -330,17 +346,17 @@ class SubProcess(object):
 
         if service.debug:
             if not env:
-                debug("{0} environment is empty", service.name)
+                self.logdebug("{0} environment is empty", service.name)
             else:
-                debug("{0} environment:", service.name)
+                self.logdebug("{0} environment:", service.name)
                 for k,v in env.items():
-                    debug(" {0} = '{1}'".format(k,v))
+                    self.logdebug(" {0} = '{1}'".format(k,v))
 
 
         create = asyncio.create_subprocess_exec(*service.exec_args, preexec_fn=self._setup_subprocess,
                                                 env=env, **kwargs)
         if service.exit_kills:
-            warn("system wll be killed when '{0}' exits", service.exec_args[0])
+            self.logwarn("system wll be killed when '{0}' exits", service.exec_args[0])
             yield from asyncio.sleep(0.2)
 
         proc = self._proc = yield from create
@@ -359,7 +375,7 @@ class SubProcess(object):
 
         self._starts_allowed = self.service.restart_limit
 
-        debug("{0} successfully started", service.name)
+        self.logdebug("{0} successfully started", service.name)
 
     @asyncio.coroutine
     def process_prepare_co(self, environment):
@@ -379,7 +395,7 @@ class SubProcess(object):
         service = self.service
 
         if service.exit_kills:
-            warn("{0} terminated abnormally with {1}", service.name, code)
+            self.logwarn("{0} terminated abnormally with {1}", service.name, code)
             return
 
         # A disabled service should not do recovery
@@ -391,7 +407,7 @@ class SubProcess(object):
             controller = self.family.controller
             if controller.system_alive:
                 if service.restart_delay:
-                    info("{0} pausing between restart retries", service.name)
+                    self.loginfo("{0} pausing between restart retries", service.name)
                     yield from asyncio.sleep(service.restart_delay)
             if controller.system_alive:
                 yield from self.reset(True)
@@ -401,18 +417,18 @@ class SubProcess(object):
             return
 
         if service.ignore_failures:
-            debug("{0} abnormal process exit ignored due to ignore_failures=true", service.name)
+            self.logdebug("{0} abnormal process exit ignored due to ignore_failures=true", service.name)
             yield from self.reset()
             return
 
-        error("{0} terminated abnormally with {1}", service.name, code)
+        self.logerror("{0} terminated abnormally with {1}", service.name, code)
 
     def _restart_callback(self, fut):
         # Catches a restart result, reporting it as a warning, and either passing back to _abnormal_exit
         # or accepting glorious success.
         ex = fut.exception()
         if ex:
-            warn("{0} restart failed: {1}", self.name, ex)
+            self.logwarn("{0} restart failed: {1}", self.name, ex)
             asyncio.async(self._abnormal_exit(self._proc and self._proc.returncode))
 
     def _kill_system(self):
@@ -424,7 +440,7 @@ class SubProcess(object):
 
     @asyncio.coroutine
     def reset(self, restart = False, dependents = False, enable = False):
-        debug("{0} received reset", self.name)
+        self.logdebug("{0} received reset", self.name)
 
         if self._proc:
             if self._proc.returncode is None:
@@ -467,7 +483,7 @@ class SubProcess(object):
         if proc:
             if proc.returncode is None:
                 if self.kill_signal is not None:
-                    debug("using {0} to terminate {1}", get_signal_name(self.kill_signal), self.name)
+                    self.logdebug("using {0} to terminate {1}", get_signal_name(self.kill_signal), self.name)
                     proc.send_signal(self.kill_signal)
                 else:
                     proc.terminate()
@@ -499,9 +515,9 @@ class SubProcess(object):
         yield from proc.wait()
 
         if proc.returncode is not None and proc.returncode.normal_exit:
-            debug("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))
+            self.logdebug("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))
         else:
-            info("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))
+            self.loginfo("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))
 
         return proc.returncode
 
