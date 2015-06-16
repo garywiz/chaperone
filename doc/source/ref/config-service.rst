@@ -1,7 +1,9 @@
 .. chapereone documentation
    configuration directives
 
-.. |ENV| replace:: :kbd:`$ENV`
+.. include:: /includes/defs.rst
+
+.. _service:
 
 Configuration: Service Declarations
 ===================================

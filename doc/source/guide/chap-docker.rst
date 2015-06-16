@@ -1,4 +1,6 @@
 
+.. include:: /includes/incomplete.rst
+
 .. _chap.docker:
 
 Using Chaperone with Docker

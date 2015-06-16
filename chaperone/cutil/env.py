@@ -143,7 +143,12 @@ class Environment(lazydict):
         Two bash features are employed to allow tests:
             $(VAR:-sub)    Expands to sub if VAR not defined
             $(VAR:+sub)    Expands to sub if VAR IS defined
+
+        If a list is provided instead of a string, a list will be returned with each item
+        separately expanded.
         """
+        if isinstance(instr, list):
+            return [self.expand(item) for item in instr]
         if not isinstance(instr, str):
             return instr
         return _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)

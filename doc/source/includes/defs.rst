@@ -1,0 +1,1 @@
+.. |ENV| replace:: :kbd:`$ENV`

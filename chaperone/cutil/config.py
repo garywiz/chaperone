@@ -201,7 +201,7 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_groups={0.service_groups}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory'}
+    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'startup_pause', 'ignore_failures'}
 
     system_group_names = ('IDLE', 'INIT')

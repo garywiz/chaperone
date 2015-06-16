@@ -183,6 +183,51 @@ Variable Reference
 	    ENV _CHAP_OPTIONS --config apps/chaperone.d
 	    ENTRYPOINT ["/usr/local/bin/chaperone"]
 
+.. _env._CHAP_INTERACTIVE:
+
+.. envvar:: _CHAP_INTERACTIVE
+
+   This variable will always be set by Chaperone to either "0" or "1".  A "1" value
+   indicates that Chaperone detected a controlling terminal (pseudo-tty).  For example::
+
+     $ docker run -t -i chapdev/chaperone-baseimage --task /bin/echo '$(_CHAP_INTERACTIVE)'
+     1
+     $ docker run -i chapdev/chaperone-baseimage --task /bin/echo '$(_CHAP_INTERACTIVE)'
+     0
+     $
+
+   Exporting this value to services can allow services to detect interactive
+   vs. daemon containers in order to tailor their operation.
+
+.. _env._CHAP_SERVICE:
+
+.. envvar:: _CHAP_SERVICE
+
+   For each :ref:`service definition <service>`, this variable will be set to the name
+   of the service itself, including the ``.service`` suffix.  So, the service::
+
+     mydata.service: {
+       command: "/bin/bash -c '/bin/echo $(_CHAP_SERVICE) >/tmp/service.txt'"
+     }
+
+   will write ``mydata.service`` to the file ``/tmp/service.txt`` (not particularly useful).
+
+   Note that even the main command runs as a conventional service named "CONSOLE"::
+
+     $ docker run -i chapdev/chaperone-baseimage --task /bin/echo '$(_CHAP_SERVICE)'
+     CONSOLE
+     $
+
+.. _env._CHAP_TASK_MODE:
+
+.. envvar:: _CHAP_TASK_MODE
+
+   This variable will be defined and set to "1" whenever Chaperone was run with the
+   :ref:`--task <option.task>` command-line option.
+
+   It can be used within scripts or applications to tailor behavior, if desired.
+
+
 Notify Socket
 -------------
 
@@ -191,7 +236,7 @@ Notify Socket
 .. envvar:: NOTIFY_SOCKET
 
    Chaperone attempts to emulate ``systemd`` behavior by providing a
-   :ref:`"forking" service type <service.type>`.   Processes created by this type
+   :ref:`"forking" service type <service.sect.service_types>`.   Processes created by this type
    will have the additional variable ``NOTIFY_SOCKET`` set in their environment,
    which is the path to a UNIX domain socket created privately within the
    container.  The service should use this environment variable to trigger
