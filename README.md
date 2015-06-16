@@ -46,12 +46,11 @@ system services (such as runit).  Chaperone is designed to be self-contained.
 Status
 ------
 
-As of Saturday, 06-Jun-2015...
+As of Saturday, 16-Jun-2015...
 
 THIS PROJECT IS IN PRE-RELEASE PHASE, and has been uploaded here and to PyPi to
-prepare for a more formal release.  I advise you do not use it yet.  However,
-the released version does work in most of my test cases, and should install
-properly from PyPi.
+prepare for a more formal release.  It is ready for Beta use, and documentation
+is now released and being completed.  The reference section is finished.
 
 Some status notes:
 
@@ -63,8 +62,7 @@ Some status notes:
   for a full LAMP stack designed to simplify development and production with
   all needed features. Both will appear soon on github in source form and on
   Docker Hub as usable images.
-* Documentation is in progress both for chaperone as well as the docker
-  images.
+* Further documentation is on the way.
 
 Watch this space for announcements as final touches and documentation
 are added in the next few weeks.
