@@ -193,6 +193,36 @@ Service Config Reference
    Services can be enabled and disabled dynamically while Chaperone is running using the
    :ref:`telchap command <telchap>`.
 
+.. _service.env_inherit:
+
+.. describe:: env_inherit [ 'pattern', 'pattern', ... ]
+
+Specifies a list of patterns which define what will be inherited from the environment defined by the
+:ref:`global settings <config.settings>`  Patterns are standard filename "glob" patterns.
+By default, all environment variables will be inherited from the settings environment.
+
+For example::
+
+  sample.service: {
+    command: '/opt/app/bin/do_the_stuff',
+    env_inherit: [ 'PATH', 'TERM', 'HOST', 'SSH_*' ],
+  }
+
+.. _service.env_set:
+
+.. describe:: env_set { 'NAME': 'value', ... }
+
+Provides a list of name/value pairs for setting or overriding environment variables.  The values may contain
+:ref:`variable expansions <env.expansion>`.    The inherited environment will be the one configured
+using similar settings directives such as :ref:`settings env_set <settings.env_set>`.
+
+.. _service.env_unset:
+
+.. describe:: env_unset [ 'pattern, 'pattern', ... ]
+
+Removes the environment variables which match any of the given patterns from the environment.  
+Patterns are standard filename 'glob' patterns.
+
 .. _service.stdout:
 
 .. describe:: stdout: ( 'log' | 'inherit' )

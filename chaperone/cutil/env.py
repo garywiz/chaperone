@@ -90,9 +90,11 @@ class Environment(lazydict):
                         shadow[k] = from_env # we keep track of the environment where the predecessor originated
                     self[k] = v
             if unset:
-                for s in unset:
-                    self.pop(s, None)
-                    shadow.pop(s, None)
+                patmatch = lambda p: any([fnmatch(p,pat) for pat in unset])
+                for delkey in [k for k in self.keys() if patmatch(k)]:
+                    del self[delkey]
+                for delkey in [k for k in shadow.keys() if patmatch(k)]:
+                    del shadow[delkey]
 
         #print('   DONE (.uid={0}): {1}\n'.format(self.uid, self))
 
@@ -198,12 +200,13 @@ class Environment(lazydict):
         if not match:
             if parent == k:     # self-referential
                 primary = self._get_shadow_environment(k)
-                return (primary and primary.get(k, '')) or '' # special case where we return nothing
-            if k in result:
-                return result[k]
-            if k not in primary:
-                return default
-            val = primary[k]
+                val = (primary and primary.get(k, '')) or '' # special case where we return nothing
+            else:
+                if k in result:
+                    return result[k]
+                if k not in primary:
+                    return default
+                val = primary[k]
         else:
             (k, oper, repl) = match.groups()
             if parent == k:     # self-referential

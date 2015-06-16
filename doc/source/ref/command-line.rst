@@ -29,7 +29,7 @@ command-line switch                	       		       function
                                    	       		       implied or specified as a default.
 :ref:`--force <option.force>`				       If chaperone refuses to do something, tell it to try anyway.
 --help                             	       		       Displays command and option help.
-:ref:`--ignore-failures <option.ignore-failures>`	       Run as if :ref:`ignore_failures <config.ignore_failures>` were true for all
+:ref:`--ignore-failures <option.ignore-failures>`	       Run as if :ref:`ignore_failures <service.ignore_failures>` were true for all
                                    	       		       services.
 :ref:`--log-level=level <option.log-level>`		       Force the syslog log output level to this value.  (one of 'emerg', 'alert', 'crit',
                                    	       		       'err', 'warn', 'notice', 'info', or 'debug).
@@ -107,7 +107,7 @@ Option Reference Information
    specifies that the contents of the directory ``chaperone.d`` should be scanned and any file
    ending with ``.conf`` or ``.yaml`` will be read (in alphabetic order) to create the final
    configuration.   To understand how Chapeone handles directives which occur in multiple
-   files, see :ref:`config.sect.files`.
+   files, see :ref:`config.file-format`.
 
    If not specified, defaults to ``/etc/chaperone.d``, or uses the default option set in
    the ``_CHAP_OPTIONS`` (see :ref:`ch.env`) environment variable.
@@ -257,7 +257,7 @@ Option Reference Information
    (Such as using Docker's ``CMD`` or ``ENTRYPOINT`` directives in a `Dockerfile <https://docs.docker.com/reference/builder/>`_.
 
    Note the user *must exist* already inside the container's configuration.  If not, you can 
-   use :ref:`--create-user <options.create-user>` to dynamically create a new user inside the container upon startup.
+   use :ref:`--create-user <option.create-user>` to dynamically create a new user inside the container upon startup.
 
 .. _option.create-user:
 
