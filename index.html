@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Chaperone: A lightweight, all-in-one process manager for lean containers &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="#"/>
+        <link rel="next" title="Introduction to Chaperone" href="guide/chap-intro.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="#" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ref/index.html">Chaperone Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ref/command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ref/command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ref/command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ref/command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ref/config.html">Chaperone Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ref/config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ref/config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ref/config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ref/config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ref/config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ref/env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ref/env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ref/env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ref/env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ref/env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ref/env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ref/env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>Chaperone: A lightweight, all-in-one process manager for lean containers</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="chaperone-a-lightweight-all-in-one-process-manager-for-lean-containers">
+<h1>Chaperone: A lightweight, all-in-one process manager for lean containers<a class="headerlink" href="#chaperone-a-lightweight-all-in-one-process-manager-for-lean-containers" title="Permalink to this headline">¶</a></h1>
+<p>Chaperone is a lightweight alternative to process environment managers
+like <code class="docutils literal"><span class="pre">systemd</span></code> or <code class="docutils literal"><span class="pre">upstart</span></code>.   While chaperone provides an extensive
+feature set, including dependency-based startup, syslog logging, zombie harvesting,
+and job scheduling, it does all of this in a single self-contained process that can
+run as a &#8220;system init&#8221; daemon or can run in userspace.</p>
+<p>This makes Chaperone an ideal tool for managing &#8220;small&#8221; process spaces like Docker
+containers while still providing the system services many daemons expect.</p>
+<p>If you are using Chaperone with Docker, we suggest reading the XXXX.</p>
+<p>Any bugs should be reported as issues at <a class="reference external" href="https://github.com/garywiz/chaperone/issues">https://github.com/garywiz/chaperone/issues</a>.</p>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ref/index.html">Chaperone Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ref/command-line.html">Chaperone Command Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ref/config.html">Chaperone Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ref/env.html">Environment Variables</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="downloading-and-installing">
+<h2>Downloading and Installing<a class="headerlink" href="#downloading-and-installing" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way to install <code class="docutils literal"><span class="pre">chaperone</span></code> is using <code class="docutils literal"><span class="pre">pip</span></code> from the <a class="reference external" href="https://pypi.python.org/pypi/chaperone">https://pypi.python.org/pypi/chaperone</a> package:</p>
+<div class="highlight-python"><div class="highlight"><pre># Ubuntu or debian prerequisites...
+apt-get install python3-pip
+
+# chaperone (may be all you need)
+pip3 install chaperone
+</pre></div>
+</div>
+<p>If you&#8217;re interested in the source code, or contributing, you can find the <code class="docutils literal"><span class="pre">chaperone</span></code> source code
+at <a class="reference external" href="https://github.com/garywiz/chaperone">https://github.com/garywiz/chaperone</a>.</p>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>Copyright (c) 2015, Gary J. Wisniewski &lt;<a class="reference external" href="mailto:garyw&#37;&#52;&#48;blueseastech&#46;com">garyw<span>&#64;</span>blueseastech<span>&#46;</span>com</a>&gt;</p>
+<p>Licensed under the Apache License, Version 2.0 (the &#8220;License&#8221;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<blockquote>
+<div><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></div></blockquote>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8220;AS IS&#8221; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="guide/chap-intro.html" class="btn btn-neutral float-right" title="Introduction to Chaperone" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

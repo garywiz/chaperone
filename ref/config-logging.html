@@ -1,0 +1,531 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Configuration: Logging Declarations &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="../index.html"/>
+        <link rel="up" title="Chaperone Configuration" href="config.html"/>
+        <link rel="next" title="Environment Variables" href="env.html"/>
+        <link rel="prev" title="Configuration: Service Declarations" href="config-service.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Chaperone Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="config.html">Chaperone Configuration</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Chaperone Reference</a> &raquo;</li>
+      
+          <li><a href="config.html">Chaperone Configuration</a> &raquo;</li>
+      
+    <li>Configuration: Logging Declarations</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="configuration-logging-declarations">
+<span id="logging"></span><h1>Configuration: Logging Declarations<a class="headerlink" href="#configuration-logging-declarations" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="logging-quick-reference">
+<h2>Logging Quick Reference<a class="headerlink" href="#logging-quick-reference" title="Permalink to this headline">¶</a></h2>
+<p>Chaperone has its own internal <code class="docutils literal"><span class="pre">syslog</span></code> service which listens on the <code class="docutils literal"><span class="pre">/dev/log</span></code> socket.  Hoewver, by default,
+none of the messages sent to the syslog will be stored or output unless logging declarations are made.</p>
+<p>The simplest logging directive tells chaperone what to do with log entries using a superset of the familiar
+<a class="reference external" href="http://linux.die.net/man/5/syslog.conf">syslogd configuration format</a>.  For example, the following will
+direct all messages at the warning level (or greater) to <code class="docutils literal"><span class="pre">stdout</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>console.logging: {
+  selector: &#39;*.warn&#39;,
+  stdout: true,
+}
+</pre></div>
+</div>
+<p>You can define as many different logging entries, and all will be respected as individual output targets.  If you
+have services which do significant syslog output, you can decide on a per-service basis which logs go where,
+what aspects are sent to <code class="docutils literal"><span class="pre">stdout</span></code> and which go to log files.</p>
+<p>An overview of logging directives follow, then detailed reference information.  Entries below
+marked with <code class="kbd docutils literal"><span class="pre">$ENV</span></code> support <a class="reference internal" href="env.html#env-expansion"><span>environment variable expansion</span></a>.</p>
+<table border="1" class="docutils" id="id2">
+<span id="table-logging-quick"></span><caption><span class="caption-number">Table 4 </span><span class="caption-text">Logging Directives Quick Reference</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">logging keyword</th>
+<th class="head">meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference internal" href="#logging-selector"><span>selector</span></a></td>
+<td>Specifies the syslog-compatible selection filter for this logging entry.
+<code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#logging-file"><span>file</span></a></td>
+<td>Specifies an optional file for output. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#logging-stderr"><span>stderr</span></a></td>
+<td>Directs output to <code class="docutils literal"><span class="pre">stderr</span></code> (can be used with <code class="docutils literal"><span class="pre">file</span></code>).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#logging-stdout"><span>stdout</span></a></td>
+<td>Directs output to <code class="docutils literal"><span class="pre">stdout</span></code> (can be used with <code class="docutils literal"><span class="pre">file</span></code>).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#logging-enabled"><span>enabled</span></a></td>
+<td>Can be set to <code class="docutils literal"><span class="pre">false</span></code> to disable this logging entry.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#logging-overwrite"><span>overwrite</span></a></td>
+<td>If <code class="docutils literal"><span class="pre">file</span></code> is provided, then setting this to <code class="docutils literal"><span class="pre">true</span></code> will overwrite
+the file upon opening.  By default, log files operate in append mode.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#logging-extended"><span>extended</span></a></td>
+<td>Prefixes log entries with their facility and priority (useful primarily
+for debugging).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#logging-uid"><span>uid</span></a></td>
+<td>The uid (name or number) for permissions on created files and directories.
+<code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#logging-gid"><span>gid</span></a></td>
+<td>The gid (name or number) for permissions on created files and directories.
+<code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="syslog-selectors">
+<span id="logging-sect-selectors"></span><h2>Syslog Selectors<a class="headerlink" href="#syslog-selectors" title="Permalink to this headline">¶</a></h2>
+<p>The method used for selecting which log entries are sent to which logging services are specified using a selector
+format similar to the one used by the standard <code class="docutils literal"><span class="pre">syslogd</span></code> daemon.<a class="footnote-reference" href="#f1" id="id1">[1]</a>  Chaperone includes some extensions to
+the standard format to introduce greater flexiblity without deviating too far from the well-known syntax.</p>
+<p>In the absence of a selector, Chaperone will direct all syslog output to the given location, so this entry
+echoes literally every <code class="docutils literal"><span class="pre">syslog</span></code> message to the container&#8217;s <code class="docutils literal"><span class="pre">stdout</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>everything.logging: { stdout: true }
+</pre></div>
+</div>
+<p>While this may be alright for simple applications, or for debugging, most applications require more nuanced
+control of what goes where.  This is done by using <em>selectors</em>.  For example, the following includes
+a selector which echoes only messages which have &#8216;err&#8217; severity or greater to <code class="docutils literal"><span class="pre">stdout</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>badstuff.logging { stdout:true, selector: &#39;*.err&#39; }
+</pre></div>
+</div>
+<div class="section" id="selector-format">
+<h3>Selector Format<a class="headerlink" href="#selector-format" title="Permalink to this headline">¶</a></h3>
+<p>The general format for selectors is:</p>
+<blockquote>
+<div>[!] <em>&lt;facility&gt;</em> . [!][=] <em>&lt;priority&gt;</em> ; ...</div></blockquote>
+<p>where</p>
+<dl class="docutils">
+<dt><em>&lt;facility&gt;</em></dt>
+<dd><p class="first">Describes the subsystem where the syslog message originated.  It is a comma-separated list of one of
+the following, with the last two options being Chaperone extensions:</p>
+<ol class="last arabic simple">
+<li>An asterisk (<code class="docutils literal"><span class="pre">*</span></code>) indicating all facilities.</li>
+<li>One of the keywords <strong>kern</strong>, <strong>user</strong>, <strong>mail</strong>, <strong>daemon</strong>, <strong>auth</strong>, <strong>syslog</strong>, <strong>lpr</strong>, <strong>news</strong>,
+<strong>uucp</strong>, <strong>clock</strong>, <strong>authpriv</strong>, <strong>ftp</strong>, <strong>ntp</strong>, <strong>audit</strong>, <strong>alert</strong>, <strong>cron</strong>, or <strong>local0</strong>
+through <strong>local7</strong>.</li>
+<li>A program identifier enclosed in brackets, such as <code class="docutils literal"><span class="pre">[httpd]</span></code> or <code class="docutils literal"><span class="pre">[chaperone]</span></code>.</li>
+<li>A regular expression which will match any text within the message, such as <code class="docutils literal"><span class="pre">/error/</span></code> or <code class="docutils literal"><span class="pre">/seg.*fault/</span></code>.</li>
+</ol>
+</dd>
+<dt><em>&lt;priority&gt;</em></dt>
+<dd>Describes the priority of the message, and is either an asterisk (<code class="docutils literal"><span class="pre">*</span></code>) or
+one of the following keywords in ascending order
+of severity: <strong>debug</strong>, <strong>info</strong>, <strong>notice</strong>, <strong>warn</strong> (or <strong>warning</strong>), <strong>err</strong> (or <strong>error</strong>),
+<strong>crit</strong>, <strong>alert</strong>, <strong>emerg</strong>.</dd>
+</dl>
+<p>Selectors including an exclamation mark are <em>negative</em> selectors, omitting otherwise included log entries.  A selector
+<em>must</em> include positive selectors or no log entries will be selected.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre># Select all errors (or more severe) except those sent to the auth subsystem
+selector: &#39;*.err;auth,authpriv.!*&#39;
+</pre></div>
+</div>
+<p>However, the following selector will select nothing because there is no positive component:</p>
+<div class="highlight-python"><div class="highlight"><pre># Does nothing
+selector: &#39;auth,authpriv.!*&#39;
+</pre></div>
+</div>
+</div>
+<div class="section" id="facility-selection">
+<h3>Facility Selection<a class="headerlink" href="#facility-selection" title="Permalink to this headline">¶</a></h3>
+<p>Chaperone includes a more versatile set of options for selecting the facility where the message
+originated.  You can include the classic <code class="docutils literal"><span class="pre">syslog</span></code> facility indication, or a program name (in brackets)
+or even a regular expression to match.</p>
+<p>For example, assume a syslog message from <code class="docutils literal"><span class="pre">sshd</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>Jun  3 19:40:16 weevil sshd[1642]: Accepted publickey for root from ::1 port 48488 ssh2: RSA 24:2d:95:ec:09:fb:49:fa:e9:ff:e0:9e:c2:4d:13:42
+</pre></div>
+</div>
+<p>Since <code class="docutils literal"><span class="pre">sshd</span></code> defaults to logging to the <code class="docutils literal"><span class="pre">auth</span></code> subsystem, the following would select the above message:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;auth,authpriv.*&#39;
+</pre></div>
+</div>
+<p>You could also specify the program name:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;[sshd].*&#39;
+</pre></div>
+</div>
+<p>You could even use a regular expression to match arbitrary strings to select the message (assuming the above message is written
+at priority &#8216;info&#8217; or greater:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;/publickey/.info&#39;
+</pre></div>
+</div>
+<p>You could also select all info messages which did not contain the word &#8220;publickey&#8221; like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;*.info;!/publickey/.*&#39;
+</pre></div>
+</div>
+</div>
+<div class="section" id="priority-selection">
+<h3>Priority Selection<a class="headerlink" href="#priority-selection" title="Permalink to this headline">¶</a></h3>
+<p>Priority selection is simpler, but it&#8217;s important to notice that choosing a priority means that messages
+of that level <em>or greater severity</em> are selected:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;*.err&#39;
+</pre></div>
+</div>
+<p>will select messages of <strong>err</strong>, <strong>crit</strong>, <strong>alert</strong>, or <strong>emerge</strong>, whereas:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;*.*;*.!err&#39;
+</pre></div>
+</div>
+<p>will select messages of <strong>debug</strong>, <strong>info</strong>, <strong>notice</strong> or <strong>warn</strong>.   If you want to specify a priority
+which is exact (either for exclusion or inclusion), use the <cite>=</cite> prefix.  The following selector
+includes log entries <em>only</em> if they are at level &#8216;debug&#8217;:</p>
+<div class="highlight-python"><div class="highlight"><pre>selector: &#39;*.=debug&#39;
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="logging-config-reference">
+<h2>Logging Config Reference<a class="headerlink" href="#logging-config-reference" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="logging-selector"></span><dl class="describe">
+<dt>
+<code class="descname">selector: &quot;selector; [selector; ...]&quot;</code></dt>
+<dd><p>Specifies the logging entries which will be selected for reporting by this service.  Multiple selectors can be provided,
+separated by semicolons.  If no selector option is provided, Chaperone assumes a selector of <code class="docutils literal"><span class="pre">*.*</span></code>.</p>
+<p>See the separate section above <a class="reference internal" href="#logging-sect-selectors"><span>on syslog selectors</span></a> for more details.</p>
+</dd></dl>
+
+<span class="target" id="logging-file"></span><dl class="describe">
+<dt>
+<code class="descname">file: &quot;filepath&quot;</code></dt>
+<dd><p>Indicates that output should be written to <code class="docutils literal"><span class="pre">filepath</span></code>, which must be a full pathname or a pathname relative
+to the home directory of the logging user (implicitly defined, or defined by the <a class="reference internal" href="#logging-uid"><span>uid</span></a> directive.</p>
+<p><em>Note</em>: this should be an actual file, not a system file such as <code class="docutils literal"><span class="pre">/dev/stdout</span></code>.  You can use the <a class="reference internal" href="#logging-stdout"><span>stdout</span></a>
+directive to cause syslog output to be directed to <code class="docutils literal"><span class="pre">stdout</span></code>.</p>
+<p>Chaperone supports two special features for logging filenames:</p>
+<ol class="arabic">
+<li><p class="first">You can include substitutions within a log filename using the &#8216;%&#8217; substituion set compatible
+with <a class="reference external" href="http://man7.org/linux/man-pages/man3/strftime.3.html">strftime</a>.  If so, Chaperone will close and
+reopen the log file whenever the name changes.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>filename: &quot;$(APPS_DIR)/var/log/app-messages-%a.log&quot;
+</pre></div>
+</div>
+<p>would create log files for each day of the week with names <code class="docutils literal"><span class="pre">app-messages-sun.log</span></code>, <code class="docutils literal"><span class="pre">app-messages-mon.log</span></code>.</p>
+<p>Sometimes, this allows you to eliminate the need for log rotation.</p>
+</li>
+<li><p class="first">If Chaperone notices that the file&#8217;s &#8216;inode&#8217; or mountpoint has changed, it will close and reopen the file
+automatically.  This means you can create jobs to do log-rotation, or manually rename or move the existing logfile
+and Chaperone will take notice and assure a new log file is opened.</p>
+</li>
+</ol>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a> and <a class="reference internal" href="#logging-stderr"><span>stderr</span></a>.  Output will
+be simultaneously written to all chosen locations.</p>
+</dd></dl>
+
+<span class="target" id="logging-stdout"></span><dl class="describe">
+<dt>
+<code class="descname">stdout ( false | true )</code></dt>
+<dd><p>If this is &#8216;true&#8217;, then all selected syslog records will be copied to the &#8216;stdout&#8217; of the container.  Defaults to &#8216;false&#8217;.</p>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stderr"><span>stderr</span></a> and <a class="reference internal" href="#logging-file"><span>file</span></a>.  Output will
+be simultaneously written to all chosen locations.</p>
+</dd></dl>
+
+<span class="target" id="logging-stderr"></span><dl class="describe">
+<dt>
+<code class="descname">stderr ( false | true )</code></dt>
+<dd><p>If this is &#8216;true&#8217;, then all selected syslog records will be copied to the &#8216;stderr&#8217; of the container.  Defaults to &#8216;false&#8217;.</p>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a> and <a class="reference internal" href="#logging-file"><span>file</span></a>.  Output will
+be simultaneously written to all chosen locations.</p>
+</dd></dl>
+
+<span class="target" id="logging-enabled"></span><dl class="describe">
+<dt>
+<code class="descname">enabled ( true | false )</code></dt>
+<dd><p>Set this to &#8216;false&#8217; to disable all logging to this logging service.</p>
+</dd></dl>
+
+<span class="target" id="logging-overwrite"></span><dl class="describe">
+<dt>
+<code class="descname">overwrite ( false | true )</code></dt>
+<dd><p>By default, Chaperone will append logs to any existing log file which matches the <a class="reference internal" href="#logging-file"><span>file</span></a> directive.
+Setting this to &#8216;true&#8217; will overwrite any log file.  Note that log files are opened when Chaperone starts running, so
+any overwrite will be immediate.</p>
+</dd></dl>
+
+<span class="target" id="logging-extended"></span><dl class="describe">
+<dt>
+<code class="descname">extended ( false | true )</code></dt>
+<dd><p>This option prefixes every output syslog line with the facility and priority which was used to write to the syslog.
+Normally, this is not desirable, since often people rely upon the format of a log file line, which typically
+looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>Jun 15 02:09:33 su [27]: pam_unix(su:session): session opened for user root by (uid=1000)
+</pre></div>
+</div>
+<p>If you set <code class="docutils literal"><span class="pre">extended=true</span></code>, then log output lines will look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>authpriv.info Jun 15 02:09:33 su [27]: pam_unix(su:session): session opened for user root by (uid=1000)
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal"><span class="pre">authpriv.info</span></code> is at the beginning of the line, and indicates the facility and priority.</p>
+<p>This is primarily useful for debugging and fine-tuning logging output, as there is no good way to determine
+the exact facility and priority used by some daemons if they do not clearly document it.</p>
+</dd></dl>
+
+<span class="target" id="logging-uid"></span><dl class="describe">
+<dt>
+<code class="descname">uid user-name-or-number</code></dt>
+<dd><p>Chaperone will create and manage log files as the user specified by <code class="docutils literal"><span class="pre">uid</span></code>.  If <code class="docutils literal"><span class="pre">uid</span></code> is not specified,
+the <a class="reference internal" href="config-global.html#settings-uid"><span>settings uid</span></a> will be used, and finally the user specified on the command
+line with <a class="reference internal" href="command-line.html#cmdoption-chaperone--user"><code class="xref std std-option docutils literal"><span class="pre">--user</span></code></a> or <a class="reference internal" href="command-line.html#cmdoption-chaperone--create-user"><code class="xref std std-option docutils literal"><span class="pre">--create-user</span></code></a>.</p>
+<p>If none of the above are specified, the Chaperone runs the service normally under its own account
+without specifying a new user.</p>
+<p>Specifying a user requires root privileges.  Within containers like Docker, chaperone usually runs
+as root, so service configurations can specify alternate users even if they are run under a
+different user account.</p>
+<p>For example, if Chaperone were run from docker using the <span class="xref std std-ref">chaperone-baseimage</span> image like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -d chapdev/chaperone-baseimage \
+            --user wwwuser --config /home/wwwuser/chaperone.conf
+</pre></div>
+</div>
+<p>there is no reason that <code class="docutils literal"><span class="pre">chaperone.conf</span></code> could not contain the following logging definitions:</p>
+<div class="highlight-python"><div class="highlight"><pre>mysql.logging: {
+  uid: root,
+  selector: &quot;[mysql].*&quot;,
+  file: &quot;/var/log/mysql-%d.log&quot;,
+}
+</pre></div>
+</div>
+<p>In this case, &#8220;mysql.logging&#8221; would be written as &#8216;root&#8217;, regardless of what the user configuration
+is for other services.</p>
+<p>Typically, when using a <span class="xref std std-ref">userspace development model</span>, you want daemon log
+files to be written under the development user&#8217;s ID for easy management.</p>
+</dd></dl>
+
+<span class="target" id="logging-gid"></span><dl class="describe">
+<dt>
+<code class="descname">gid group-name-or-number</code></dt>
+<dd><p>When <a class="reference internal" href="#logging-uid"><span>uid</span></a> is specified (either explicitly or implicitly inherited), the <code class="docutils literal"><span class="pre">gid</span></code>
+directive can be used to specify an alternate group to be used for logging.  If not specified,
+then the user&#8217;s primary group will be used.</p>
+<p>As with <a class="reference internal" href="#logging-uid"><span>uid</span></a> specifying a group requires root priviliges.</p>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>The &#8220;standard&#8221; <code class="docutils literal"><span class="pre">syslogd</span></code>, for our purposes, is the one authored by <a class="reference external" href="http://linux.die.net/man/5/syslog.conf">Wettstein and Schulze</a>.
+While it has been in use for decades, there are also many variations and some inconsistencies in the way selectors are
+interpreted.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="env.html" class="btn btn-neutral float-right" title="Environment Variables" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="config-service.html" class="btn btn-neutral" title="Configuration: Service Declarations" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

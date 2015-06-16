@@ -1,0 +1,309 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Configuration File Format &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="../index.html"/>
+        <link rel="up" title="Chaperone Configuration" href="config.html"/>
+        <link rel="next" title="Configuration: Global Settings" href="config-global.html"/>
+        <link rel="prev" title="Chaperone Configuration" href="config.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Chaperone Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="config.html">Chaperone Configuration</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Chaperone Reference</a> &raquo;</li>
+      
+          <li><a href="config.html">Chaperone Configuration</a> &raquo;</li>
+      
+    <li>Configuration File Format</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="configuration-file-format">
+<span id="config-file-format"></span><h1>Configuration File Format<a class="headerlink" href="#configuration-file-format" title="Permalink to this headline">¶</a></h1>
+<p>Chaperone&#8217;s configuration is contained either in a single file, or a directory of configuration.
+You specify the configuration with the <a class="reference internal" href="command-line.html#option-config"><span>&#8211;config</span></a> switch on the command line.
+If none is specified, the default <cite>/etc/chaperone.d</cite> is used.  If a directory is chosen, then only the
+top-level of the directory will be searched, and only files ending in <code class="docutils literal"><span class="pre">.conf</span></code> or <code class="docutils literal"><span class="pre">.yaml</span></code> will be
+recognised and read in alphabetic order.</p>
+<p>Configuration files are written using <a class="reference external" href="http://www.yaml.org/spec/1.2/spec.html">YAML Version 2</a>.<a class="footnote-reference" href="#f1" id="id1">[1]</a>  For example, you can
+define two chaperone services like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>mysql.service:
+  command: &quot;/etc/init.d/mysql start&quot;
+
+apache2.service:
+  command: &quot;/etc/init.d/apache2 start&quot;
+  after: mysql.service
+</pre></div>
+</div>
+<p>While the above works perfectly fine, we prefer to use the <a class="reference external" href="http://yaml.org/spec/1.2/spec.html#Flow">YAML &#8220;flow style&#8221;</a> which
+looks very similar to JSON.  In flow format, the above looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>mysql.service: {
+  command: &quot;/etc/init.d/mysql start&quot;
+}
+
+apache2.service: {
+  command: &quot;/etc/init.d/apache2 start&quot;,
+  after: mysql.service,
+}
+</pre></div>
+</div>
+<p>The flow style is both easy to read, and works better when configurations become more complex.<a class="footnote-reference" href="#f2" id="id2">[2]</a>  So, throughout
+the chaperone documentation, we&#8217;ll stick to the flow format.</p>
+<p>Comments can be included both between lines and at the end of lines using the hash symbol (<code class="docutils literal"><span class="pre">#</span></code>).  Here is a complete well-commented
+configuration section for a sample service that&#8217;s included with the <code class="docutils literal"><span class="pre">chaperone-baseimage</span></code> docker image:</p>
+<div class="highlight-python"><div class="highlight"><pre># This is a sample oneshot service that runs at IDLE time, just before
+# the console app, if present. It will output something so at least
+# something appears on the screen.
+
+sample.service: {
+  # This is a oneshot service, but most likely a real applicaton will be another type
+  # such as &#39;simple&#39;, or &#39;forking&#39;.
+  type: oneshot,
+  enabled: true,   # CHANGE TO &#39;false&#39; so this app doesn&#39;t run any more
+
+  # Command output goes directly to stdout instead of to the syslog.
+  # Note that you normally want to have services output to the syslog, because
+  # chaperone&#39;s logging directives allow you to echo syslog data to stdout.  That&#39;s
+  # a better place to control things (see 010-start.conf).
+  command: &quot;$(APPS_DIR)/bin/sample_app&quot;,
+  stdout: inherit,
+
+  # Because we&#39;re in the IDLE group, we will run only after all system services have
+  # started.  However, if there is a command line program, like /bin/bash, we want to
+  # run before that one.  All upper-case group names have special meanings.  However,
+  # You can define your own service groups, then use them to declare startup
+  # dependencies.
+  service_groups: &quot;IDLE&quot;,
+  before: &quot;CONSOLE&quot;,
+
+  # These environment variables will be added only for your service
+  env_set: {
+    &#39;INTERACTIVE&#39;: &#39;$(_CHAP_INTERACTIVE)&#39;,
+  }
+}
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>This is the text of footnote 1.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>This is the text of footnote 2.</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="config-global.html" class="btn btn-neutral float-right" title="Configuration: Global Settings" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="config.html" class="btn btn-neutral" title="Chaperone Configuration" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

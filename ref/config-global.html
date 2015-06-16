@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Configuration: Global Settings &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="../index.html"/>
+        <link rel="up" title="Chaperone Configuration" href="config.html"/>
+        <link rel="next" title="Configuration: Service Declarations" href="config-service.html"/>
+        <link rel="prev" title="Configuration File Format" href="config-format.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Chaperone Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="config.html">Chaperone Configuration</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Chaperone Reference</a> &raquo;</li>
+      
+          <li><a href="config.html">Chaperone Configuration</a> &raquo;</li>
+      
+    <li>Configuration: Global Settings</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="configuration-global-settings">
+<span id="config-settings"></span><h1>Configuration: Global Settings<a class="headerlink" href="#configuration-global-settings" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="settings-quick-reference">
+<h2>Settings Quick Reference<a class="headerlink" href="#settings-quick-reference" title="Permalink to this headline">¶</a></h2>
+<p>Global settings are identified by a configuration file section titled settings, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre>settings: {
+  ignore_failures: true,
+  env_set: {
+    &#39;LANG&#39;: &#39;en_US.UTF-8&#39;,
+    &#39;LC_CTYPE&#39;: &#39;$(LANG)&#39;,
+    &#39;PATH&#39;: &#39;$(APPS_DIR)/bin:/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin&#39;,
+  },
+}
+</pre></div>
+</div>
+<p>Directives applied in the setting section apply globally and some define defaults to be inherited by
+logging or service declarations.</p>
+<p>Entries below marked with <code class="kbd docutils literal"><span class="pre">$ENV</span></code> support <a class="reference internal" href="env.html#env-expansion"><span>environment variable expansion</span></a>.</p>
+<table border="1" class="docutils" id="id1">
+<span id="table-settings-quick"></span><caption><span class="caption-number">Table 1 </span><span class="caption-text">Global Settings Quick Reference</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="40%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">settings variable</th>
+<th class="head">meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference internal" href="#settings-env-inherit"><span>env_inherit</span></a></td>
+<td>An array of patterns which can match one or more
+environment variables.  Environment variables which
+do not match any pattern will be excluded.  Default is <code class="docutils literal"><span class="pre">['*']</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#settings-env-set"><span>env_set</span></a></td>
+<td>Additional environment variables to be set.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#settings-env-unset"><span>env_unset</span></a></td>
+<td>Environment variables to be removed.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#settings-idle-delay"><span>idle_delay</span></a></td>
+<td>The &#8220;grace period&#8221; after all services have started before
+services in the &#8220;IDLE&#8221; group will begin running.  Default is 1.0 seconds.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#settings-ignore-failures"><span>ignore_failures</span></a></td>
+<td>Specifies the <code class="docutils literal"><span class="pre">ignore_failures</span></code> default for services.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#settings-process-timeout"><span>process_timeout</span></a></td>
+<td>Specifies the amount of time Chaperone will wait for a service to start.
+The default varies for each type of service.
+See <a class="reference internal" href="config-service.html#service-process-timeout"><span>service process_timeout</span></a> for more
+information.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#settings-shutdown-timeout"><span>shutdown_timeout</span></a></td>
+<td>The amount of time Chaperone will wait for services to complete shutdown
+before forcing a kill with SIGKILL.  Default is 10 seconds.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#settings-startup-pause"><span>startup_pause</span></a></td>
+<td>Specifies the <code class="docutils literal"><span class="pre">startup_pause</span></code> default for services.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#settings-uid"><span>uid</span></a></td>
+<td>The default uid (name or number) for all services and logging tasks.
+Overrides the value specified by <a class="reference internal" href="command-line.html#option-user"><span>&#8211;user</span></a> or
+<a class="reference internal" href="command-line.html#option-create-user"><span>&#8211;create-user</span></a>. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#settings-gid"><span>gid</span></a></td>
+<td>The default gid (name or number) for all services and logging tasks.
+<code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="settings-reference">
+<h2>Settings Reference<a class="headerlink" href="#settings-reference" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="settings-env-inherit"></span><dl class="describe">
+<dt>
+<code class="descname">env_inherit [ 'pattern', 'pattern', ... ]</code></dt>
+<dd></dd></dl>
+
+<p>Specifies a list of patterns which define what will be inherited from the environment passed to Chaperone when it
+was executed.  Patterns are standard filename &#8220;glob&#8221; patterns.   By default, all environment variables will be
+inherited.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>settings: {
+  env_inherit: [ &#39;PATH&#39;, &#39;TERM&#39;, &#39;HOST&#39;, &#39;SSH_*&#39; ],
+}
+</pre></div>
+</div>
+<span class="target" id="settings-env-set"></span><dl class="describe">
+<dt>
+<code class="descname">env_set { 'NAME': 'value', ... }</code></dt>
+<dd></dd></dl>
+
+<p>Provides a list of name/value pairs for setting or overriding environment variables.  The values may contain
+<a class="reference internal" href="env.html#env-expansion"><span>variable expansions</span></a>.  Note that variables are not expanded immediately, so you can
+refer to variables which may be defined later in services.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>settings: {
+  env_set: {
+    &#39;SHELL&#39;: &#39;/bin/ksh&#39;,
+    &#39;PATH&#39;: &#39;/services/$(_CHAP_SERVICE)/bin:$(PATH)&#39;
+    }
+  }
+</pre></div>
+</div>
+<p>In the above, while the value of <code class="docutils literal"><span class="pre">SHELL</span></code> is known, the value of <code class="docutils literal"><span class="pre">_CHAP_SERVICE</span></code> will not be valid
+until a service executes.   However, because variables use &#8220;late expansion&#8221;, you can define variables
+such as the above as templates so that they will be available to all services.</p>
+<span class="target" id="settings-env-unset"></span><dl class="describe">
+<dt>
+<code class="descname">env_unset [ 'pattern, 'pattern', ... ]</code></dt>
+<dd></dd></dl>
+
+<p>Removes the environment variables which match any of the given patterns from the environment.  These variables
+will not be passed down to services or logging directives.  Patterns are standard filename &#8216;glob&#8217; patterns.</p>
+<span class="target" id="settings-idle-delay"></span><dl class="describe">
+<dt>
+<code class="descname">idle_delay seconds</code></dt>
+<dd></dd></dl>
+
+<p>Specifies the number of seconds Chaperone will pause before tasks in the <a class="reference internal" href="config-service.html#service-service-groups"><span>IDLE service group</span></a>
+will be started.  May contain fractional values such as &#8220;0.1&#8221;.  Defaults to 1 second.</p>
+<p>This delay is useful in at least two common situations:</p>
+<ol class="arabic simple">
+<li>When service startup may cause log messages to appear at the console,
+the console program (usually a shell) may have its prompt interleaved with console messages.
+This delay decreases the liklihood of this happening.</li>
+<li>When services of type <a class="reference internal" href="config-service.html#service-sect-type"><span>simple</span></a> are used, there is no real way to determine
+if services have fully started.  However, the idle delay does nothing except add a &#8220;fudge factor&#8221;,
+which, while useful, would be better implemented using proper &#8216;notify&#8217;, or &#8216;forking&#8217; services.</li>
+</ol>
+<span class="target" id="settings-ignore-failures"></span><dl class="describe">
+<dt>
+<code class="descname">ignore_failures ( false | true )</code></dt>
+<dd><p>If set to &#8216;true&#8217;, then any the default for the service&#8217;s <a class="reference internal" href="config-service.html#service-ignore-failures"><span>ignore_failures</span></a> will be
+&#8216;true&#8217; rather than the normal &#8216;false&#8217; default.   Any setting by a service overrides this value.</p>
+<p>Primarily, this is useful for debugging and has similar utility as the command-line switch
+<a class="reference internal" href="command-line.html#option-ignore-failures"><span>&#8211;ignore-failures</span></a> since it allows you to bypass normal system failure
+checks and allow services to start even though dependencies may have failed.</p>
+</dd></dl>
+
+<span class="target" id="settings-process-timeout"></span><dl class="describe">
+<dt>
+<code class="descname">process_timeout: seconds</code></dt>
+<dd><p>This allows you to set the global default for service <a class="reference internal" href="config-service.html#service-process-timeout"><span>process_timeout</span></a>.
+Normally the process timeout value is determined by the <a class="reference internal" href="config-service.html#service-sect-type"><span>service type</span></a>.  Setting
+this value globally will cause <em>all</em> processes to use the same process timeout as their defaults.</p>
+<p>If a service specifies its own value, it will always take precedence over this default.</p>
+</dd></dl>
+
+<span class="target" id="settings-shutdown-timeout"></span><dl class="describe">
+<dt>
+<code class="descname">shutdown_timeout</code></dt>
+<dd><p>When Chaperone receives a shutdown request (usually <code class="docutils literal"><span class="pre">SIGTERM</span></code>), it goes through an orderly shutdown,
+telling each service to stop.  If there are still services running after the shutdown timeout,
+Chaperone will force all processes to quit using <code class="docutils literal"><span class="pre">SIGKILL</span></code>.  The default for this value is
+10 seconds.</p>
+</dd></dl>
+
+<span class="target" id="settings-startup-pause"></span><dl class="describe">
+<dt>
+<code class="descname">startup_pause</code></dt>
+<dd><p>This allows you to set the global default for the service <a class="reference internal" href="config-service.html#service-startup-pause"><span>startup_pause</span></a> value.
+If not specified, the service default will be used.</p>
+<p>If a service specifies its own value, it will always take precedence over this default.</p>
+</dd></dl>
+
+<span class="target" id="settings-uid"></span><dl class="describe">
+<dt>
+<code class="descname">uid user-name-or-number</code></dt>
+<dd><p>This sets the default user account which will be used by services and logging directives.
+If the <code class="docutils literal"><span class="pre">uid</span></code> setting is not specified, the default will the user specified on the command
+line with <a class="reference internal" href="command-line.html#cmdoption-chaperone--user"><code class="xref std std-option docutils literal"><span class="pre">--user</span></code></a> or <a class="reference internal" href="command-line.html#cmdoption-chaperone--create-user"><code class="xref std std-option docutils literal"><span class="pre">--create-user</span></code></a>.</p>
+<p>If none of the above are specified, the Chaperone runs the service normally under its own account
+without specifying a new user.</p>
+<p>Services and logging are affected differently by user credentials:</p>
+<ul class="simple">
+<li>See <a class="reference internal" href="config-service.html#service-uid"><span>service uid</span></a>, or ...</li>
+<li><a class="reference internal" href="config-logging.html#logging-uid"><span>logging uid</span></a> for more details.</li>
+</ul>
+</dd></dl>
+
+<span class="target" id="settings-gid"></span><dl class="describe">
+<dt>
+<code class="descname">gid group-name-or-number</code></dt>
+<dd><p>When <a class="reference internal" href="#settings-uid"><span>uid</span></a> is specified (either explicitly or implicitly inherited), the <code class="docutils literal"><span class="pre">gid</span></code>
+directive can be used to specify an alternate group to be used for logging or services.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="config-service.html" class="btn btn-neutral float-right" title="Configuration: Service Declarations" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="config-format.html" class="btn btn-neutral" title="Configuration File Format" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

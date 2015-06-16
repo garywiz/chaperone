@@ -1,0 +1,21 @@
+.wy-table-responsive table td, .wy-table-responsive table th {
+  white-space: normal !important;
+}
+
+.wy-table-responsive {
+  overflow: visible !important;
+}
+
+table .caption-number:after {
+    content: ": "
+}
+
+.rst-content p.caption {
+    font-size: 80%;
+    padding-top: 5px;
+}
+
+.rst-content code.kbd {
+    color: #E74C3C;
+}
+

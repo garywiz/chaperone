@@ -1,0 +1,637 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Chaperone Command Reference &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="../index.html"/>
+        <link rel="up" title="Chaperone Reference" href="index.html"/>
+        <link rel="next" title="Chaperone Configuration" href="config.html"/>
+        <link rel="prev" title="Chaperone Reference" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Chaperone Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Chaperone Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Chaperone Reference</a> &raquo;</li>
+      
+    <li>Chaperone Command Reference</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="chaperone-command-reference">
+<h1>Chaperone Command Reference<a class="headerlink" href="#chaperone-command-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="command-quick-reference">
+<h2>Command Quick Reference<a class="headerlink" href="#command-quick-reference" title="Permalink to this headline">¶</a></h2>
+<p>Chaperone is usually executed as a container entrypoint and has the following syntax:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">chaperone</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">initial</span><span class="o">-</span><span class="n">command</span> <span class="p">[</span><span class="n">args</span><span class="o">...</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>The initial command is optional.  If provided, it will be run as an &#8220;IDLE&#8221; oneshot service, running after all
+other services have been started.</p>
+<p>Options are described in the table below, followed by more extensive reference information.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="42%" />
+<col width="58%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">command-line switch</th>
+<th class="head">function</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference internal" href="#option-config"><span>&#8211;config=config-location</span></a></td>
+<td>Specifies a file or directory where configuration information is found.
+Default is <code class="docutils literal"><span class="pre">/etc/chaperone.d</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-debug"><span>&#8211;debug</span></a></td>
+<td>Turns debugging features.  (Implies <code class="docutils literal"><span class="pre">--log-level=debug</span></code> as well)</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-disable-services"><span>&#8211;disable-services</span></a></td>
+<td>No services will be started.  Only the command-line command will execute.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-exitkills"><span>&#8211;exitkills</span></a></td>
+<td>When the command specified on the command line terminates, the chaperone
+will execute a normal shutdown operation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-no-exitkills"><span>&#8211;no-exitkills</span></a></td>
+<td>Reverses the effect of <code class="docutils literal"><span class="pre">--exitkills</span></code>.  Useful when the <code class="docutils literal"><span class="pre">--exitkills</span></code> is
+implied or specified as a default.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-force"><span>&#8211;force</span></a></td>
+<td>If chaperone refuses to do something, tell it to try anyway.</td>
+</tr>
+<tr class="row-even"><td>&#8211;help</td>
+<td>Displays command and option help.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-ignore-failures"><span>&#8211;ignore-failures</span></a></td>
+<td>Run as if <a class="reference internal" href="config-service.html#service-ignore-failures"><span>ignore_failures</span></a> were true for all
+services.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-log-level"><span>&#8211;log-level=level</span></a></td>
+<td>Force the syslog log output level to this value.  (one of &#8216;emerg&#8217;, &#8216;alert&#8217;, &#8216;crit&#8217;,
+&#8216;err&#8217;, &#8216;warn&#8217;, &#8216;notice&#8217;, &#8216;info&#8217;, or &#8216;debug).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-no-defaults"><span>&#8211;no-defaults</span></a></td>
+<td>Ignore the <a class="reference internal" href="env.html#env-chap-options"><span>_CHAP_OPTIONS</span></a> environment variable,
+if present.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-user"><span>&#8211;user=username</span></a></td>
+<td>Run all processes as <code class="docutils literal"><span class="pre">user</span></code> (uid number or name).  The user must exist.
+By default, all processes run as <code class="docutils literal"><span class="pre">root</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-create-user"><span>&#8211;create-user=newuser[/uid/gid]</span></a></td>
+<td>Create a new user upon start-up with optional <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code>.  Then
+run as if <code class="docutils literal"><span class="pre">--user=&lt;user&gt;</span></code> was specified.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
+<td>Display service dependency graph, then exit.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
+<td>Run in &#8220;task mode&#8221;.  This implies <code class="docutils literal"><span class="pre">--log-level=err</span></code>, <code class="docutils literal"><span class="pre">--disable-services</span></code>,
+and <code class="docutils literal"><span class="pre">--exitkills</span></code>.  This switch is useful when the container publishes
+commands which must run in isolation, such as displaying container internal
+information such as version information.</td>
+</tr>
+<tr class="row-even"><td>&#8211;version</td>
+<td>Displays the chaperone version number.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="chaperone-command-execution">
+<h2>Chaperone Command Execution<a class="headerlink" href="#chaperone-command-execution" title="Permalink to this headline">¶</a></h2>
+<p>Chaperone goes through a set of startup phases in order to establish a working environment.</p>
+<ol class="arabic simple">
+<li>Chaperone first examines the environment looking for the <a class="reference internal" href="env.html#env-chap-options"><span>_CHAP_OPTIONS</span></a> variable.
+If found, Chaperone uses it to establish default values.  The remaining environment variables will be passed to
+running services depending upon the both global and per-service setetings.</li>
+<li>Command line options are read and combined with any default options to form the final command option set.
+Configuration information is optional, and if no configuration is found, it is not considered an error.</li>
+<li>Once configuration information is present, chaperone proceeds to start it&#8217;s internal <code class="docutils literal"><span class="pre">syslog</span></code> service,
+creating sockets such as <code class="docutils literal"><span class="pre">/dev/log</span></code> and starts it&#8217;s internal command processor which accepts
+commands at <code class="docutils literal"><span class="pre">/dev/chaperone</span></code> or interactive commands (via <span class="xref std std-ref">telchap</span>) at
+<code class="docutils literal"><span class="pre">/dev/chaperone.sock</span></code>.  Chaperone also sets up utility envionment variables such as
+<a class="reference internal" href="env.html#env-chap-interactive"><span>_CHAP_INTERACTIVE</span></a> so that they can be used in service configurations.</li>
+<li>If a command and arguments are provided on the command line, an &#8220;IDLE&#8221; oneshot service is configured
+so that it runs after all other services are started.  If chaperone is running interactively,
+<a class="reference internal" href="#cmdoption-chaperone--exitkills"><code class="xref std std-option docutils literal"><span class="pre">--exitkills</span></code></a> is implied, otherwise, termination of this service
+will leave the system running just as if any other oneshot service exited normally.</li>
+<li>Services in the &#8220;INIT&#8221; service group (if any) are executed and must start successfully before other services
+are started.</li>
+<li>All other services are started in dependency order.  Failures during startup comprise a system
+failure unless <a class="reference internal" href="#cmdoption-chaperone--ignore-failures"><code class="xref std std-option docutils literal"><span class="pre">--ignore-failures</span></code></a> is used on the command line, or
+the service is declared with <a class="reference internal" href="config-service.html#service-ignore-failures"><span>ignore_failures</span></a> set to &#8220;true&#8221;.</li>
+<li>Services in the &#8220;IDLE&#8221; service group (if any) are executed (which includes any command specified on the
+command line).</li>
+</ol>
+<p>Once started, Chaperone monitors all services, performs logging, and cleans up zombie processes when
+they exit.   When it receives a <code class="docutils literal"><span class="pre">SIGTERM</span></code> it will shutdown all processes in an orderly fashion.</p>
+</div>
+<div class="section" id="option-reference-information">
+<h2>Option Reference Information<a class="headerlink" href="#option-reference-information" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="option-config"></span><dl class="option">
+<dt id="cmdoption-chaperone--config">
+<code class="descname">--config</code><code class="descclassname"> &lt;file-or-directory&gt;</code><a class="headerlink" href="#cmdoption-chaperone--config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies the full or relative path to the Chaperone&#8217;s configuration directory or configuration
+file.   For example, assume that <code class="docutils literal"><span class="pre">chaperone.conf</span></code> is a file and <code class="docutils literal"><span class="pre">chaperone.d</span></code> is the name
+of a directory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">chaperone</span> <span class="o">--</span><span class="n">config</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">wwwuser</span><span class="o">/</span><span class="n">chaperone</span><span class="o">.</span><span class="n">conf</span>
+</pre></div>
+</div>
+<p>will tell Chaperone to read all configuration directives from the single self-contained
+configuration file specified.  No other directives will be read.  Or,:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">chaperone</span> <span class="o">--</span><span class="n">config</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">wwwuser</span><span class="o">/</span><span class="n">chaperone</span><span class="o">.</span><span class="n">d</span>
+</pre></div>
+</div>
+<p>specifies that the contents of the directory <code class="docutils literal"><span class="pre">chaperone.d</span></code> should be scanned and any file
+ending with <code class="docutils literal"><span class="pre">.conf</span></code> or <code class="docutils literal"><span class="pre">.yaml</span></code> will be read (in alphabetic order) to create the final
+configuration.   To understand how Chapeone handles directives which occur in multiple
+files, see <a class="reference internal" href="config-format.html#config-file-format"><span>Configuration File Format</span></a>.</p>
+<p>If not specified, defaults to <code class="docutils literal"><span class="pre">/etc/chaperone.d</span></code>, or uses the default option set in
+the <code class="docutils literal"><span class="pre">_CHAP_OPTIONS</span></code> (see <a class="reference internal" href="env.html#ch-env"><span>Environment Variables</span></a>) environment variable.</p>
+</dd></dl>
+
+<span class="target" id="option-debug"></span><dl class="option">
+<dt id="cmdoption-chaperone--debug">
+<code class="descname">--debug</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enables debugging features.   When debugging is enabled:</p>
+<ul class="simple">
+<li>chaperone will print out a raw dump of all command line options (including those derived from defaults),
+as well as configuration information.</li>
+<li>Internal debugging messages will be turned on, describing service start-up in more detail.</li>
+<li>Traceback for internal errors will be enabled, making it easier to report bugs.</li>
+<li>syslog logging will be forced to output all log levels (the same as using <code class="docutils literal"><span class="pre">filter:</span> <span class="pre">'*.debug'</span></code> in all
+logging entries.</li>
+</ul>
+</dd></dl>
+
+<span class="target" id="option-disable-services"></span><dl class="option">
+<dt id="cmdoption-chaperone--disable-services">
+<code class="descname">--disable-services</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--disable-services" title="Permalink to this definition">¶</a></dt>
+<dd><p>When set to &#8216;true&#8217;, then no services will be started or configured, though dependencies and configuration
+syntax will be checked normally.</p>
+<p>This switch can be useful in cases where services do not start correctly, or you want to enter a fresh
+container for inspection or other purposes.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">chaperone</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">services</span> <span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span>
+</pre></div>
+</div>
+<p>will run <code class="docutils literal"><span class="pre">bash</span></code> alone as a child of chaperone, or in the case of using chaperone-enabled Docker images:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -t -i chapdev/chaperone-lamp --disable-services /bin/bash
+</pre></div>
+</div>
+<p>creates a fresh LAMP container running only <code class="docutils literal"><span class="pre">bash</span></code> so you can inspect the contents of the container without
+enabling any of the services.</p>
+</dd></dl>
+
+<span class="target" id="option-exitkills"></span><dl class="option">
+<dt id="cmdoption-chaperone--exitkills">
+<code class="descname">--exitkills</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--exitkills" title="Permalink to this definition">¶</a></dt>
+<dd><p>This option works in conjunction with an <code class="docutils literal"><span class="pre">initial-command</span></code> specified on the command line, and will cause
+the entire container to shut down when the command completes.</p>
+<p>Chaperone attempts to anticipate what is needed automatically, and if run in an interactive container,
+will default to <code class="docutils literal"><span class="pre">--exitkills</span></code> or when run as a daemon defaults to <code class="docutils literal"><span class="pre">--no-exitkills</span></code>.  For example,
+the following docker command will cause an exit after <code class="docutils literal"><span class="pre">bash</span></code> completes:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -t -i --rm=true chapdev/chaperone-baseimage /bin/bash
+</pre></div>
+</div>
+<p>whereas the following command will not exit upon bash&#8217;s completion:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -d chapdev/chaperone-baseimage /bin/bash
+</pre></div>
+</div>
+<p>Both this option as well as <a class="reference internal" href="#option-no-exitkills"><span>&#8211;no-exitkills</span></a> are provided when Chaperone&#8217;s
+default behavior is not desired.</p>
+</dd></dl>
+
+<span class="target" id="option-no-exitkills"></span><dl class="option">
+<dt id="cmdoption-chaperone--no-exitkills">
+<code class="descname">--no-exitkills</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--no-exitkills" title="Permalink to this definition">¶</a></dt>
+<dd><p>Will not shutdown the system when the <code class="docutils literal"><span class="pre">initial-command</span></code> exits.  See <a class="reference internal" href="#option-exitkills"><span>&#8211;exitkills</span></a>.</p>
+</dd></dl>
+
+<span class="target" id="option-force"></span><dl class="option">
+<dt id="cmdoption-chaperone--force">
+<code class="descname">--force</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--force" title="Permalink to this definition">¶</a></dt>
+<dd><p>This option can be used to force Chaperone to attempt an operation even though it typically
+would refuse.  At present, there are not many situations where this command is useful, but that may
+change.  In cases where it can be used, Chaperone will display an alert, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre>wheezy:~$ chaperone
+Normally, chaperone expects to run as PID 1 in the &#39;init&#39; role.
+If you want to go ahead anyway, use --force.
+wheezy:~$
+</pre></div>
+</div>
+</dd></dl>
+
+<span class="target" id="option-ignore-failures"></span><dl class="option">
+<dt id="cmdoption-chaperone--ignore-failures">
+<code class="descname">--ignore-failures</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--ignore-failures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Running with this option causes Chaperone to run as if the global setting <a class="reference internal" href="config-global.html#settings-ignore-failures"><span>ignore_failures</span></a> were
+set to &#8220;true&#8221;.</p>
+<p>This can be useful when a service is failing on startup and causes sytem failure (as described in the <a class="reference internal" href="config-service.html#table-service-types"><span>Service Types</span></a> table).
+In such situations, troubleshooting can be difficult since the container may be transient and failure information may be lost.</p>
+<p>For example, to run a shell in a container even if it is failing on startup:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -t -i --rm=true chapdev/chaperone-lamp --ignore-failures /bin/bash
+</pre></div>
+</div>
+</dd></dl>
+
+<span class="target" id="option-log-level"></span><dl class="option">
+<dt id="cmdoption-chaperone--log-level">
+<code class="descname">--log-level</code><code class="descclassname"> level-name</code><a class="headerlink" href="#cmdoption-chaperone--log-level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normally, Chaperone should be configured to do logging with <a class="reference internal" href="config-logging.html#logging"><span>logging directives</span></a>.  However, at times, more
+detail is needed in the logs for troubleshooting purposes.</p>
+<p>This option should be followed by one of the log levels: <strong>emerg</strong>, <strong>alert</strong>, <strong>crit</strong>, <strong>err</strong>, <strong>warn</strong>, <strong>notice</strong>,
+<strong>info</strong>, or <strong>debug</strong>.  When specified, it forces the logging system to behave as if <em>all</em> log definitions have a minimum
+severity of <code class="docutils literal"><span class="pre">level-name</span></code>.</p>
+<p>For example, <code class="docutils literal"><span class="pre">--log-level</span> <span class="pre">info</span></code> assures that all types messages except debugging messages will be displayed in all logs;
+<code class="docutils literal"><span class="pre">--log-level</span> <span class="pre">debug</span></code> assures that all types of messages are displayed.</p>
+<p>Note that logging still must be configured so that syslog messages have some destination.  By default, log messages
+are captured but not directed to &#8216;stdout&#8217; or a file.  Most configurations include at least a simple logging directive like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>console.logging: {
+  selector: &#39;*.warn&#39;,
+  stdout: true,
+}
+</pre></div>
+</div>
+<p>which tells Chaperone to direct any messages of warning level or greater severity to &#8216;stdout&#8217;.  Including <code class="docutils literal"><span class="pre">--log-level</span> <span class="pre">info</span></code>,
+for example, would cause Chaperone to behave as if the declaration looked like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>console.logging: {
+  selector: &#39;*.info&#39;,
+  stdout: true,
+}
+</pre></div>
+</div>
+<p>Note also that using the <a class="reference internal" href="#option-debug"><span>&#8211;debug</span></a> switch automatically sets the log level to &#8216;debug&#8217;, so use of this
+switch in such cases is redundant.</p>
+</dd></dl>
+
+<span class="target" id="option-no-defaults"></span><dl class="option">
+<dt id="cmdoption-chaperone--no-defaults">
+<code class="descname">--no-defaults</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--no-defaults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using this switch causes Chaperone to ignore any configuration defaults set in the <a class="reference internal" href="env.html#env-chap-options"><span>_CHAP_OPTIONS</span></a>
+environment variable.  Only the options provided on the command line itself will be recognized when this switch is used.</p>
+</dd></dl>
+
+<span class="target" id="option-user"></span><dl class="option">
+<dt id="cmdoption-chaperone--user">
+<code class="descname">--user</code><code class="descclassname"> name-or-number</code><a class="headerlink" href="#cmdoption-chaperone--user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normally, when Chaperone is started, it runs as the same user which executed the <code class="docutils literal"><span class="pre">chaperone</span></code> command.  However, in many
+cases, it is desirable to have Chaperone spawn all services and use permissions of a different user.  This switch
+specifies the user account under which Chaperone will start all processes and logging services.  For example,
+assume you have an account within a container called <code class="docutils literal"><span class="pre">appuser</span></code> and all services should run under that user account.
+You would simply do this:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -d my_chaperone_image --user appuser
+</pre></div>
+</div>
+<p>Chaperone will automatically assure that <code class="docutils literal"><span class="pre">HOME</span></code>, <code class="docutils literal"><span class="pre">LOGIN</span></code> and <code class="docutils literal"><span class="pre">LOGNAME</span></code> are set correctly so that the
+application make sure all files are located relative to the application home directory.</p>
+<p>Typically, a production container would be built with this switch incorporated into the built image itself.
+(Such as using Docker&#8217;s <code class="docutils literal"><span class="pre">CMD</span></code> or <code class="docutils literal"><span class="pre">ENTRYPOINT</span></code> directives in a <a class="reference external" href="https://docs.docker.com/reference/builder/">Dockerfile</a>.</p>
+<p>Note the user <em>must exist</em> already inside the container&#8217;s configuration.  If not, you can
+use <a class="reference internal" href="#option-create-user"><span>&#8211;create-user</span></a> to dynamically create a new user inside the container upon startup.</p>
+</dd></dl>
+
+<span class="target" id="option-create-user"></span><dl class="option">
+<dt id="cmdoption-chaperone--create-user">
+<code class="descname">--create-user</code><code class="descclassname"> name[/uid[:gid]]</code><a class="headerlink" href="#cmdoption-chaperone--create-user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Often, a generic container can be designed to allow userspace mount points, isolating persistent data
+outside the container so that the container becomes entirely transient.   Because containers have a
+set of isolated user credentials, sharing files and permissions with the host volumes can often
+lead to difficulties.</p>
+<p>The <code class="docutils literal"><span class="pre">--create-user</span></code> switch allows you to &#8220;match&#8221; the host user (and optionally group) to the running
+process tree within the container so that file permissions are consistent.</p>
+<p>This switch accepts the following:</p>
+<ul class="simple">
+<li>A <code class="docutils literal"><span class="pre">name</span></code> parameter which should be the name of a user that will be created the first time
+the container runs.</li>
+<li>An optional <code class="docutils literal"><span class="pre">uid</span></code> which must be the numeric user ID of the user to be created.  If omitted,
+a new user ID will be assigned.</li>
+<li>An optional <code class="docutils literal"><span class="pre">gid</span></code> which can be the name or number of an existing group, or the number
+of a new group to be created specifically for the new user.</li>
+</ul>
+<p>When <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code> are omitted, Chaperone will use the container&#8217;s installed OS policy
+to determine how to assign user credentials.</p>
+<p>This feature can be used to create generic start-up scripts for containers so that they
+share the credentials of whatever user created them.  Here is an example:</p>
+<div class="highlight-python"><div class="highlight"><pre>#!/bin/bash
+# Extract host user UID/GID
+myuid=`id -u`
+mygid=`id -g`
+# Run the daemon
+docker run -d -v /home:/home my-app-image --create-user $USER/$myuid:$mygid
+</pre></div>
+</div>
+<p>Once started, the image can now be stopped and restarted while retaining
+the credential relationship with the host.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Because containers are often <em>not</em> transient, and can be restarted, Chaperone is a bit
+smart about interpreting this switch, which usually be present both when the container
+is first started and when it is started again.  So, if the user name specified by
+<code class="docutils literal"><span class="pre">--create-user</span></code> already exists, Chaperone will check to assure that any
+<code class="docutils literal"><span class="pre">uid</span></code> or <code class="docutils literal"><span class="pre">gid</span></code> are correct, and proceed silently.</p>
+<p class="last">If the user credentials are defined differently, then an error will occur.</p>
+</div>
+</dd></dl>
+
+<span class="target" id="option-show-dependencies"></span><dl class="option">
+<dt id="cmdoption-chaperone--show-dependencies">
+<code class="descname">--show-dependencies</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--show-dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>More complex service scenrios which use service directives <a class="reference internal" href="config-service.html#service-before"><span>before</span></a>,
+<a class="reference internal" href="config-service.html#service-after"><span>after</span></a> and <a class="reference internal" href="config-service.html#service-service-groups"><span>service_groups</span></a> can sometimes
+require debugging to assure the startup sequence is correct.</p>
+<p>This switch provides some assistance by creating an ASCII dependency graph which
+shows the relationship between services after Chaperone analyzes service
+dependencies.</p>
+<p>Here is how you can see a sample:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker run -i --rm=true chapdev/chaperone-lamp --show-dependencies
+init | mysql | apache2 | logrotate | sample
+init      | ====
+mysql     |     ========
+apache2   |             ==========
+logrotate |             ======================
+sample    |                                   =========
+----------&gt; depends on...
+init      |
+mysql     | init
+apache2   | mysql, init
+logrotate | mysql, init
+sample    | logrotate, apache2, mysql, init
+</pre></div>
+</div>
+<p>The output consists of two sections.  The top section shows the earliest
+start time for each service, relative to other defined services, rougly
+in the order Chaperone will start them.  The lower section contains
+the explicit dependencies after they have been resolved.</p>
+<p>You can also obtain this information from inside the container using
+the &#8220;<span class="xref std std-ref">telchap dependencies</span>&#8221; command:</p>
+<div class="highlight-python"><div class="highlight"><pre>rbunion@69c0e692d78c:~$ telchap dependencies
+telchap dependencies
+            init | mysql | apache2 | logrotate | sample | CONSOLE
+init      | ====
+mysql     |     ========
+apache2   |             ==========
+logrotate |             ======================
+sample    |                                   =========
+CONSOLE   |                                            ==========
+----------&gt; depends on...
+init      |
+mysql     | init
+apache2   | init, mysql
+logrotate | init, mysql
+sample    | apache2, logrotate, init, mysql
+CONSOLE   | apache2, logrotate, init, mysql, sample
+</pre></div>
+</div>
+<p>If the container is running with a command-line command (such as <code class="docutils literal"><span class="pre">bash</span></code>)
+you will also see the <code class="docutils literal"><span class="pre">CONSOLE</span></code> service listed, which is the service
+which was created internally to manage the interactive console.  Because
+the console is part of the <a class="reference internal" href="config-service.html#service-service-groups"><span>IDLE group</span></a>,
+you can see that it depends upon all other services before it will
+start.</p>
+</dd></dl>
+
+<span class="target" id="option-task"></span><dl class="option">
+<dt id="cmdoption-chaperone--task">
+<code class="descname">--task</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--task" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a convience switch which is presently equivalent to combining:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#option-log-level"><span>&#8211;log-level err</span></a>,</li>
+<li><a class="reference internal" href="#option-disable-services"><span>&#8211;disable-services</span></a>, and</li>
+<li><a class="reference internal" href="#option-exitkills"><span>&#8211;exitkills</span></a>.</li>
+</ul>
+</div></blockquote>
+<p>It is useful when the command provided on the command line does
+some utility task which circumvents the normal operation of the
+container.</p>
+<p>For example, imagine that you create a complex container with
+several internal components, and want to provide an easy way
+to report on the versions of software inside the container.
+You could write a simple script, perhaps called <code class="docutils literal"><span class="pre">/app/bin/report-versions</span></code>
+then run it like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker run -i --rm=true my-app-image --task /app/bin/report-versions
+ngnnx: 1.9.1
+cluster-supervisor: git tag = &#39;production-1.22&#39;
+replicator: 0.1
+$
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">--task</span></code> switch attempts to silence any other output,
+and assure the container does nothing except start the command-line
+command (using the configured Chaperone environment), then exit.</p>
+<p>See the <span class="xref std std-ref">get-chaplocal</span> task for an example
+of how this switch has been used in practice.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="config.html" class="btn btn-neutral float-right" title="Chaperone Configuration" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Chaperone Reference" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

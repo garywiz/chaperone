@@ -1,0 +1,889 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Configuration: Service Declarations &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="../index.html"/>
+        <link rel="up" title="Chaperone Configuration" href="config.html"/>
+        <link rel="next" title="Configuration: Logging Declarations" href="config-logging.html"/>
+        <link rel="prev" title="Configuration: Global Settings" href="config-global.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guide/chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Chaperone Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="config.html">Chaperone Configuration</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Chaperone Reference</a> &raquo;</li>
+      
+          <li><a href="config.html">Chaperone Configuration</a> &raquo;</li>
+      
+    <li>Configuration: Service Declarations</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="configuration-service-declarations">
+<span id="service"></span><h1>Configuration: Service Declarations<a class="headerlink" href="#configuration-service-declarations" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="service-quick-reference">
+<h2>Service Quick Reference<a class="headerlink" href="#service-quick-reference" title="Permalink to this headline">¶</a></h2>
+<p>Service configurations are identified by user-defined names and end with the suffix <code class="docutils literal"><span class="pre">.service</span></code>.  So,
+for example, the following defines a registration script called <code class="docutils literal"><span class="pre">register_my_app</span></code> which runs when all other
+services have been launched:</p>
+<div class="highlight-python"><div class="highlight"><pre>myreg.service: {
+  type: oneshot,
+  command: &quot;/usr/local/bin/register_my_app --host central-registry.example.com&quot;,
+  service_groups: IDLE,
+}
+</pre></div>
+</div>
+<p>Multiple services can be declared in a single file.  Order within a configuration file is not important.
+However, if several configuration files are involved, services in subsequent files (alphabetically) will
+replace earlier services defined with the same name.</p>
+<p>Each service inherits the environment defined by the <a class="reference internal" href="config-global.html#config-settings"><span>settings directive</span></a> and
+can be tailored separately for the needs of each service.  Entries below marked with <code class="kbd docutils literal"><span class="pre">$ENV</span></code> support
+<a class="reference internal" href="env.html#env-expansion"><span>environment variable expansion</span></a>.</p>
+<table border="1" class="docutils" id="id8">
+<span id="table-service-quick"></span><caption><span class="caption-number">Table 2 </span><span class="caption-text">Service Directives Quick Reference</span><a class="headerlink" href="#id8" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">service variable</th>
+<th class="head">meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference internal" href="#service-type"><span>type</span></a></td>
+<td>Defines the service type: &#8216;oneshot&#8217;, &#8216;simple&#8217;, forking&#8217;, &#8216;notify&#8217;,
+or &#8216;cron&#8217;.  Default is &#8216;simple&#8217;.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-command"><span>command</span></a></td>
+<td>Specifies the command to execute.  The command is not processed by a shell,
+but environment variable expansion is supported. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-enabled"><span>enabled</span></a></td>
+<td>If &#8216;false&#8217;, the service will not be started, nor will it be required by
+any dependents.  Default is &#8216;true&#8217;.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-stderr"><span>stderr</span></a></td>
+<td>Either &#8216;log&#8217; to write stderr to the syslog, or &#8216;inherit&#8217; to write stderr
+to the container&#8217;s stderr file handle.   Default is &#8216;log&#8217;. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-stdout"><span>stdout</span></a></td>
+<td>Either &#8216;log&#8217; to write stdout to the syslog, or &#8216;inherit&#8217; to write stdout
+to the container&#8217;s stdout file handle.   Default is &#8216;log&#8217;. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-after"><span>after</span></a></td>
+<td>A comma-separated list of services or service groups which cannot start
+until after this service has started.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-before"><span>before</span></a></td>
+<td>A comma-separated list of services or service groups which must start
+before this service.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-directory"><span>directory</span></a></td>
+<td>The directory where the command will be executed.  Otherwise, the account
+home directory will be used. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-env-inherit"><span>env_inherit</span></a></td>
+<td>An array of patterns which can match one or more
+environment variables.  Environment variables which
+do not match any pattern will be excluded.  Default is <code class="docutils literal"><span class="pre">['*']</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-env-set"><span>env_set</span></a></td>
+<td>Additional environment variables to be set.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-env-unset"><span>env_unset</span></a></td>
+<td>Environment variables to be removed.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-exit-kills"><span>exit_kills</span></a></td>
+<td>If &#8216;true&#8217; the entire system should be shut down when this service stops.
+Default is &#8216;false&#8217;.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-ignore-failures"><span>ignore_failures</span></a></td>
+<td>If &#8216;true&#8217;, failures of this service will be ignored but logged.
+Dependent services are still allowed to start.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-interval"><span>interval</span></a></td>
+<td>For <cite>type=cron</cite> services, specifies the crontab-compatible interval
+in standard <code class="docutils literal"><span class="pre">M</span> <span class="pre">H</span> <span class="pre">DOM</span> <span class="pre">MON</span> <span class="pre">DOW</span></code> format. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-kill-signal"><span>kill_signal</span></a></td>
+<td>The signal used to kill this process.  Default is <code class="docutils literal"><span class="pre">SIGTERM</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-optional"><span>optional</span></a></td>
+<td>If &#8216;true&#8217;, then if the command file is not present on the system,
+the service will act as if it were not enabled.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a></td>
+<td>Specifies the amount of time Chaperone will wait for a service to start.
+The default varies for each type of service.
+See :ref:<code class="docutils literal"><span class="pre">service</span> <span class="pre">types</span> <span class="pre">&lt;config.sect.type&gt;</span></code> for more
+information.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-restart"><span>restart</span></a></td>
+<td>If &#8216;true&#8217;, then chaperone will restart this service if it fails (but
+not if it terminates normally).  Default is &#8216;false&#8217;.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-restart-delay"><span>restart_delay</span></a></td>
+<td>The number of seconds to pause between restarts.  Default is 3 seconds.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-restart-limit"><span>restart_limit</span></a></td>
+<td>The maximum number of restart attempts.  Default is 5.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-service-groups"><span>service_groups</span></a></td>
+<td>A comma-separatedlist of service groups this service belongs to.  All
+uppercase services are reserved by the system.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-setpgrp"><span>setpgrp</span></a></td>
+<td>If &#8216;true&#8217;, then the service will be isolated in its own process
+group upon startup.  This is the default.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-startup-pause"><span>startup_pause</span></a></td>
+<td>The amount of time Chaperone will wait to see if a service fails
+immediately upon startup.  Defaults is 0.5 seconds.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-uid"><span>uid</span></a></td>
+<td>The uid (name or number) of the user for this service. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-gid"><span>gid</span></a></td>
+<td>The gid (name or number) of the group for this service. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="service-types">
+<span id="service-sect-type"></span><h2>Service Types<a class="headerlink" href="#service-types" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">type</span></code> option defines how the service will be treated, when it is considered active, and what happens
+when the service terminates either normally, or abnormally.</p>
+<p>Valid service types are: <em>simple</em> (the default), <em>oneshot</em>, <em>forking</em>, <em>notify</em>, and <em>cron</em>.   These service types
+are patterned loosely after service types defined by <a class="reference external" href="http://www.freedesktop.org/software/systemd/man/systemd.service.html">systemd</a>,
+but there are important differences<a class="footnote-reference" href="#f1" id="id1">[1]</a> , so this section should be read carefully before making any assumptions.</p>
+<p>As shown in <a class="reference internal" href="#table-service-types"><span>Table 3</span></a>, each service type has a different behavior.   In the event the service&#8217;s process reports
+an error, it is either a <em>system failure</em> or <em>service failure</em>.  A system failure results in an immediate, orderly shutdown of
+any services which have been started, along with logging an error report and termination of the system.  A service failure is
+an isolated situation affecting only the service itself.</p>
+<table border="1" class="docutils" id="id9">
+<span id="table-service-types"></span><caption><span class="caption-number">Table 3 </span><span class="caption-text">Service Types</span><a class="headerlink" href="#id9" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="13%" />
+<col width="47%" />
+<col width="20%" />
+<col width="20%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">type</th>
+<th class="head">behavior</th>
+<th class="head">system failure</th>
+<th class="head">service failure</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>simple</td>
+<td>This is the default type.  Chaperone considers a service
+&#8220;started&#8221; as soon as the startup grace period
+(defined by <a class="reference internal" href="#service-startup-pause"><span>startup_pause</span></a>)
+elapses.
+If the service terminates normally at any time, the
+service is considered &#8220;started&#8221; until reset.</td>
+<td>Service terminates
+abnormally during grace
+period.</td>
+<td>Service terminates
+abnormally later despite
+retries.</td>
+</tr>
+<tr class="row-odd"><td>forking</td>
+<td>A forking service is expected to set up all
+communications channels and assure that the service
+is ready for application use, then exit normally
+before the
+<a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a>
+expires.  <em>Note</em>: The default process timeout for
+forking services is 300 seconds.</td>
+<td>Service terminates
+abnormally during the
+process timeout.</td>
+<td>Never.<a class="footnote-reference" href="#f2" id="id2">[2]</a></td>
+</tr>
+<tr class="row-even"><td>oneshot</td>
+<td>A oneshot service is designed to execute scripts which
+complete an operation and are considered started once
+they run successfully.  <em>Note</em>: The default process
+timeout for oneshot services is 60 seconds.</td>
+<td>Service terminates
+abnormally during
+the process timeout.</td>
+<td>Service terminates
+abnormally during a
+manual &#8220;start&#8221;
+operation.</td>
+</tr>
+<tr class="row-odd"><td>notify</td>
+<td>A notify service is expected to establish communication
+with chaperone using the <em>sd_notify</em> protcol.  The
+<a class="reference internal" href="env.html#env-notify-socket"><span>NOTIFY_SOCKET</span></a>
+environment variable will be set, and chaperone will
+consider the service started only when notified
+appropriately. <em>Note</em>: The default process timeout
+for a notify service is 30 seconds.</td>
+<td>Service terminates
+abnormally during the
+process timeout</td>
+<td>Service sends a
+failure notification.</td>
+</tr>
+<tr class="row-even"><td>cron</td>
+<td>The cron type schedules a script or program for periodic
+execution.  The service is considered started once
+successfully scheduled.  Both scheduling parameters
+(specified using <a class="reference internal" href="#service-interval"><span>interval</span></a>)
+as well as the presence of the executable specified
+in <a class="reference internal" href="#service-command"><span>command</span></a> will be checked
+before scheduling is considered successful.  Cron
+services which are declared as
+<a class="reference internal" href="#service-optional"><span>optional</span></a> will not be
+scheduled and will be treated as if they were disabled.</td>
+<td>Service executable
+is missing or invalid
+but not optional.</td>
+<td>Never.  Failures of
+isolated executions
+do not constitute
+a permanent service
+failure.</td>
+</tr>
+</tbody>
+</table>
+<p>Note: Unlike <code class="docutils literal"><span class="pre">systemd</span></code>, Chaperone does not have an &#8220;idle&#8221; service type.  This is accomplished instead using a special
+system-defined service group called &#8220;IDLE&#8221;, thereby permitting any service type to be activated when startup is
+complete.   See <a class="reference internal" href="#service-service-groups"><span>service_groups</span></a> for more information.</p>
+</div>
+<div class="section" id="service-config-reference">
+<h2>Service Config Reference<a class="headerlink" href="#service-config-reference" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="service-type"></span><dl class="describe">
+<dt>
+<code class="descname">type: ( simple | forking | oneshot | notify | cron )</code></dt>
+<dd><p>The <code class="docutils literal"><span class="pre">type</span></code> option defines how the service will be treated, when it is considered active, and what happens
+when the service terminates either normally, or abnormally.  See the <a class="reference internal" href="#service-sect-type"><span>separate section on service types</span></a> for
+a full description of what chaperone service types are and how they behave.</p>
+<p>This setting is optional.  If omitted, the default is &#8220;simple&#8221;.</p>
+</dd></dl>
+
+<span class="target" id="service-command"></span><dl class="describe">
+<dt>
+<code class="descname">command: &quot;executable args ...&quot;</code></dt>
+<dd><p>The <code class="docutils literal"><span class="pre">command</span></code> option defines the command and arguments which will be executed when the service is started.  Both
+<a class="reference internal" href="env.html#env-expansion"><span>environment variable expansion</span></a> and &#8220;tilde&#8221; expansion for user names are supported, though
+&#8220;tilde&#8221; expansion is supported only on the command name itself, not on arguments.</p>
+<p>Note that the command line is <em>not</em> passed to a shell, so other shell metacharacters or shell environment variable
+syntax not supported.</p>
+<p>The first token on the command line must be an executable program available in the <code class="docutils literal"><span class="pre">PATH</span></code>.  If it is not found,
+it will be considered an error.  However, if <a class="reference internal" href="#service-optional"><span>optional</span></a>
+is set to &#8216;true&#8217;, then the service will be disabled in such cases.  This makes it easy to define configurations
+for programs which may or may not be installed.  <em>Note</em>: If the executable is present, but permissions deny
+access, it is considered an error regardless of whether the service is declared optional.</p>
+<p>In all cases, the environment that is used for <code class="docutils literal"><span class="pre">PATH</span></code> and expansions is the same environment that would be
+passed to the service.  If the executable is not available in the service&#8217;s <code class="docutils literal"><span class="pre">PATH</span></code> then a fully qualified
+pathname should be used.</p>
+</dd></dl>
+
+<span class="target" id="service-enabled"></span><dl class="describe">
+<dt>
+<code class="descname">enabled: ( true | false )</code></dt>
+<dd><p>If enabled is &#8216;true&#8217; (the default), then the service will start normally as per its type.  If it is
+set to &#8216;false&#8217;, then the service will be ignored upon start-up, and any dependencies will
+be considered satisfied.</p>
+<p>Services can be enabled and disabled dynamically while Chaperone is running using the
+<span class="xref std std-ref">telchap command</span>.</p>
+</dd></dl>
+
+<span class="target" id="service-env-inherit"></span><dl class="describe">
+<dt>
+<code class="descname">env_inherit [ 'pattern', 'pattern', ... ]</code></dt>
+<dd></dd></dl>
+
+<p>Specifies a list of patterns which define what will be inherited from the environment defined by the
+<a class="reference internal" href="config-global.html#config-settings"><span>global settings</span></a>  Patterns are standard filename &#8220;glob&#8221; patterns.
+By default, all environment variables will be inherited from the settings environment.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>sample.service: {
+  command: &#39;/opt/app/bin/do_the_stuff&#39;,
+  env_inherit: [ &#39;PATH&#39;, &#39;TERM&#39;, &#39;HOST&#39;, &#39;SSH_*&#39; ],
+}
+</pre></div>
+</div>
+<span class="target" id="service-env-set"></span><dl class="describe">
+<dt>
+<code class="descname">env_set { 'NAME': 'value', ... }</code></dt>
+<dd></dd></dl>
+
+<p>Provides a list of name/value pairs for setting or overriding environment variables.  The values may contain
+<a class="reference internal" href="env.html#env-expansion"><span>variable expansions</span></a>.    The inherited environment will be the one configured
+using similar settings directives such as <a class="reference internal" href="config-global.html#settings-env-set"><span>settings env_set</span></a>.</p>
+<span class="target" id="service-env-unset"></span><dl class="describe">
+<dt>
+<code class="descname">env_unset [ 'pattern, 'pattern', ... ]</code></dt>
+<dd></dd></dl>
+
+<p>Removes the environment variables which match any of the given patterns from the environment.
+Patterns are standard filename &#8216;glob&#8217; patterns.</p>
+<span class="target" id="service-stdout"></span><dl class="describe">
+<dt>
+<code class="descname">stdout: ( 'log' | 'inherit' )</code></dt>
+<dd><p>Can be set to &#8216;log&#8217; to output service <cite>stdout</cite> to syslog (the default) or &#8216;inherit&#8217; to output service messages
+directly to the container&#8217;s stdout.   While it may be tempting to use &#8216;inherit&#8217;, we suggest you use the syslog
+service instead, then tailor <a class="reference internal" href="config-logging.html#logging"><span>logging</span></a> entries accordingly if console output desired.
+This will provide much more flexibility.</p>
+<p>Messages from the process <cite>stdout</cite> will be logged as syslog facility and severity of <cite>daemon.info</cite>.<a class="footnote-reference" href="#f3" id="id3">[3]</a></p>
+</dd></dl>
+
+<span class="target" id="service-stderr"></span><dl class="describe">
+<dt>
+<code class="descname">stderr: ( 'log' | 'inherit' )</code></dt>
+<dd><p>Can be set to &#8216;log&#8217; to output service <cite>stderr</cite> to syslog (the default) or &#8216;inherit&#8217; to output service messages
+directly to the container&#8217;s stderr.   While it may be tempting to use &#8216;inherit&#8217;, we suggest you use the syslog
+service instead, then tailor <a class="reference internal" href="config-logging.html#logging"><span>logging</span></a> entries accordingly if console output desired.
+This will provide much more flexibility.</p>
+<p>Messages from the process <cite>stderr</cite> will be logged as syslog facility and severity of <cite>daemon.warn</cite>.<a class="footnote-reference" href="#f3" id="id4">[3]</a></p>
+</dd></dl>
+
+<span class="target" id="service-after"></span><dl class="describe">
+<dt>
+<code class="descname">after: &quot;service-or-group, ...&quot;</code></dt>
+<dd><p>Specifies one or more services or service groups which must be started sucessfully before this service
+will start.</p>
+<p>The value specified is a comma-separated list of services or service groups.  Services are always
+identified with a <code class="docutils literal"><span class="pre">.service</span></code> suffix.  Otherwise, the reference is to a service group.  Thus:</p>
+<div class="highlight-python"><div class="highlight"><pre>some.service: { after: &quot;one.service, setup&quot;, command: &quot;echo some&quot; }
+</pre></div>
+</div>
+<p>defines a service which will start only after the service &#8220;one.service&#8221; and all services which
+are members of the &#8220;setup&#8221; group.</p>
+<p>For more information see <a class="reference internal" href="#service-service-groups"><span>service_groups</span></a>.</p>
+</dd></dl>
+
+<span class="target" id="service-before"></span><dl class="describe">
+<dt>
+<code class="descname">before: &quot;service-or-group, ...&quot;</code></dt>
+<dd><p>Specifies one or more services or service groups which will not be started until this service starts
+successfully.</p>
+<p>The value specified is a comma-separated list of services or service groups.  Services are always
+identified with a <code class="docutils literal"><span class="pre">.service</span></code> suffix.  Otherwise, the reference is to a service group.  Thus:</p>
+<div class="highlight-python"><div class="highlight"><pre>some.service: { before: &quot;one.service, application&quot;, command: &quot;echo some&quot; }
+</pre></div>
+</div>
+<p>defines a service which will start before &#8220;one.service&#8221; and any services which
+are members of the &#8220;application&#8221; group.</p>
+<p>For more information see <a class="reference internal" href="#service-service-groups"><span>service_groups</span></a>.</p>
+</dd></dl>
+
+<span class="target" id="service-directory"></span><dl class="describe">
+<dt>
+<code class="descname">directory: &quot;directory-path&quot;</code></dt>
+<dd><p>Specifies the start-up directory for this service.  If not provided, then the start-up directory is
+the home directory for the user under which the service will run.</p>
+</dd></dl>
+
+<span class="target" id="service-exit-kills"></span><dl class="describe">
+<dt>
+<code class="descname">exit_kills ( false | true )</code></dt>
+<dd><p>If set to &#8216;true&#8217;, then when this service terminates, Chaperone will initiate an orderly system shutdown.
+This is useful in cases where the lifetime of a controlling service, such as a shell or main application should
+dictate the lifetime of the container.</p>
+</dd></dl>
+
+<span class="target" id="service-ignore-failures"></span><dl class="describe">
+<dt>
+<code class="descname">ignore_failures ( false | true )</code></dt>
+<dd><p>If set to &#8216;true&#8217;, then any failure by the service will be logged but ignored.  Service failures are logged
+using syslog facility <cite>local5.info</cite> (<cite>local5</cite> is the facility used for all messages that originate from
+Chaperone itself.</p>
+</dd></dl>
+
+<span class="target" id="service-interval"></span><dl class="describe">
+<dt>
+<code class="descname">interval: &quot;cron-interval-spec&quot;</code></dt>
+<dd><p>This is required for service <code class="docutils literal"><span class="pre">type=cron</span></code> and contains the cron specification which indicates the interval
+for period execution.  Nearly all features documented in <a class="reference external" href="http://unixhelp.ed.ac.uk/CGI/man-cgi?crontab+5">this crontab man page</a>
+are supported, including extensions for ranges and special keywords such as <code class="docutils literal"><span class="pre">&#64;hourly</span></code> which can be specified
+with or without the leading <code class="docutils literal"><span class="pre">&#64;</span></code>.  So, a simple hourly cron service can be defined like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>cleanup_cookies.service: {
+  type: cron,
+  interval: hourly,
+  command: &quot;/opt/superapp/bin/clean_temp_cookies --silent&quot;,
+}
+</pre></div>
+</div>
+<p>which is equivalent to:</p>
+<div class="highlight-python"><div class="highlight"><pre>cleanup_cookies.service: {
+  type: cron,
+  interval: &quot;0 * * * *&quot;,
+  command: &quot;/opt/superapp/bin/clean_temp_cookies --silent&quot;,
+}
+</pre></div>
+</div>
+<p>Chaperone also supports an optional sixth field<a class="footnote-reference" href="#f4" id="id5">[4]</a> for seconds so that seconds can be provided, so the following runs
+every 15 seconds:</p>
+<div class="highlight-python"><div class="highlight"><pre>pingit.service: {
+  type: cron,
+  interval: &quot;* * * * * * */15&quot;
+  command: &quot;/opt/superapp/bin/ping_central_hub&quot;,
+}
+</pre></div>
+</div>
+<p>Note that the <code class="docutils literal"><span class="pre">&#64;reboot</span></code> special nickname is not supported, since Chaperone provides similar features using
+the <code class="docutils literal"><span class="pre">INIT</span></code> service group.</p>
+</dd></dl>
+
+<span class="target" id="service-kill-signal"></span><dl class="describe">
+<dt>
+<code class="descname">kill_signal: ( name | number )</code></dt>
+<dd><p>Specifies the signal which is sent to the process for normal termination.  By default, Chaperone sends <code class="docutils literal"><span class="pre">SIGTERM</span></code>.</p>
+</dd></dl>
+
+<span class="target" id="service-optional"></span><dl class="describe">
+<dt>
+<code class="descname">optional: ( false | true )</code></dt>
+<dd><p>If &#8216;true&#8217;, then this service is considered optional and will be disabled upon start-up if the executable is not
+found.   Only a &#8220;file not found&#8221; error triggers optional service behavior.  If the executable file exists,
+but permissions are incorrect, it is still considered a failure.</p>
+<p>Optional services may be started manually later if, for example, the executable should become available after
+system start-up.</p>
+</dd></dl>
+
+<span class="target" id="service-process-timeout"></span><dl class="describe">
+<dt>
+<code class="descname">process_timeout: seconds</code></dt>
+<dd><p>When Chaperone is waiting for a service to start, it will wait for this number of seconds before it considers that
+the service has failed.   This value is meaningful for process types <cite>oneshot</cite>, <cite>forking</cite>, and <cite>notify</cite> only
+and is ignored for other types:</p>
+<dl class="docutils">
+<dt>For <cite>oneshot</cite> services:</dt>
+<dd>Chaperone assumes that a oneshot service is only started once it completes its task succesfully, and
+therefore waits <code class="docutils literal"><span class="pre">process_timeout</span></code> seconds before allowing dependent services ot start.  For oneshot
+services the default process timeout is <em>60 seconds</em>.</dd>
+<dt>For <cite>forking</cite> services:</dt>
+<dd>Chaperone assumes a forking service does set-up, then proceeds to launch subprocesses to provide
+services.   The default process timeout for a forking service is <em>30 seconds</em>.</dd>
+<dt>For <cite>notify</cite> services:</dt>
+<dd>Since a notify service has an explicit means to tell chaperone about it&#8217;s status, the process timeout
+defaults to <em>300 seconds</em> to provide the service with a greater amount of startup time.</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="service-restart"></span><dl class="describe">
+<dt>
+<code class="descname">restart: ( false | true )</code></dt>
+<dd><p>By default, chaperone will not restart a service once it has failed.  Setting this to &#8216;true&#8217; will tell chaperone
+to wait <a class="reference internal" href="#service-restart-delay"><span>restart_delay</span></a> seconds after a failure, then restart the service until the
+<a class="reference internal" href="#service-restart-limit"><span>restart_limit</span></a> is reached.   If all restarts fail, the chaperone considers
+the service to be failed.</p>
+<p>Note that restarts do <em>not</em> happen during system startup.  If a service fails during system startup, the
+failure is considered a system failure (unless <a class="reference internal" href="#service-ignore-failures"><span>ignore_failures</span></a> is &#8216;true&#8217;)</p>
+</dd></dl>
+
+<span class="target" id="service-restart-delay"></span><dl class="describe">
+<dt>
+<code class="descname">restart_delay: seconds</code></dt>
+<dd><p>When a service fails and is about to be restarted, chaperone delays for this interval before attempting
+restart.   By default, this value is <em>0.5 seconds</em>.</p>
+<p>Consider increasing the restart delay for services which may fail because of network issues, since network
+issues may be transient (such as routers rebooting).</p>
+</dd></dl>
+
+<span class="target" id="service-restart-limit"></span><dl class="describe">
+<dt>
+<code class="descname">restart_limit: number-of-retries</code></dt>
+<dd><p>This value indicate the number of restarts which will be performed when a service fails.  Once the service
+starts sucessfully, the restart counter is reset.</p>
+</dd></dl>
+
+<span class="target" id="service-service-groups"></span><dl class="describe">
+<dt>
+<code class="descname">service_groups: &quot;group[,group,...]&quot;</code></dt>
+<dd><p>This directive declares that the service has membership in one or more service groups.  If not specified,
+all services have membership in the group &#8220;default&#8221;.</p>
+<p>There are also two system-defined groups which have special meaning:</p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">INIT</span></code></dt>
+<dd>This group will be started first, before any other service that is <em>not a member of the INIT group</em> itself.
+The order in which services will start within the INIT group is unspecified unless services make explicit
+<a class="reference internal" href="#service-before"><span>before</span></a> or <a class="reference internal" href="#service-after"><span>after</span></a> declarations.</dd>
+<dt><code class="docutils literal"><span class="pre">IDLE</span></code></dt>
+<dd>This group will be started after all other services that are <em>not a member of the IDLE group</em> itself.
+The order in which services will start within the IDLE group is unspecified unless services make explicit
+<a class="reference internal" href="#service-before"><span>before</span></a> or <a class="reference internal" href="#service-after"><span>after</span></a> declarations.</dd>
+</dl>
+<p>User-defined groups can be defined and used for any purpose, but must not have names which are all
+uppercase, as these are reserved for system groups.</p>
+<p>Group membership does <em>not</em> imply that the group will be started as a unit, or that the entire group
+will complete startup before other groups start.  For example, consider these service declarations:</p>
+<div class="highlight-python"><div class="highlight"><pre>one.service:    { service_group: &quot;setup&quot;, command: &quot;echo one&quot; }
+two.service:    { service_group: &quot;setup&quot;, command: &quot;echo two&quot; }
+three.service:  { service_group: &quot;sanity_checks&quot;, command: &quot;echo three&quot; }
+four.service:   { service_group: &quot;sanity_checks&quot;, command: &quot;echo four&quot; }
+</pre></div>
+</div>
+<p>Chaperone does not consider members of the same group to be related in any way, and will start them
+randomly in parallel at start-up.  Assuring a sequence of start-up operations <em>must</em> be done using
+<a class="reference internal" href="#service-before"><span>before</span></a> or <a class="reference internal" href="#service-after"><span>after</span></a>, as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre>one.service:    { service_group: &quot;setup&quot;, command: &quot;echo one&quot; }
+two.service:    { service_group: &quot;setup&quot;, command: &quot;echo two&quot; }
+three.service:  { service_group: &quot;sanity_checks&quot;, after: &quot;setup&quot; command: &quot;echo three&quot; }
+four.service:   { service_group: &quot;sanity_checks&quot;, command: &quot;echo four&quot; }
+</pre></div>
+</div>
+<p>The &#8220;after&#8221; declaration assures that &#8220;three.service&#8221; will start only once all services in the &#8220;setup&#8221;
+group have successfully started.  <em>But</em>, &#8220;four.service&#8221; is still independent and can start at any time.</p>
+<p>So, for &#8220;four.service&#8221; there are two options.  By declaring &#8220;four.service&#8221; like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>four.service:   { service_group: &quot;sanity_checks&quot;, after: &quot;setup&quot;, command: &quot;echo four&quot; }
+</pre></div>
+</div>
+<p>it will also wait for all &#8220;setup&#8221; services, <em>but</em> it will start in parallel with &#8220;three.service&#8221;,
+whereas the declaration:</p>
+<div class="highlight-python"><div class="highlight"><pre>four.service:   { service_group: &quot;sanity_checks&quot;, after: &quot;three.service&quot;, command: &quot;echo four&quot; }
+</pre></div>
+</div>
+<p>achieves two goals: it assures the &#8220;four.service&#8221; starts after &#8220;three.service&#8221; but also assures
+all &#8220;setup&#8221; services will be completed, since &#8220;three.service&#8221; already expresses such a dependency.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>In all cases, references to a service group operate identically to explicit references to all
+group members.  Group references are merely a shortcut.  Therefore:</p>
+<div class="highlight-python"><div class="highlight"><pre>four.service:   { service_group: &quot;sanity_checks&quot;,
+                  after: &quot;setup&quot;,
+                  command: &quot;echo four&quot; }
+</pre></div>
+</div>
+<p>is functionally identical to:</p>
+<div class="last highlight-python"><div class="highlight"><pre>four.service:   { service_group: &quot;sanity_checks&quot;,
+                  after: &quot;one.service,two.service,three.service&quot;,
+                  command: &quot;echo four&quot; }
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<span class="target" id="service-setpgrp"></span><dl class="describe">
+<dt>
+<code class="descname">setpgrp ( true | false )</code></dt>
+<dd><p>By default, chaperone makes each newly created service the parent of it&#8217;s own process group.  This has the advantage
+of providing partial isolation for the service, and assures that if signals are sent to the group, no other processes
+are affected.  It also provides a poor man&#8217;s method of tracking service groupings.<a class="footnote-reference" href="#f5" id="id6">[5]</a></p>
+<p>While this is a reasonable default, some interactive processes (such as shells like <code class="docutils literal"><span class="pre">/bin/bash</span></code>) should be executed with
+<code class="docutils literal"><span class="pre">setpgrp:</span> <span class="pre">false</span></code>, since they use process groups extensively themselves and will want to set up process groups
+according to their job control strategy.</p>
+</dd></dl>
+
+<span class="target" id="service-startup-pause"></span><dl class="describe">
+<dt>
+<code class="descname">startup_pause seconds</code></dt>
+<dd><p>When Chaperone starts a service, it waits a short time to determine whether the service fails immediately.  This
+is the &#8220;startup_pause&#8221; and defaults to 0.5 seconds.</p>
+<p>Currently, Chaperone only uses this technique for <code class="docutils literal"><span class="pre">type=simple</span></code> services, so it will have no impact on other
+service types.  Because &#8220;simple&#8221; services are considered started as soon as process execution begins, the
+this short pause catches errors which occur within the first few moments of process initialization (such as
+unexpected permission problems) rather than allowing dependent services to start immediately.</p>
+</dd></dl>
+
+<span class="target" id="service-uid"></span><dl class="describe">
+<dt>
+<code class="descname">uid user-name-or-number</code></dt>
+<dd><p>Chaperone will run the service as the user specified by <code class="docutils literal"><span class="pre">uid</span></code>.  If <code class="docutils literal"><span class="pre">uid</span></code> is not specified for the service,
+the <a class="reference internal" href="config-global.html#settings-uid"><span>settings uid</span></a> will be used, and finally the user specified on the command
+line with <a class="reference internal" href="command-line.html#cmdoption-chaperone--user"><code class="xref std std-option docutils literal"><span class="pre">--user</span></code></a> or <a class="reference internal" href="command-line.html#cmdoption-chaperone--create-user"><code class="xref std std-option docutils literal"><span class="pre">--create-user</span></code></a>.</p>
+<p>When Chaperone is told to use a particular user account, it also sets the <code class="docutils literal"><span class="pre">HOME</span></code>, <code class="docutils literal"><span class="pre">USER</span></code>, and
+<code class="docutils literal"><span class="pre">LOGNAME</span></code> environment variables to reflect those associated with the user.</p>
+<p>If none of the above are specified, the Chaperone runs the service normally under its own account
+without specifying a new user.</p>
+<p>Specifying a user requires root privileges.  Within containers like Docker, chaperone usually runs
+as root, so service configurations can specify alternate users even if they are run under a
+different user account.</p>
+<p>For example, if Chaperone were run from docker using the <span class="xref std std-ref">chaperone-baseimage</span> image like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -d chapdev/chaperone-baseimage \
+            --user wwwuser --config /home/wwwuser/chaperone.conf
+</pre></div>
+</div>
+<p>there is no reason that <code class="docutils literal"><span class="pre">chaperone.conf</span></code> could not contain the following service definitions:</p>
+<div class="highlight-python"><div class="highlight"><pre>mysql.service: {
+  uid: root, command: &quot;/etc/init.d/mysql start&quot;
+}
+myapp.service: {
+  command: &quot;~/bin/my_application&quot;
+}
+</pre></div>
+</div>
+<p>In this case, &#8220;myapp.service&#8221; would run as user &#8220;wwwuser&#8221; becaues no <code class="docutils literal"><span class="pre">uid</span></code> was specified.  However
+because Docker runs chaperone as root, it is perfectly valid for the configuration file to tell
+Chaperone to run the &#8220;mysql&#8221; startup command as root.</p>
+</dd></dl>
+
+<span class="target" id="service-gid"></span><dl class="describe">
+<dt>
+<code class="descname">gid group-name-or-number</code></dt>
+<dd><p>When <a class="reference internal" href="#service-uid"><span>uid</span></a> is specified (either explicitly or implicitly inherited), the <code class="docutils literal"><span class="pre">gid</span></code>
+directive can be used to specify an alternate group to be used for execution.  If not specified,
+then the user&#8217;s primary group will be used.</p>
+<p>As with <a class="reference internal" href="#service-uid"><span>uid</span></a> specifying a group requires root priviliges.</p>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Making chaperone&#8217;s service types similar to <code class="docutils literal"><span class="pre">systemd</span></code> service types is a blessing and a curse.  The blessing is that <code class="docutils literal"><span class="pre">systemd</span></code>
+is rapidly becoming the new standard for init daemons, so over time, there will be a good general knowledge of what various
+service types mean.  The downside is that chaperone is significantly simpler than <code class="docutils literal"><span class="pre">systemd</span></code> and there will be subtle
+(and probably to some, annoying) differences.  However, we took the risk of choosing a similar model, which we believe will
+benefit from the standardization of important process management techniques like
+<a class="reference external" href="http://www.freedesktop.org/software/systemd/man/sd_notify.html">sd_notify</a> as well as making it easier for those
+familiar with <code class="docutils literal"><span class="pre">systemd</span></code> to use their knowledge in defining chaperone configurations.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>Chaperone does not attempt &#8220;PID guessing&#8221; as <code class="docutils literal"><span class="pre">systemd</span></code> and some other process managers attempt to do.  The assumption
+is that &#8220;notify&#8221; will be the preferred means to determine if a service has started successfully, and to know what
+it&#8217;s PID is in case of a crash or internal notification.  However, it&#8217;s likely that a future version of chaperone
+will introduce a &#8220;pid_file&#8221; directive to allow forking services a way to provide information about their
+controlling PID.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[3]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id4">2</a>)</em> Syslog facilities and severity levels are documented <a class="reference external" href="https://en.wikipedia.org/wiki/Syslog">on Wikipedia</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[4]</a></td><td>Yes, the seconds field appears at the <em>end</em>.  This is inherited from the <a class="reference external" href="https://github.com/kiorky/croniter">croniter package</a>
+which we use to parse and manage the internal cron intervals.  We considered not documenting it because it seems
+a bit non-standard, then figured... hey, could be useful.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id6">[5]</a></td><td>There is really only one bulletproof way to manage isolated groups of processes:
+<a class="reference external" href="https://en.wikipedia.org/wiki/Cgroups">control groups (or cgroups)</a>.  Chaperone intentionally avoids using
+control groups for a number of reasons, but mostly because they require privileges which make containers
+less secure.  In addition, despite their power and utility, control groups are have become a contentious
+feature right now, being used extensively, and often in incompatible ways, by
+both <a class="reference external" href="docker.com">Docker</a>  and <a class="reference external" href="http://www.freedesktop.org/software/systemd/man/systemd.service.html">systemd</a>.  Chaperone
+is intended to be lean, simple and compatible with containers.  For now, avoiding cgroups we believe will
+keep Chaperone a more useful and simple accessory.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="config-logging.html" class="btn btn-neutral float-right" title="Configuration: Logging Declarations" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="config-global.html" class="btn btn-neutral" title="Configuration: Global Settings" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

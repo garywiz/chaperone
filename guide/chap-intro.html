@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Introduction to Chaperone &mdash; chaperone 1.0.5 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 1.0.5 documentation" href="../index.html"/>
+        <link rel="next" title="Using Chaperone with Docker" href="chap-docker.html"/>
+        <link rel="prev" title="Chaperone: A lightweight, all-in-one process manager for lean containers" href="../index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ref/index.html">Chaperone Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ref/command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ref/command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ref/config.html">Chaperone Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ref/env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Introduction to Chaperone</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="introduction-to-chaperone">
+<h1>Introduction to Chaperone<a class="headerlink" href="#introduction-to-chaperone" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Container technologies like Docker and Rocket have changed dramatically the way
+we bundle and distribute applications. While many containers are built with
+a single contained process in mind, other applications require a small suite
+of processes bundled into the &#8220;black box&#8221; that containers provide.  When this
+happens, the need arises for a container control system, but the available
+technologies such as <code class="docutils literal"><span class="pre">systemd</span></code> or <code class="docutils literal"><span class="pre">upstart</span></code> are both too modular and
+too heavy, resulting in &#8220;fat containers&#8221; which introduce the very kinds of
+overhead container technologies are designed to eliminate.</p>
+<p>Chaperone is designed to solve this problem by providing a single, self-contained
+&#8220;caretaker&#8221; process which provides the following capabilities within the container:</p>
+<ul class="simple">
+<li>A robust process manager with service types for forking, oneshot, simple, and
+notify service types modelled after systemd.</li>
+<li>Dependency-based parallel start-up of services.</li>
+<li>A &#8220;cron&#8221; service type to schedule periodic tasks.</li>
+<li>A built-in highly configurable syslog service which can direct syslog
+messages to multiple output files and duplicate selected streams or severities
+to the container stdout as well.</li>
+<li>Control capabilities so that services can be stopped, started, or restarted easily
+at the command line or within application programs.</li>
+<li>Emulation of systemd&#8217;s <code class="docutils literal"><span class="pre">sd_notify</span></code> capability, allocating notify sockets
+for each service so that cgroups and other privileges are not needed
+within the container.</li>
+<li>Features to support the creation of &#8220;mini-systems&#8221; within a single directory
+so that system services can run in userspace, or be mounted on host shares
+to keep development processes and production processes as close to identical
+as possible (see <code class="docutils literal"><span class="pre">chaperone-lamp</span></code> for an example of how this can be realized).</li>
+</ul>
+<p>In addition, many incidental features are present, such as process monitoring and
+zombie clean-up, clean shutdown and container restarts, and interactive console
+process detection so that applications know when they are being run interactively.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="chap-docker.html" class="btn btn-neutral float-right" title="Using Chaperone with Docker" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral" title="Chaperone: A lightweight, all-in-one process manager for lean containers" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.5',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
