@@ -26,15 +26,21 @@ _RE_ENVVAR = re.compile(r'\$(?:\([^=\(]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={]
 # Parsing for operators within expansions
 _RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$')
 
+_DICT_CONST = dict()            # a dict we must never change, just an optimisation
+
 class Environment(lazydict):
 
     uid = None
     gid = None
 
-    # This is a small optimization to save extra expansion in the case where an expanded
-    # environment is immediately used for expand_attributes(), which expand the environment
-    # if needed.
-    _is_expanded = False
+    # This is a cached version of this environment, expanded
+    _expanded = None
+
+    # The _shadow Environment contains a pointer to the environment which contained
+    # the LAST active value for each env_set item so that we can deal with self-referential
+    # cases like:
+    #    'PATH': '/usr/local:$(PATH)'
+    _shadow = None
 
     def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
         """
@@ -49,6 +55,9 @@ class Environment(lazydict):
         userenv = dict()
 
         # Inherit user from passed-in environment
+        self._shadow = getattr(from_env, '_shadow', None)
+        shadow = None           # we don't bother to recreate this in any complex fashion unless we need to
+
         if uid is None:
             self.uid = getattr(from_env, 'uid', self.uid)
             self.gid = getattr(from_env, 'gid', self.gid)
@@ -68,27 +77,57 @@ class Environment(lazydict):
             if inherit and from_env:
                 self.update({k:v for k,v in from_env.items() if any([fnmatch(k,pat) for pat in inherit])})
             self.update(userenv)
+
             add = config.get('env_set')
-            if add:
-                self.update(add)
             unset = config.get('env_unset')
+
+            if add or unset:
+                self._shadow = shadow = (getattr(self, '_shadow') or _DICT_CONST).copy()
+
+            if add:
+                for k,v in add.items():
+                    if from_env and k in from_env:
+                        shadow[k] = from_env # we keep track of the environment where the predecessor originated
+                    self[k] = v
             if unset:
                 for s in unset:
                     self.pop(s, None)
+                    shadow.pop(s, None)
 
         #print('   DONE (.uid={0}): {1}\n'.format(self.uid, self))
 
+    def _get_shadow_environment(self, var):
+        """
+        Returns the environment where var  existed before the specified variable was set, even
+        that occurred long ago.  Delays expansion of the parent environment until this point,
+        since it is only rarely that self-referential environment variables need to consult the shadow.
+        """
+        try:
+            shadow = self._shadow[var]
+        except (TypeError, KeyError):
+            return None
+
+        try:
+            return shadow.expanded()
+        except AttributeError:
+            pass
+
+        # Note shadow may be None at this point, or a dict()
+        self._shadow[var] = shadow = Environment(shadow)
+
+        return shadow.expanded()
+
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
-        self._is_expanded = False
+        self._expanded = None
 
     def __delitem__(self, key):
         super().__delitem__(key)
-        self._is_expanded = False
+        self._expanded = None
 
     def clear(self):
         super().clear()
-        self._is_expanded = False
+        self._expanded = None
 
     def _elookup(self, match):
         whole = match.group(0)
@@ -117,15 +156,20 @@ class Environment(lazydict):
         if not explist:
             return
 
-        env = self if self._is_expanded else self.expanded()
+        env = self.expanded()
         for attr in explist:
             setattr(obj, attr, env.expand(getattr(obj, attr)))
             
     def expanded(self):
         """
         Does a recursive expansion on all variables until there are no matches.  Circular recursion
-        is halted rather than reported as an error.
+        is halted rather than reported as an error.  Returns a version of this environment
+        which has been expanded.  Asking an expanded() copy for another expanded() copy returns self
+        unless the expanded copy has been modified.
         """
+        if self._expanded is not None:
+            return self._expanded
+
         result = Environment(None) 
         for k in sorted(self.keys()): # sorted so outcome is deterministic
             self._expand_into(k, result)
@@ -134,34 +178,48 @@ class Environment(lazydict):
         # own environment.
         result.uid = self.uid
         result.gid = self.gid
-        result._is_expanded = True
+        result._shadow = self._shadow
+
+        # Cache a copy, but also tell the cached copy that it's expanded cached copy is itself.
+        result._expanded = result
+        self._expanded = result
 
         return result
 
-    def _expand_into(self, k, result, default = None):
+    def _expand_into(self, k, result, default = None, parent = None):
         match = _RE_OPERS.match(k)
         use_repl = None
         val = None
 
+        # We are the primary source of values unless we discover a self-referential
+        # variable later.
+        primary = self    
+
         if not match:
+            if parent == k:     # self-referential
+                primary = self._get_shadow_environment(k)
+                return (primary and primary.get(k, '')) or '' # special case where we return nothing
             if k in result:
                 return result[k]
-            if k not in self:
+            if k not in primary:
                 return default
-            val = self[k]
+            val = primary[k]
         else:
             (k, oper, repl) = match.groups()
+            if parent == k:     # self-referential
+                primary = self._get_shadow_environment(k) or _DICT_CONST
             # Handle both :- and :+
-            if (oper == '-' and k not in self) or (oper == '+' and k in self):
+            if (oper == '-' and k not in primary) or (oper == '+' and k in primary):
                 use_repl = repl
-            elif k not in self:
+                k = None        # this is not a self-referential forward reference
+            elif k not in primary:
                 return ''
             elif k in result:
                 return result[k]
             else:
-                val = self[k]
+                val = primary[k]
 
-        recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0))
+        recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0), k)
 
         if use_repl is not None:
             val = _RE_ENVVAR.sub(recurse, use_repl)
@@ -179,7 +237,7 @@ class Environment(lazydict):
         Public variables are those which are exported to the application and do NOT start with an
         underscore.  All underscore names will be kept private.
         """
-        newenv = Environment(self).expanded()
+        newenv = self.expanded().copy()
     
         # collect private or blanks, then delete them
         delkeys = [k for k in newenv.keys() if k.startswith('_') or newenv[k] in (None, '')]

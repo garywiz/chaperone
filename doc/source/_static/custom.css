@@ -9,3 +9,13 @@
 table .caption-number:after {
     content: ": "
 }
+
+.rst-content p.caption {
+    font-size: 80%;
+    padding-top: 5px;
+}
+
+.rst-content code.kbd {
+    color: #E74C3C;
+}
+

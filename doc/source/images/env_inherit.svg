@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="388.561" height="438.75" viewBox="0, 0, 259.04, 292.5">
+  <defs>
+    <linearGradient id="Gradient_1" gradientUnits="userSpaceOnUse" x1="108" y1="253.333" x2="347.588" y2="253.333">
+      <stop offset="0" stop-color="#E5EDFF"/>
+      <stop offset="1" stop-color="#F5F5F5"/>
+    </linearGradient>
+    <linearGradient id="Gradient_2" gradientUnits="userSpaceOnUse" x1="108" y1="387.5" x2="339.708" y2="387.5">
+      <stop offset="0" stop-color="#FFE4E4"/>
+      <stop offset="1" stop-color="#F4F4F5"/>
+    </linearGradient>
+    <clipPath id="Clip_1">
+      <path d="M117.992,329.333 L217.587,329.333 L217.587,395.667 L117.992,395.667 z M204.066,337.333 L131.513,337.333 C127.361,337.333 123.992,340.662 123.992,344.771 L123.992,380.229 C123.992,384.338 127.361,387.667 131.513,387.667 L204.066,387.667 C208.219,387.667 211.588,384.338 211.587,380.229 L211.587,344.771 C211.588,340.662 208.219,337.333 204.066,337.333 z"/>
+    </clipPath>
+    <filter id="Shadow_2">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000"/>
+      <feComposite in2="offsetblur" operator="in"/>
+    </filter>
+    <radialGradient id="Gradient_3" gradientUnits="userSpaceOnUse" cx="167.79" cy="362.5" r="43.298">
+      <stop offset="0.049" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FF7474" stop-opacity="0.335"/>
+    </radialGradient>
+    <clipPath id="Clip_3">
+      <path d="M228.992,329.333 L328.587,329.333 L328.587,395.667 L228.992,395.667 z M315.066,337.333 L242.513,337.333 C238.361,337.333 234.992,340.662 234.992,344.771 L234.992,380.229 C234.992,384.338 238.361,387.667 242.513,387.667 L315.066,387.667 C319.219,387.667 322.588,384.338 322.587,380.229 L322.587,344.771 C322.588,340.662 319.219,337.333 315.066,337.333 z"/>
+    </clipPath>
+    <filter id="Shadow_4">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000"/>
+      <feComposite in2="offsetblur" operator="in"/>
+    </filter>
+    <radialGradient id="Gradient_4" gradientUnits="userSpaceOnUse" cx="278.79" cy="362.5" r="43.298">
+      <stop offset="0.049" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FF7474" stop-opacity="0.335"/>
+    </radialGradient>
+    <clipPath id="Clip_5">
+      <path d="M117.992,209.833 L217.587,209.833 L217.587,276.167 L117.992,276.167 z M204.066,217.833 L131.513,217.833 C127.361,217.833 123.992,221.162 123.992,225.271 L123.992,260.729 C123.992,264.838 127.361,268.167 131.513,268.167 L204.066,268.167 C208.219,268.167 211.588,264.838 211.587,260.729 L211.587,225.271 C211.588,221.162 208.219,217.833 204.066,217.833 z"/>
+    </clipPath>
+    <filter id="Shadow_6">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000"/>
+      <feComposite in2="offsetblur" operator="in"/>
+    </filter>
+    <radialGradient id="Gradient_5" gradientUnits="userSpaceOnUse" cx="167.79" cy="243" r="43.298">
+      <stop offset="0.049" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#749EFF" stop-opacity="0.335"/>
+    </radialGradient>
+  </defs>
+  <g id="Layer_1" transform="translate(-88.547, -158.667)">
+    <path d="M108,194.167 L347.588,194.167 L347.588,312.5 L108,312.5 L108,194.167 z" fill="url(#Gradient_1)"/>
+    <path d="M108,323.833 L339.708,323.833 L339.708,451.167 L108,451.167 L108,323.833 z" fill="url(#Gradient_2)"/>
+    <text transform="matrix(1, 0, 0, 1, 167.992, 171.167)">
+      <tspan x="-43.905" y="-2.5" font-family="HelveticaNeue" font-size="10" fill="#000000">Parent Environment</tspan>
+      <tspan x="-40.845" y="9.5" font-family="HelveticaNeue" font-size="10" fill="#000000">(from Docker, etc.)</tspan>
+    </text>
+    <text transform="matrix(1, 0, 0, 1, 165.123, 435.667)">
+      <tspan x="-14.888" y="-4.5" font-family="HelveticaNeue" font-size="8" fill="#000000">service1</tspan>
+      <tspan x="-22.084" y="5.5" font-family="HelveticaNeue" font-size="8" fill="#000000">environment</tspan>
+    </text>
+    <text transform="matrix(1, 0, 0, 1, 278.29, 435.667)">
+      <tspan x="-14.888" y="-4.5" font-family="HelveticaNeue" font-size="8" fill="#000000">service2</tspan>
+      <tspan x="-22.084" y="5.5" font-family="HelveticaNeue" font-size="8" fill="#000000">environment</tspan>
+    </text>
+    <g>
+      <path d="M168.492,276.167 L168.492,289.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+      <path d="M165.492,289.5 L168.492,297.5 L171.492,289.5 M168.492,289.5 L168.492,297.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+    </g>
+    <g>
+      <path d="M167.746,189.667 L167.746,203" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+      <path d="M164.746,203 L167.746,211 L170.746,203 M167.746,203 L167.746,211" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+    </g>
+    <g>
+      <path d="M165.623,395.167 L165.623,408.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+      <path d="M162.623,408.5 L165.623,416.5 L168.623,408.5 M165.623,408.5 L165.623,416.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+    </g>
+    <g>
+      <path d="M278.492,395.167 L278.492,408.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+      <path d="M275.492,408.5 L278.492,416.5 L281.492,408.5 M278.492,408.5 L278.492,416.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+    </g>
+    <g>
+      <path d="M204.066,337.333 C208.219,337.333 211.588,340.662 211.587,344.771 L211.587,380.229 C211.588,384.338 208.219,387.667 204.066,387.667 L131.513,387.667 C127.361,387.667 123.992,384.338 123.992,380.229 L123.992,344.771 C123.992,340.662 127.361,337.333 131.513,337.333 L204.066,337.333 z" clip-path="url(#Clip_1)" filter="url(#Shadow_2)" fill="rgba(0,0,0,0.45)"/>
+      <path d="M131.513,337.833 L204.066,337.833 C207.944,337.833 211.088,340.939 211.088,344.771 L211.088,380.229 C211.088,384.061 207.944,387.167 204.066,387.167 L131.513,387.167 C127.635,387.167 124.492,384.061 124.492,380.229 L124.492,344.771 C124.492,340.939 127.635,337.833 131.513,337.833 z" fill="url(#Gradient_3)"/>
+      <path d="M131.513,337.833 L204.066,337.833 C207.944,337.833 211.088,340.939 211.088,344.771 L211.088,380.229 C211.088,384.061 207.944,387.167 204.066,387.167 L131.513,387.167 C127.635,387.167 124.492,384.061 124.492,380.229 L124.492,344.771 C124.492,340.939 127.635,337.833 131.513,337.833 z" fill-opacity="0" stroke="#A25C5C" stroke-width="1" stroke-opacity="0.469"/>
+    </g>
+    <g>
+      <path d="M315.066,337.333 C319.219,337.333 322.588,340.662 322.587,344.771 L322.587,380.229 C322.588,384.338 319.219,387.667 315.066,387.667 L242.513,387.667 C238.361,387.667 234.992,384.338 234.992,380.229 L234.992,344.771 C234.992,340.662 238.361,337.333 242.513,337.333 L315.066,337.333 z" clip-path="url(#Clip_3)" filter="url(#Shadow_4)" fill="rgba(0,0,0,0.45)"/>
+      <path d="M242.513,337.833 L315.066,337.833 C318.944,337.833 322.088,340.939 322.088,344.771 L322.088,380.229 C322.088,384.061 318.944,387.167 315.066,387.167 L242.513,387.167 C238.635,387.167 235.492,384.061 235.492,380.229 L235.492,344.771 C235.492,340.939 238.635,337.833 242.513,337.833 z" fill="url(#Gradient_4)"/>
+      <path d="M242.513,337.833 L315.066,337.833 C318.944,337.833 322.088,340.939 322.088,344.771 L322.088,380.229 C322.088,384.061 318.944,387.167 315.066,387.167 L242.513,387.167 C238.635,387.167 235.492,384.061 235.492,380.229 L235.492,344.771 C235.492,340.939 238.635,337.833 242.513,337.833 z" fill-opacity="0" stroke="#A25C5C" stroke-width="1" stroke-opacity="0.469"/>
+    </g>
+    <g>
+      <path d="M204.066,217.833 C208.219,217.833 211.588,221.162 211.587,225.271 L211.587,260.729 C211.588,264.838 208.219,268.167 204.066,268.167 L131.513,268.167 C127.361,268.167 123.992,264.838 123.992,260.729 L123.992,225.271 C123.992,221.162 127.361,217.833 131.513,217.833 L204.066,217.833 z" clip-path="url(#Clip_5)" filter="url(#Shadow_6)" fill="rgba(0,0,0,0.45)"/>
+      <path d="M131.513,218.333 L204.066,218.333 C207.944,218.333 211.088,221.439 211.088,225.271 L211.088,260.729 C211.088,264.561 207.944,267.667 204.066,267.667 L131.513,267.667 C127.635,267.667 124.492,264.561 124.492,260.729 L124.492,225.271 C124.492,221.439 127.635,218.333 131.513,218.333 z" fill="url(#Gradient_5)"/>
+      <path d="M131.513,218.333 L204.066,218.333 C207.944,218.333 211.088,221.439 211.088,225.271 L211.088,260.729 C211.088,264.561 207.944,267.667 204.066,267.667 L131.513,267.667 C127.635,267.667 124.492,264.561 124.492,260.729 L124.492,225.271 C124.492,221.439 127.635,218.333 131.513,218.333 z" fill-opacity="0" stroke="#6D5CA2" stroke-width="1" stroke-opacity="0.469"/>
+    </g>
+    <text transform="matrix(1, 0, 0, 1, 167.29, 242.5)">
+      <tspan x="-27.254" y="-8.667" font-family="Courier-Bold" font-size="8" fill="#000000">env_inherit</tspan>
+      <tspan x="-27.254" y="1.333" font-family="Courier-Bold" font-size="8" fill="#000000">env_set</tspan>
+      <tspan x="-27.254" y="11.333" font-family="Courier-Bold" font-size="8" fill="#000000">env_unset</tspan>
+    </text>
+    <text transform="matrix(1, 0, 0, 1, 165.123, 362)">
+      <tspan x="-27.254" y="-8.667" font-family="Courier-Bold" font-size="8" fill="#000000">env_inherit</tspan>
+      <tspan x="-27.254" y="1.333" font-family="Courier-Bold" font-size="8" fill="#000000">env_set</tspan>
+      <tspan x="-27.254" y="11.333" font-family="Courier-Bold" font-size="8" fill="#000000">env_unset</tspan>
+    </text>
+    <text transform="matrix(1, 0, 0, 1, 277.992, 362)">
+      <tspan x="-27.254" y="-8.667" font-family="Courier-Bold" font-size="8" fill="#000000">env_inherit</tspan>
+      <tspan x="-27.254" y="1.333" font-family="Courier-Bold" font-size="8" fill="#000000">env_set</tspan>
+      <tspan x="-27.254" y="11.333" font-family="Courier-Bold" font-size="8" fill="#000000">env_unset</tspan>
+    </text>
+    <g>
+      <path d="M168.492,320 L168.492,308 L278.492,308 L278.492,319.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+      <path d="M165.492,320 L168.492,328 L171.492,320 M168.492,320 L168.492,328" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+      <path d="M275.492,319.5 L278.492,327.5 L281.492,319.5 M278.492,319.5 L278.492,327.5" fill-opacity="0" stroke="#000000" stroke-width="1" stroke-opacity="0.502"/>
+    </g>
+    <g>
+      <path d="M92,194.167 L108,194.167 L108,312.5 L92,312.5 L92,194.167 z" fill="#E5EDFF"/>
+      <text fill="#000000" transform="matrix(0, -1, 1, 0, 99.812, 252.33)">
+        <tspan x="-42.755" y="3.348" font-family="HelveticaNeue-Italic" font-size="9">Settings Environment</tspan>
+      </text>
+    </g>
+    <g>
+      <path d="M92,323.833 L108,323.833 L108,451.167 L92,451.167 L92,323.833 z" fill="#FFE4E4"/>
+      <text fill="#000000" transform="matrix(0, -1, 1, 0, 99.812, 386.965)">
+        <tspan x="-49.5" y="3.348" font-family="HelveticaNeue-Italic" font-size="9">Per-Service Environment</tspan>
+      </text>
+    </g>
+    <text transform="matrix(1, 0, 0, 1, 278.29, 242.5)">
+      <tspan x="-54.854" y="-12.5" font-family="HelveticaNeue-Italic" font-size="8" fill="#000000">Chaperone applies directives</tspan>
+      <tspan x="-54.854" y="-2.5" font-family="HelveticaNeue-Italic" font-size="8" fill="#000000">at each level to refine the</tspan>
+      <tspan x="-54.854" y="7.5" font-family="HelveticaNeue-Italic" font-size="8" fill="#000000">environment globally, then </tspan>
+      <tspan x="-54.854" y="17.5" font-family="HelveticaNeue-Italic" font-size="8" fill="#000000">for each service.</tspan>
+    </text>
+  </g>
+</svg>

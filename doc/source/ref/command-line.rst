@@ -84,24 +84,6 @@ Once started, Chaperone monitors all services, performs logging, and cleans up z
 they exit.   When it receives a ``SIGTERM`` it will shutdown all processes in an orderly fashion.
 
 
-Start-up Environment Variables
-------------------------------
-
-.. _env._CHAP_OPTIONS:
-
-.. envvar:: _CHAP_OPTIONS
-
-   When Chaperone starts, it reads options both from the command line and from this environment
-   variable.  The environment variable provides defaults which should be used if they are 
-   not present on the command line.
-
-   For example, in the ``chaperone-baseimage`` image configuration, the default value
-   for ``--config`` is set::
-
-	    ENV _CHAP_OPTIONS --config apps/chaperone.d
-	    ENTRYPOINT ["/usr/local/bin/chaperone"]
-
-
 Option Reference Information
 ----------------------------
 

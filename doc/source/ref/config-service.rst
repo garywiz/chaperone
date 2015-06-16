@@ -1,6 +1,8 @@
 .. chapereone documentation
    configuration directives
 
+.. |ENV| replace:: :kbd:`$ENV`
+
 Configuration: Service Declarations
 ===================================
 
@@ -22,7 +24,8 @@ However, if several configuration files are involved, services in subsequent fil
 replace earlier services defined with the same name.
 
 Each service inherits the environment defined by the :ref:`settings directive <config.settings>` and
-can be tailored separately for the needs of each service.
+can be tailored separately for the needs of each service.  Entries below marked with |ENV| support 
+:ref:`environment variable expansion <env.expansion>`.
 
 .. _table.service-quick:
 
@@ -34,27 +37,31 @@ can be tailored separately for the needs of each service.
    :ref:`type <service.type>`                        Defines the service type: 'oneshot', 'simple', forking', 'notify',
 						     or 'cron'.  Default is 'simple'.
    :ref:`command <service.command>`                  Specifies the command to execute.  The command is not processed by a shell,
-						     but environment variable expansion is supported.
-						     (See :ref:``config.environment_expansion``)
+						     but environment variable expansion is supported. |ENV|
    :ref:`enabled <service.enabled>`                  If 'false', the service will not be started, nor will it be required by
 						     any dependents.  Default is 'true'.
    :ref:`stderr <service.stderr>`                    Either 'log' to write stderr to the syslog, or 'inherit' to write stderr
-						     to the container's stderr file handle.   Default is 'log'.
+						     to the container's stderr file handle.   Default is 'log'. |ENV|
    :ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
-						     to the container's stdout file handle.   Default is 'log'.
+						     to the container's stdout file handle.   Default is 'log'. |ENV|
 
    :ref:`after <service.after>`                      A comma-separated list of services or service groups which cannot start
 						     until after this service has started.
    :ref:`before <service.before>`                    A comma-separated list of services or service groups which must start
 						     before this service.
    :ref:`directory <service.directory>`              The directory where the command will be executed.  Otherwise, the account
-						     home directory will be used.
+						     home directory will be used. |ENV|
+   :ref:`env_inherit <service.env_inherit>`	     An array of patterns which can match one or more
+   		     				     environment variables.  Environment variables which
+						     do not match any pattern will be excluded.  Default is ``['*']``.
+   :ref:`env_set <service.env_set>`		     Additional environment variables to be set.
+   :ref:`env_unset <service.env_unset>`		     Environment variables to be removed.
    :ref:`exit_kills <service.exit_kills>`            If 'true' the entire system should be shut down when this service stops.
 						     Default is 'false'.
    :ref:`ignore_failures <service.ignore_failures>`  If 'true', failures of this service will be ignored but logged.
 						     Dependent services are still allowed to start.
    :ref:`interval <service.interval>`                For `type=cron` services, specifies the crontab-compatible interval
-						     in standard ``M H DOM MON DOW`` format.
+						     in standard ``M H DOM MON DOW`` format. |ENV|
    :ref:`kill_signal <service.kill_signal>`          The signal used to kill this process.  Default is ``SIGTERM``.
    :ref:`optional <service.optional>`                If 'true', then if the command file is not present on the system,
 						     the service will act as if it were not enabled.
@@ -72,8 +79,8 @@ can be tailored separately for the needs of each service.
 						     group upon startup.  This is the default.
    :ref:`startup_pause <service.startup_pause>`      The amount of time Chaperone will wait to see if a service fails
 						     immediately upon startup.  Defaults is 0.5 seconds.
-   :ref:`uid <service.uid>`                          The uid (name or number) of the user for this service.
-   :ref:`gid <service.gid>`                          The gid (name or number) of the group for this service.
+   :ref:`uid <service.uid>`                          The uid (name or number) of the user for this service. |ENV|
+   :ref:`gid <service.gid>`                          The gid (name or number) of the group for this service. |ENV|
    ================================================  =============================================================================
 
 .. _service.sect.type:
@@ -440,7 +447,7 @@ Service Config Reference
 
 .. describe:: setpgrp ( true | false )
 
-   By default, chaperone places makes each newly created service the parent of it's own process group.  This has the advantage
+   By default, chaperone makes each newly created service the parent of it's own process group.  This has the advantage
    of providing partial isolation for the service, and assures that if signals are sent to the group, no other processes
    are affected.  It also provides a poor man's method of tracking service groupings. [#f5]_
 

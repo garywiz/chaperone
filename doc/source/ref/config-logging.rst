@@ -1,6 +1,8 @@
 .. chapereone documentation
    configuration directives
 
+.. |ENV| replace:: :kbd:`$ENV`
+
 .. _logging:
 
 Configuration: Logging Declarations
@@ -25,7 +27,9 @@ You can define as many different logging entries, and all will be respected as i
 have services which do significant syslog output, you can decide on a per-service basis which logs go where,
 what aspects are sent to ``stdout`` and which go to log files.
 
-An overview of logging directives follow, then detailed reference information.
+An overview of logging directives follow, then detailed reference information.  Entries below
+marked with |ENV| support :ref:`environment variable expansion <env.expansion>`.
+
 
 .. _table.logging-quick:
 
@@ -35,7 +39,8 @@ An overview of logging directives follow, then detailed reference information.
    logging keyword                        meaning
    =====================================  =============================================================================
    :ref:`selector <logging.selector>`     Specifies the syslog-compatible selection filter for this logging entry.
-   :ref:`file <logging.file>`             Specifies an optional file for output.
+		  			  |ENV|
+   :ref:`file <logging.file>`             Specifies an optional file for output. |ENV|
    :ref:`stderr <logging.stderr>`         Directs output to ``stderr`` (can be used with ``file``).
    :ref:`stdout <logging.stdout>`         Directs output to ``stdout`` (can be used with ``file``).
    :ref:`enabled <logging.enabled>`       Can be set to ``false`` to disable this logging entry.
@@ -43,8 +48,10 @@ An overview of logging directives follow, then detailed reference information.
                                           the file upon opening.  By default, log files operate in append mode.
    :ref:`extended <logging.extended>`     Prefixes log entries with their facility and priority (useful primarily
                                           for debugging).
-   :ref:`uid <logging.uid>`               The uid (name or number) for permissions on created files and directories.
+   :ref:`uid <logging.uid>`               The uid (name or number) for permissions on created files and directories. 
+   	     				  |ENV|
    :ref:`gid <logging.gid>`               The gid (name or number) for permissions on created files and directories.
+      	     				  |ENV|
    =====================================  =============================================================================
 
 .. _logging.sect.selectors:

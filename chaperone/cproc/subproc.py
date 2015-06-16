@@ -338,11 +338,12 @@ class SubProcess(object):
         if service.directory:
             kwargs['cwd'] = service.directory
 
-        env = self._xenv
-        if env:
-            env = env.get_public_environment()
+        env = self._xenv or Environment(None)
 
         yield from self.process_prepare_co(env)
+
+        if env:
+            env = env.get_public_environment()
 
         if service.debug:
             if not env:
