@@ -15,7 +15,9 @@ run as a "system init" daemon or can run in userspace.
 This makes Chaperone an ideal tool for managing "small" process spaces like Docker
 containers while still providing the system services many daemons expect.
 
-If you are using Chaperone with Docker, we suggest reading the XXXX.
+If you are using Chaperone with Docker, we suggest reading the :ref:`intro`, then try out
+the ``chaperone-lamp`` Docker image by
+`following the instructions on the github page <https://github.com/garywiz/chaperone-docker#try-it-out>`_
 
 Any bugs should be reported as issues at https://github.com/garywiz/chaperone/issues.
 

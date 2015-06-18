@@ -1,4 +1,6 @@
 
+.. _intro:
+
 Introduction to Chaperone
 =========================
 
