@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'chaperone = chaperone.exec.chaperone:main_entry',
             'telchap = chaperone.exec.telchap:main_entry',
+            'envcp = chaperone.exec.envcp:main_entry',
         ],
     },
     license = "BSD 3",
