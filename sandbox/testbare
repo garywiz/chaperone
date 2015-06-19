@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Used to test a bareimage, an image which was created "as if" chaperone was JUST installed from pip,
+# mostly to be sure that if people do a "pip3 install chaperone" and then run chaperone, that errors
+# and other feedback are reasonable.
+
 SANDBOX=$PWD
 
 docker run -t -i --rm=true -e "TERM=$TERM" -v /home:/home -e "SANDBOX=$SANDBOX" chapdev/bareimage \

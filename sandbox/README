@@ -3,5 +3,5 @@ image and point /home to my host's /home, then keep chaperone in a sub-directory
 needing to install it each time.   I run my docker image with ./testdock and it isolates operation in this
 sandbox directory.
 
-This directory may be retired at some point, hopefully soon, once a more structured set of examples exists
-in a separate samples directory.
+The "testimage" script is especially useful since it lets you work with a standard docker chaperone image
+while substituting the current chaperone source instead of using the installed version.

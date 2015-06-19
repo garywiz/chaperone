@@ -1,0 +1,40 @@
+#!/bin/bash
+# Used to create an apps directory here in the sandbox which runs a
+# standard docker image, however uses the local chaperone sources
+# and creates an app directory here in the sandbox.  This is for
+# development of chaperone itself, and allows you to duplicate the
+# environment of an image.  Especially useful for reproducing problems
+# and troubleshooting images.
+
+if [ $# == 0 ]; then
+    echo "usage: testimage image-suffix"
+    exit 1
+fi
+
+# the cd trick assures this works even if the current directory is not current.
+cd ${0%/*}
+
+SUFFIX=$1
+shift				# remaining arguments are for chaperone
+
+IMAGE=chapdev/chaperone-$SUFFIX
+SANDBOX=$PWD
+APPSDIR=$SANDBOX/apps-$SUFFIX
+
+myuid=`id -u`
+mygid=`id -g`
+
+# Copy the apps into this sandbox directory so we can work on it.
+
+if [ ! -d $APPSDIR ]; then
+    docker run -i --rm=true -v /home:/home $IMAGE --disable --exitkills --log err \
+	/bin/bash -c "cp -a /apps $APPSDIR; chown -R $myuid:$mygid $APPSDIR"
+fi
+
+# Run the lamp image using our local copy of chaperone as well as the local apps directory
+
+docker run -t -i -e "TERM=$TERM" -e "EMACS=$EMACS" --rm=true -v /home:/home \
+    --entrypoint $SANDBOX/chaperone $IMAGE \
+    --create $USER/$myuid \
+    --config $APPSDIR/chaperone.d $* \
+     /bin/bash --rcfile $SANDBOX/bash.bashrc
