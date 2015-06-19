@@ -27,6 +27,7 @@ setup(
             'chaperone = chaperone.exec.chaperone:main_entry',
             'telchap = chaperone.exec.telchap:main_entry',
             'envcp = chaperone.exec.envcp:main_entry',
+            'sdnotify = chaperone.exec.sdnotify:main_entry',
         ],
     },
     license = "BSD 3",

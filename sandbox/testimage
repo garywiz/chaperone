@@ -21,6 +21,12 @@ IMAGE=chapdev/chaperone-$SUFFIX
 SANDBOX=$PWD
 APPSDIR=$SANDBOX/apps-$SUFFIX
 
+bashcmd="/bin/bash --rcfile $SANDBOX/bash.bashrc"
+if [ "$1" == "-" ]; then
+  bashcmd=""
+  shift
+fi
+
 myuid=`id -u`
 mygid=`id -g`
 
@@ -34,7 +40,6 @@ fi
 # Run the lamp image using our local copy of chaperone as well as the local apps directory
 
 docker run -t -i -e "TERM=$TERM" -e "EMACS=$EMACS" --rm=true -v /home:/home \
-    --entrypoint $SANDBOX/chaperone $IMAGE \
+    --entrypoint $SANDBOX/bin/chaperone $IMAGE \
     --create $USER/$myuid \
-    --config $APPSDIR/chaperone.d $* \
-     /bin/bash --rcfile $SANDBOX/bash.bashrc
+    --config $APPSDIR/chaperone.d $* $bashcmd
