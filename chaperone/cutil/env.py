@@ -151,7 +151,7 @@ class Environment(lazydict):
             return [self.expand(item) for item in instr]
         if not isinstance(instr, str):
             return instr
-        return _RE_ENVVAR.sub(lambda m: print(m) or self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)
+        return _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)
 
     def expand_attributes(self, obj, *args):
         """
