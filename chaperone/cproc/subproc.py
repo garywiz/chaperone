@@ -119,8 +119,11 @@ class SubProcess(object):
         return getattr(self.service, name)
 
     def __setattr__(self, name, value):
-        "Any service object attribute supercedes our own except for privates."
-        if name[0:0] != '_' and hasattr(self.service, name):
+        """
+        Any service object attribute supercedes our own except for privates or those we
+        keep separately, in which case there is a distinction.
+        """
+        if name[0:0] != '_' and hasattr(self.service, name) and not hasattr(self, name):
             setattr(self.service, name, value)
         else:
             object.__setattr__(self, name, value)
