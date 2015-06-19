@@ -39,9 +39,20 @@ def check_canwrite(flist, overok):
 
 def main_entry():
     options = docopt(__doc__, version=VERSION_MESSAGE)
-
     files = options['FILE']
 
+    env = Environment()
+
+    # Support stdin/stdout behavior if '-' is the only file specified on the command line
+
+    if '-' in files:
+        if len(files) > 1:
+            print("error: '-' for stdin/stdout cannot be combined with other filename arguments")
+            exit(1)
+        sys.stdout.write(env.expand(sys.stdin.read()))
+        sys.stdout.flush()
+        exit(0)
+        
     if len(files) < 2:
         print("error: must include two or more filename arguments")
         exit(1)
@@ -67,7 +78,6 @@ def main_entry():
         check_canwrite([destfile], options['--overwrite'])
 
     # files is now a list of pairs [(source, dest-basename), ...]
-    env = Environment()
 
     for curpair in files:
         if not os.path.exists(curpair[0]):
