@@ -21,7 +21,7 @@ ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone run
 #      $(VAR:-$(VAL))
 # However, more levels of nesting are not supported and will cause substitutions to be unrecognised.
 
-_RE_ENVVAR = re.compile(r'\$(?:\([^=\(]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={]+(?::(?:[^={}]|{[^=}]+})+)?})')
+_RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={}]+(?::(?:[^={}]|{[^=}]+})+)?})')
 
 # Parsing for operators within expansions
 _RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$')
@@ -151,7 +151,7 @@ class Environment(lazydict):
             return [self.expand(item) for item in instr]
         if not isinstance(instr, str):
             return instr
-        return _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)
+        return _RE_ENVVAR.sub(lambda m: print(m) or self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)
 
     def expand_attributes(self, obj, *args):
         """
