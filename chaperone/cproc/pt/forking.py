@@ -8,6 +8,7 @@ class ForkingProcess(SubProcess):
         result = yield from self.timed_wait(self.process_timeout, self._exit_timeout)
         if result is not None and result > 0:
             yield from self._abnormal_exit(result)
+        yield from self.wait_for_pidfile()
         
     def _exit_timeout(self):
         service = self.service

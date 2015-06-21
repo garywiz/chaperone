@@ -36,6 +36,7 @@ _config_schema = V.Any(
         'interval': str,
         'kill_signal': str,
         'optional': bool,
+        'pidfile': str,
         'process_timeout': V.Any(float, int),
         'startup_pause': V.Any(float, int),
         'restart': bool,
@@ -182,6 +183,7 @@ class ServiceConfig(_BaseConfig):
     ignore_failures = False
     kill_signal = None
     optional = False
+    pidfile = None              # the pidfile to monitor
     process_timeout = None      # time to elapse before we decide a process has misbehaved
     startup_pause = 0.5         # time to wait momentarily to see if a service starts (if needed)
     restart = False
@@ -201,7 +203,7 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_groups={0.service_groups}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args'}
+    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args', 'pidfile'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'startup_pause', 'ignore_failures'}
 
     system_group_names = ('IDLE', 'INIT')

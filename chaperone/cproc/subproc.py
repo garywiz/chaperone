@@ -13,7 +13,7 @@ from chaperone.cutil.env import Environment
 from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cutil.proc import ProcStatus
 from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name, executable_path
-from chaperone.cutil.errors import ChNotFoundError
+from chaperone.cutil.errors import ChNotFoundError, ChProcessError
 from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
@@ -170,6 +170,11 @@ class SubProcess(object):
     def pid(self, newpid):
         if self._pid is not None and newpid is not None and self._pid is not newpid:
             self.logdebug("{0} changing PID to {1} (from {2})", self.name, newpid, self._pid)
+            try:
+                pgid = os.getpgid(newpid)
+            except ProcessLookupError:
+                raise ChProcessError("{0} attempted to attach the process with PID={1} but there is no such process".
+                                     format(self.name, newpid))
             self._attach_pid(newpid)
         self._pid = newpid
 
@@ -428,6 +433,37 @@ class SubProcess(object):
         pass
 
     @asyncio.coroutine
+    def wait_for_pidfile(self):
+        """
+        If the pidfile option was specified, then wait until we find a valid pidfile,
+        and register the new PID.  This is not done automatically, but is implemented
+        here as a utility for process types that need it.
+        """
+        if not self.pidfile:
+            return
+
+        pidsleep = 0.02         # work incrementally up to no more than process_timeout
+        minsleep = 3
+        expires = time() + self.process_timeout
+
+        while time() < expires:
+            yield from asyncio.sleep(pidsleep)
+            # ramp up until we hit the minsleep ceiling
+            pidsleep = min(pidsleep*2, minsleep)
+            try:
+                newpid = int(open(self.pidfile, 'r').read().strip())
+            except FileNotFoundError:
+                continue
+            except Exception as ex:
+                raise ChProcessErrorr("{0} found pid file '{1}' but contents did not contain an integer".format(
+                                      self.name, self.pidfile))
+            self.pid = newpid
+            return
+
+        raise ChProcessError("{0} did not find pid file '{1}' before {2}sec process_timeout expired".format(
+                             self.name, self.pidfile, self.process_timeout))
+        
+    @asyncio.coroutine
     def _wait_kill_on_exit(self):
         yield from self.wait()
         self._kill_system()
@@ -527,6 +563,14 @@ class SubProcess(object):
         
         if enable:
             self.service.enabled = True
+
+        # If there is a pidfile, then remove it
+
+        if self.pidfile:
+            try:
+                os.remove(self.pidfile)
+            except:
+                pass
 
         # Reset any non-ready dependents
 

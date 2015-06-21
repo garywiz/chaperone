@@ -39,10 +39,12 @@ class TopLevelProcess(objectplus):
     _killing_system = False
     _kill_future = None
     _config = None
+    _pending = None
 
     def __init__(self, config):
         self._config = config
         self._start_time = time()
+        self._pending = set()
 
         # wait at least 0.5 seconds, zero is totally pointless
         self._shutdown_timeout = config.get_settings().get('shutdown_timeout', 10) or 0.5
@@ -148,6 +150,14 @@ class TopLevelProcess(objectplus):
     @asyncio.coroutine
     def _kill_system_co(self):
 
+        # Cancel any pending activated tasks
+
+        for p in list(self._pending):
+            if not p.cancelled():
+                p.cancel()
+
+        # Tell the family it's been nice
+
         if self._family:
             for f in self._family.values():
                 yield from f.final_stop()
@@ -175,11 +185,13 @@ class TopLevelProcess(objectplus):
             return
 
     def activate_result(self, future):
+        self._pending.discard(future)
         debug("DISPATCH RESULT", future)
 
     def activate(self, cr):
        future = asyncio.async(cr)
        future.add_done_callback(self.activate_result)
+       self._pending.add(future)
        return future
 
     def _syslog_started(self, f):
@@ -247,5 +259,7 @@ class TopLevelProcess(objectplus):
         family = self._family = SubProcessFamily(self, services)
         try:
             yield from family.run()
+        except asyncio.CancelledError:
+            pass
         finally:
             self._services_started = True
