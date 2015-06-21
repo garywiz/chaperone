@@ -26,7 +26,7 @@ However, if several configuration files are involved, services in subsequent fil
 replace earlier services defined with the same name.
 
 Each service inherits the environment defined by the :ref:`settings directive <config.settings>` and
-can be tailored separately for the needs of each service.  Entries below marked with |ENV| support 
+can be tailored separately for the needs of each service.  Entries below marked with |ENV| support
 :ref:`environment variable expansion <env.expansion>`.
 
 .. _table.service-quick:
@@ -37,50 +37,52 @@ can be tailored separately for the needs of each service.  Entries below marked 
    service variable                                  meaning
    ================================================  =============================================================================
    :ref:`type <service.type>`                        Defines the service type: 'oneshot', 'simple', forking', 'notify',
-						     or 'cron'.  Default is 'simple'.
+                                                     or 'cron'.  Default is 'simple'.
    :ref:`command <service.command>`                  Specifies the command to execute.  The command is not processed by a shell,
-						     but environment variable expansion is supported. |ENV|
+                                                     but environment variable expansion is supported. |ENV|
    :ref:`enabled <service.enabled>`                  If 'false', the service will not be started, nor will it be required by
-						     any dependents.  Default is 'true'.
+                                                     any dependents.  Default is 'true'.
    :ref:`stderr <service.stderr>`                    Either 'log' to write stderr to the syslog, or 'inherit' to write stderr
-						     to the container's stderr file handle.   Default is 'log'. |ENV|
+                                                     to the container's stderr file handle.   Default is 'log'. |ENV|
    :ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
-						     to the container's stdout file handle.   Default is 'log'. |ENV|
+                                                     to the container's stdout file handle.   Default is 'log'. |ENV|
 
    :ref:`after <service.after>`                      A comma-separated list of services or service groups which cannot start
-						     until after this service has started.
+                                                     until after this service has started.
    :ref:`before <service.before>`                    A comma-separated list of services or service groups which must start
-						     before this service.
+                                                     before this service.
    :ref:`directory <service.directory>`              The directory where the command will be executed.  Otherwise, the account
-						     home directory will be used. |ENV|
-   :ref:`env_inherit <service.env_inherit>`	     An array of patterns which can match one or more
-   		     				     environment variables.  Environment variables which
-						     do not match any pattern will be excluded.  Default is ``['*']``.
-   :ref:`env_set <service.env_set>`		     Additional environment variables to be set.
-   :ref:`env_unset <service.env_unset>`		     Environment variables to be removed.
+                                                     home directory will be used. |ENV|
+   :ref:`env_inherit <service.env_inherit>`          An array of patterns which can match one or more
+                                                     environment variables.  Environment variables which
+                                                     do not match any pattern will be excluded.  Default is ``['*']``.
+   :ref:`env_set <service.env_set>`                  Additional environment variables to be set.
+   :ref:`env_unset <service.env_unset>`              Environment variables to be removed.
    :ref:`exit_kills <service.exit_kills>`            If 'true' the entire system should be shut down when this service stops.
-						     Default is 'false'.
+                                                     Default is 'false'.
    :ref:`ignore_failures <service.ignore_failures>`  If 'true', failures of this service will be ignored but logged.
-						     Dependent services are still allowed to start.
+                                                     Dependent services are still allowed to start.
    :ref:`interval <service.interval>`                For `type=cron` services, specifies the crontab-compatible interval
-						     in standard ``M H DOM MON DOW`` format. |ENV|
+                                                     in standard ``M H DOM MON DOW`` format. |ENV|
    :ref:`kill_signal <service.kill_signal>`          The signal used to kill this process.  Default is ``SIGTERM``.
    :ref:`optional <service.optional>`                If 'true', then if the command file is not present on the system,
-						     the service will act as if it were not enabled.
+                                                     the service will act as if it were not enabled.
+   :ref:`pidfile <service.pidfile>`                  The full path to the file which will contain the process 'pid'
+                                                     upon startup. ('forking' type only) |ENV|
    :ref:`process_timeout <service.process_timeout>`  Specifies the amount of time Chaperone will wait for a service to start.
-						     The default varies for each type of service.
-						     See :ref:``service types <config.sect.type>`` for more
-						     information.
+                                                     The default varies for each type of service.
+                                                     See :ref:``service types <config.sect.type>`` for more
+                                                     information.
    :ref:`restart <service.restart>`                  If 'true', then chaperone will restart this service if it fails (but
-						     not if it terminates normally).  Default is 'false'.
+                                                     not if it terminates normally).  Default is 'false'.
    :ref:`restart_delay <service.restart_delay>`      The number of seconds to pause between restarts.  Default is 3 seconds.
    :ref:`restart_limit <service.restart_limit>`      The maximum number of restart attempts.  Default is 5.
    :ref:`service_groups <service.service_groups>`    A comma-separatedlist of service groups this service belongs to.  All
-						     uppercase services are reserved by the system.
+                                                     uppercase services are reserved by the system.
    :ref:`setpgrp <service.setpgrp>`                  If 'true', then the service will be isolated in its own process
-						     group upon startup.  This is the default.
+                                                     group upon startup.  This is the default.
    :ref:`startup_pause <service.startup_pause>`      The amount of time Chaperone will wait to see if a service fails
-						     immediately upon startup.  Defaults is 0.5 seconds.
+                                                     immediately upon startup.  Defaults is 0.5 seconds.
    :ref:`uid <service.uid>`                          The uid (name or number) of the user for this service. |ENV|
    :ref:`gid <service.gid>`                          The gid (name or number) of the group for this service. |ENV|
    ================================================  =============================================================================
@@ -110,39 +112,39 @@ an isolated situation affecting only the service itself.
    type              behavior                                                    system failure            service failure
    ================  ==========================================================  ========================= =========================
    simple            This is the default type.  Chaperone considers a service    Service terminates        Service terminates
-		     "started" as soon as the startup grace period               abnormally during grace   abnormally later despite
-		     (defined by :ref:`startup_pause <service.startup_pause>`)   period.                   retries.
-		     elapses.                                                 
-		     If the service terminates normally at any time, the      
-		     service is considered "started" until reset.        
-   forking           A forking service is expected to set up all                 Service terminates        Never. [#f2]_
-		     communications channels and assure that the service         abnormally during the
-		     is ready for application use, then exit normally            process timeout.
-		     before the
-		     :ref:`process_timeout <service.process_timeout>`
-		     expires.  *Note*: The default process timeout for
-		     forking services is 300 seconds.
+                     "started" as soon as the startup grace period               abnormally during grace   abnormally later despite
+                     (defined by :ref:`startup_pause <service.startup_pause>`)   period.                   retries.
+                     elapses.
+                     If the service terminates normally at any time, the
+                     service is considered "started" until reset.
+   forking           A forking service is expected to set up all                 Service terminates        Service terminates
+                     communications channels and assure that the service         abnormally during the     abnormally later despite
+                     is ready for application use, then exit normally            process timeout, or       retries, only if pidfile
+                     before the                                                  the pidfile cannot be     specifies.  Otherwise,
+                     :ref:`process_timeout <service.process_timeout>`            found (if specified)      never. [#f2]_
+                     expires.  *Note*: The default process timeout for           during the timeout
+                     forking services is 300 seconds.                            period.
    oneshot           A oneshot service is designed to execute scripts which      Service terminates        Service terminates
-		     complete an operation and are considered started once       abnormally during         abnormally during a
-		     they run successfully.  *Note*: The default process         the process timeout.      manual "start"
-		     timeout for oneshot services is 60 seconds.                                           operation.
+                     complete an operation and are considered started once       abnormally during         abnormally during a
+                     they run successfully.  *Note*: The default process         the process timeout.      manual "start"
+                     timeout for oneshot services is 60 seconds.                                           operation.
    notify            A notify service is expected to establish communication     Service terminates        Service sends a
-		     with chaperone using the *sd_notify* protcol.  The          abnormally during the     failure notification.
-		     :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`                    process timeout
-		     environment variable will be set, and chaperone will
-		     consider the service started only when notified
-		     appropriately. *Note*: The default process timeout
-		     for a notify service is 30 seconds.
+                     with chaperone using the *sd_notify* protcol.  The          abnormally during the     failure notification.
+                     :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`                    process timeout
+                     environment variable will be set, and chaperone will
+                     consider the service started only when notified
+                     appropriately. *Note*: The default process timeout
+                     for a notify service is 30 seconds.
    cron              The cron type schedules a script or program for periodic    Service executable        Never.  Failures of
-		     execution.  The service is considered started once          is missing or invalid     isolated executions
-		     successfully scheduled.  Both scheduling parameters         but not optional.         do not constitute
-		     (specified using :ref:`interval <service.interval>`)                                  a permanent service
-		     as well as the presence of the executable specified                                   failure.
-		     in :ref:`command <service.command>` will be checked
-		     before scheduling is considered successful.  Cron
-		     services which are declared as
-		     :ref:`optional <service.optional>` will not be
-		     scheduled and will be treated as if they were disabled.
+                     execution.  The service is considered started once          is missing or invalid     isolated executions
+                     successfully scheduled.  Both scheduling parameters         but not optional.         do not constitute
+                     (specified using :ref:`interval <service.interval>`)                                  a permanent service
+                     as well as the presence of the executable specified                                   failure.
+                     in :ref:`command <service.command>` will be checked
+                     before scheduling is considered successful.  Cron
+                     services which are declared as
+                     :ref:`optional <service.optional>` will not be
+                     scheduled and will be treated as if they were disabled.
    ================  ==========================================================  ========================= =========================
 
 Note: Unlike ``systemd``, Chaperone does not have an "idle" service type.  This is accomplished instead using a special
@@ -174,7 +176,7 @@ Service Config Reference
    Note that the command line is *not* passed to a shell, so other shell metacharacters or shell environment variable
    syntax not supported.
 
-   The first token on the command line must be an executable program available in the ``PATH``.  If it is not found, 
+   The first token on the command line must be an executable program available in the ``PATH``.  If it is not found,
    it will be considered an error.  However, if :ref:`optional <service.optional>`
    is set to 'true', then the service will be disabled in such cases.  This makes it easy to define configurations
    for programs which may or may not be installed.  *Note*: If the executable is present, but permissions deny
@@ -222,7 +224,7 @@ using similar settings directives such as :ref:`settings env_set <settings.env_s
 
 .. describe:: env_unset [ 'pattern, 'pattern', ... ]
 
-Removes the environment variables which match any of the given patterns from the environment.  
+Removes the environment variables which match any of the given patterns from the environment.
 Patterns are standard filename 'glob' patterns.
 
 .. _service.stdout:
@@ -231,18 +233,18 @@ Patterns are standard filename 'glob' patterns.
 
    Can be set to 'log' to output service `stdout` to syslog (the default) or 'inherit' to output service messages
    directly to the container's stdout.   While it may be tempting to use 'inherit', we suggest you use the syslog
-   service instead, then tailor :ref:`logging <logging>` entries accordingly if console output desired.  
+   service instead, then tailor :ref:`logging <logging>` entries accordingly if console output desired.
    This will provide much more flexibility.
 
    Messages from the process `stdout` will be logged as syslog facility and severity of `daemon.info`. [#f3]_
-   
+
 .. _service.stderr:
 
 .. describe:: stderr: ( 'log' | 'inherit' )
 
    Can be set to 'log' to output service `stderr` to syslog (the default) or 'inherit' to output service messages
    directly to the container's stderr.   While it may be tempting to use 'inherit', we suggest you use the syslog
-   service instead, then tailor :ref:`logging <logging>` entries accordingly if console output desired.  
+   service instead, then tailor :ref:`logging <logging>` entries accordingly if console output desired.
    This will provide much more flexibility.
 
    Messages from the process `stderr` will be logged as syslog facility and severity of `daemon.warn`. [#f3]_
@@ -269,7 +271,7 @@ Patterns are standard filename 'glob' patterns.
 .. describe:: before: "service-or-group, ..."
 
    Specifies one or more services or service groups which will not be started until this service starts
-   successfully. 
+   successfully.
 
    The value specified is a comma-separated list of services or service groups.  Services are always
    identified with a ``.service`` suffix.  Otherwise, the reference is to a service group.  Thus::
@@ -356,6 +358,25 @@ Patterns are standard filename 'glob' patterns.
    Optional services may be started manually later if, for example, the executable should become available after
    system start-up.
 
+.. _service.pidfile:
+
+.. describe:: pidfile: file-path
+
+   This setting specifies the "PID file" which the service will create upon startup to indicate it's controlling
+   process ID.   This is valid only for forking services where it is assumed the service will create a detached
+   process as it's controlling process.
+
+   When the ``pidfile`` directive exists:
+
+   1. Chaperone start the service command normally.
+   2. If the executable starts and exits without error, Chaperone will watch for the appearance
+      of the file specified in the ``pidfile`` directive.
+   3. If the PID file does not appear within the timeframe given by the :ref:`process_timeout <service.process_timeout>`,
+      then it is considered a failure.
+
+   If the ``pidfile`` is seen, and contains a valid integer process ID *which denotes a running process*, then
+   Chaperone will monitor the status of that process for failures to determine the disposition of the service.
+
 .. _service.process_timeout:
 
 .. describe:: process_timeout: seconds
@@ -416,7 +437,7 @@ Patterns are standard filename 'glob' patterns.
    There are also two system-defined groups which have special meaning:
 
    ``INIT``
-     This group will be started first, before any other service that is *not a member of the INIT group* itself.  
+     This group will be started first, before any other service that is *not a member of the INIT group* itself.
      The order in which services will start within the INIT group is unspecified unless services make explicit
      :ref:`before <service.before>` or :ref:`after <service.after>` declarations.
 
@@ -464,15 +485,15 @@ Patterns are standard filename 'glob' patterns.
       In all cases, references to a service group operate identically to explicit references to all
       group members.  Group references are merely a shortcut.  Therefore::
 
-	four.service:   { service_group: "sanity_checks", 
-	                  after: "setup", 
-			  command: "echo four" }
+        four.service:   { service_group: "sanity_checks",
+                          after: "setup",
+                          command: "echo four" }
 
       is functionally identical to::
 
-	four.service:   { service_group: "sanity_checks", 
-			  after: "one.service,two.service,three.service",
-			  command: "echo four" }
+        four.service:   { service_group: "sanity_checks",
+                          after: "one.service,two.service,three.service",
+                          command: "echo four" }
 
 
 .. _service.setpgrp:
@@ -522,7 +543,7 @@ Patterns are standard filename 'glob' patterns.
 
      docker run -d chapdev/chaperone-baseimage \
                  --user wwwuser --config /home/wwwuser/chaperone.conf
-      
+
    there is no reason that ``chaperone.conf`` could not contain the following service definitions::
 
      mysql.service: {
@@ -562,13 +583,11 @@ Patterns are standard filename 'glob' patterns.
 
    Chaperone does not attempt "PID guessing" as ``systemd`` and some other process managers attempt to do.  The assumption
    is that "notify" will be the preferred means to determine if a service has started successfully, and to know what
-   it's PID is in case of a crash or internal notification.  However, it's likely that a future version of chaperone
-   will introduce a "pid_file" directive to allow forking services a way to provide information about their 
-   controlling PID.
+   it's PID is in case of a crash or internal notification.
 
 .. [#f3] Syslog facilities and severity levels are documented `on Wikipedia <https://en.wikipedia.org/wiki/Syslog>`_.
 
-.. [#f4] 
+.. [#f4]
 
    Yes, the seconds field appears at the *end*.  This is inherited from the `croniter package <https://github.com/kiorky/croniter>`_
    which we use to parse and manage the internal cron intervals.  We considered not documenting it because it seems
