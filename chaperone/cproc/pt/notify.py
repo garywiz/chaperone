@@ -3,8 +3,10 @@ import socket
 import re
 from functools import partial
 
-from chaperone.cproc.subproc import SubProcess
+from chaperone.cutil.errors import ChProcessError
 from chaperone.cutil.protocol import Server, ServerProtocol
+from chaperone.cutil.proc import ProcStatus
+from chaperone.cproc.subproc import SubProcess
 
 _RE_NOTIFY = re.compile(r'^([A-Za-z]+)=(.+)$')
 
@@ -74,7 +76,12 @@ class NotifyProcess(SubProcess):
             "terminating due to 'ignore_failures=False'")
         if not service.ignore_failures:
             self.terminate()
-        raise Exception(message)
+        raise ChProcessError(message)
+
+    @asyncio.coroutine
+    def reset(self, restart = False, dependents = False, enable = False):
+        yield from super().reset(restart, dependents, enable)
+        self._close_notifier()
 
     @asyncio.coroutine
     def final_stop(self):
@@ -99,16 +106,20 @@ class NotifyProcess(SubProcess):
                 self._notify_timeout()
             else:
                 self._ready_event = None
-
+                rc = self.returncode
+                if rc is not None and not rc.normal_exit:
+                    raise ChProcessError("{0} failed with reported error {1}".format(self.name, rc))
 
     @asyncio.coroutine
     def _monitor_service(self):
+        """
+        We only care about errors here.  The rest is dealt with by having notifications
+        occur.
+        """
         result = yield from self.wait()
-        self._close_notifier()
         if isinstance(result, int) and result > 0:
+            self._close_notifier()
             yield from self._abnormal_exit(result)
-        else:
-            yield from self.reset()
             
     def have_notify(self, var, value):
         callfunc = getattr(self, "notify_" + var.upper(), None)
@@ -116,9 +127,42 @@ class NotifyProcess(SubProcess):
         if callfunc:
             callfunc(value)
 
-    def notify_READY(self, value):
-        if value == "1" and self._ready_event:
+    def _setready(self):
+        if self._ready_event:
             self._ready_event.set()
+            return True
+        return False
+
+    def notify_MAINPID(self, value):
+        try:
+            pid = int(value)
+        except ValueError:
+            self.logdebug("{0} got MAINPID={1}, but not a valid pid#", self.name, value)
+            return
+        self.pid = pid
+
+    def notify_BUSERROR(self, value):
+        code = ProcStatus(value)
+        if not self._setready():
+            self.process_exit(code)
+        else:
+            self.returncode = code
+
+    def notify_ERRNO(self, value):
+        try:
+            intval = int(value)
+        except ValueError:
+            self.logdebug("{0} got ERROR={1}, not a valid error code", self.name, value)
+            return
+        code = ProcStatus(intval << 8)
+        if not self._setready():
+            self.process_exit(code)
+        else:
+            self.returncode = code
+
+    def notify_READY(self, value):
+        if value == "1":
+            self._setready()
 
     def notify_STATUS(self, value):
         self.note = value

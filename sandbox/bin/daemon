@@ -1,33 +1,21 @@
 #!/usr/bin/python3
 
 """
-Tool to create processes for various purposes.
+Forks a process in a daemon-like fashion for testing.
 
 Usage:
-    proctool [--dump] [--hang] [--wait=seconds] [--ignore-signals] [--exit=code] [--notify=CMD] [MESSAGE]
+    fork [--wait=seconds] [--ignore-signals] [--exit=code] COMMAND [ARGS ...]
 """
 
 import signal
 import sys
+import subprocess
 from time import sleep
 from docopt import docopt
 
 import os
 
-options = docopt(__doc__)
-
-if options['MESSAGE']:
-   sys.stdout.write('proctool says: ' + options['MESSAGE'] + "\n")
-   sys.stdout.flush()
-
-if options['--notify']:
-   cmd = options['--notify']
-   os.system('systemd-notify ' + cmd)
-
-if options['--dump']:
-    print("UID:{0} GID:{1} PID:{2} Environment:".format(os.getuid(), os.getgid(), os.getpid()))
-    for k,v in os.environ.items():
-        print(" {0}={1}".format(k,v))
+options = docopt(__doc__, options_first=True)
 
 if options['--ignore-signals']:
     signal.signal(signal.SIGTERM, lambda signum, frame: print("ignoring SIGTERM"))
@@ -39,11 +27,14 @@ else:
     signal.signal(signal.SIGINT, lambda signum, frame: not print("received SIGINT"))
 
 if options['--wait']:
+    print("Waiting {0} ...".format(options['--wait']))
     sleep(float(options['--wait']))
 
-if options['--hang']:
-    while True:
-        sleep(100)
+args = [options['COMMAND']] + options['ARGS']
+
+print("Launching {0} ...".format(args))
+
+subprocess.Popen(args, start_new_session=True)
 
 if options['--exit']:
     exit(int(options['--exit']))

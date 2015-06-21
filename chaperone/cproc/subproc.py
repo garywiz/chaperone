@@ -2,6 +2,7 @@ import os
 import asyncio
 import shlex
 import importlib
+import signal
 from functools import partial
 
 from time import time, sleep
@@ -10,6 +11,7 @@ import chaperone.cutil.syslog_info as syslog_info
 
 from chaperone.cutil.env import Environment
 from chaperone.cutil.logging import warn, info, debug, error
+from chaperone.cutil.proc import ProcStatus
 from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name, executable_path
 from chaperone.cutil.errors import ChNotFoundError
 from chaperone.cutil.format import TableFormatter
@@ -34,7 +36,6 @@ def _process_logger(stream, kind, service):
 
 class SubProcess(object):
 
-    pid = None
     service = None              # service object
     family = None
     process_timeout = 30.0      # process_timeout will be set to this unless it is overridden by 
@@ -43,6 +44,12 @@ class SubProcess(object):
                                 # logerror, logdebug, logwarn, etc...
 
     _proc = None
+    _pid = None                 # the pid, often associated with _proc, but not necessarily in the
+                                # case of notify processes
+    _returncode = None          # an alternate returncode, set with returncode property
+    _exit_event = None          # an event to be fired if an exit occurs, in the case of an
+                                # attached PID
+
     _pwrec = None               # the pwrec looked up for execution user/group
     _cond_starting = None       # a condition which, if present, indicates that this service is starting
     _started = False            # true if a start has occurred, either successful or not
@@ -153,6 +160,30 @@ class SubProcess(object):
             states.append('running')
         return ' '.join(states)
 
+    # pid and returncode management
+
+    @property
+    def pid(self):
+        return self._pid
+
+    @pid.setter
+    def pid(self, newpid):
+        if self._pid is not None and newpid is not None and self._pid is not newpid:
+            self.logdebug("{0} changing PID to {1} (from {2})", self.name, newpid, self._pid)
+            self._attach_pid(newpid)
+        self._pid = newpid
+
+    @property
+    def returncode(self):
+        if self._returncode is not None:
+            return self._returncode
+        return self._proc and self._proc.returncode
+
+    @returncode.setter
+    def returncode(self, val):
+        self._returncode = ProcStatus(val)
+        self.logdebug("{0} got explicit return code '{1}'", self.name, self._returncode)
+
     # Logging methods which may do special things for this service
 
     def loginfo(self, *args, **kwargs):
@@ -211,6 +242,13 @@ class SubProcess(object):
     @enabled.setter
     def enabled(self, val):
         self.service.enabled = bool(val)
+
+    @property
+    def kill_signal(self):
+        ksig = self.service.kill_signal
+        if ksig is not None:
+            return ksig
+        return signal.SIGTERM
 
     @property
     def running(self):
@@ -394,6 +432,31 @@ class SubProcess(object):
         yield from self.wait()
         self._kill_system()
 
+    def _attach_pid(self, newpid):
+        """
+        Attach this process to a new PID, creating a condition which will be used by 
+        the child watcher to determine when the PID has exited.
+        """
+        with asyncio.get_child_watcher() as watcher:
+            watcher.add_child_handler(newpid, self._child_watcher_callback)
+
+        self._exit_event = asyncio.Event()
+        
+    def _child_watcher_callback(self, pid, returncode):
+        asyncio.get_event_loop().call_soon_threadsafe(self.process_exit, returncode)
+
+    def process_exit(self, code):
+        self.returncode = code
+
+        if self._exit_event:
+            self._exit_event.set()
+            self._exit_event = None
+
+        if code.normal_exit or self.kill_signal == code.signal:
+            return
+
+        asyncio.async(self._abnormal_exit(code))
+    
     @asyncio.coroutine
     def _abnormal_exit(self, code):
         service = self.service
@@ -446,7 +509,9 @@ class SubProcess(object):
     def reset(self, restart = False, dependents = False, enable = False):
         self.logdebug("{0} received reset", self.name)
 
-        if self._proc:
+        if self._exit_event:
+            self.terminate()
+        elif self._proc:
             if self._proc.returncode is None:
                 self.terminate()
                 yield from self.wait()
@@ -478,20 +543,32 @@ class SubProcess(object):
     @asyncio.coroutine
     def final_stop(self):
         "Called when the whole system is killed, but before drastic measures are taken."
+        if self._exit_event:
+            self._exit_event = None
         for p in list(self._pending):
             if not p.cancelled():
                 p.cancel()
 
     def terminate(self):
         proc = self._proc
+        otherpid = self.pid
+
         if proc:
+            if otherpid == proc.pid:
+                otherpid = None
             if proc.returncode is None:
-                if self.kill_signal is not None:
+                if self.service.kill_signal is not None: # explicitly check service
                     self.logdebug("using {0} to terminate {1}", get_signal_name(self.kill_signal), self.name)
                     proc.send_signal(self.kill_signal)
                 else:
                     proc.terminate()
 
+        if otherpid:
+            self.logdebug("using {0} to terminate {1}", get_signal_name(self.kill_signal), self.name)
+            os.kill(otherpid, self.kill_signal)
+
+        self._pid = None
+        
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
         """
@@ -516,9 +593,12 @@ class SubProcess(object):
     def wait(self):
         proc = self._proc
 
-        if not proc:
-            raise Exception("Process not running, can't wait")
-        yield from proc.wait()
+        if self._exit_event:
+            yield from self._exit_event.wait()
+        elif proc:
+            yield from proc.wait()
+        else:
+            raise Exception("Process not running (or attached), can't wait")
 
         if proc.returncode is not None and proc.returncode.normal_exit:
             self.logdebug("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, self.name))

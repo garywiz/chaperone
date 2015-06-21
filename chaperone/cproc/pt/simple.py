@@ -21,7 +21,6 @@ class SimpleProcess(SubProcess):
                 result = None
             if result is not None and result > 0:
                 raise Exception("{0} failed on start-up during {1}sec grace period".format(self.name, self.startup_pause))
-                yield from self._abnormal_exit(result)
 
         # We have a successful start.  Monitor this service.
 

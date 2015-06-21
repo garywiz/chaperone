@@ -9,3 +9,6 @@ class ChNotFoundError(ChError):
 
 class ChSystemError(ChError):
     pass
+
+class ChProcessError(ChError):
+    pass

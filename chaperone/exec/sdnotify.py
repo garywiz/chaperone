@@ -5,10 +5,10 @@ Usage:
     sdnotify [options] [VARIABLE=VALUE ...]
 
 Options:
-    --ready          Send the ready signal (READY=1)
     --pid PID        Inform chaperone/systemd of MAINPID
                      (must say --pid=self if you want the programs PID)
     --status=STATUS  Inform chaperone/systemd of status information
+    --ready          Send the ready signal (READY=1)
     --booted         Indicate whether we were booted with systemd.
                      (Note: Always indicates 'no', exit status 1.)
     --ignore         Silently ignore inability to send notifications.
@@ -45,8 +45,8 @@ def do_notify(msg):
         try:
             sock.connect(_mkabstract(notify_socket))
             sock.sendall(msg.encode())
-        except EnvironmentError:
-            LOG.debug("Systemd notification failed", exc_info=True)
+        except EnvironmentError as ex:
+            raise Exception("Systemd notification failed: " + str(ex))
         finally:
             sock.close()
 
@@ -54,9 +54,6 @@ def main_entry():
     options = docopt(__doc__, version=VERSION_MESSAGE)
 
     mlist = list()
-
-    if options['--ready']:
-        mlist.append("READY=1")
 
     if options['--pid']:
         pid = options['--pid']
@@ -72,6 +69,9 @@ def main_entry():
     
     if options['--status']:
         mlist.append("STATUS=" + options['--status'])
+
+    if options['--ready']:
+        mlist.append("READY=1")
 
     for vv in options['VARIABLE=VALUE']:
         vvs = vv.split('=')
