@@ -254,38 +254,42 @@ in standard <code class="docutils literal"><span class="pre">M</span> <span clas
 <td>If &#8216;true&#8217;, then if the command file is not present on the system,
 the service will act as if it were not enabled.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-pidfile"><span>pidfile</span></a></td>
+<td>The full path to the file which will contain the process &#8216;pid&#8217;
+upon startup. (&#8216;forking&#8217; type only) <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a></td>
 <td>Specifies the amount of time Chaperone will wait for a service to start.
 The default varies for each type of service.
 See :ref:<code class="docutils literal"><span class="pre">service</span> <span class="pre">types</span> <span class="pre">&lt;config.sect.type&gt;</span></code> for more
 information.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-restart"><span>restart</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-restart"><span>restart</span></a></td>
 <td>If &#8216;true&#8217;, then chaperone will restart this service if it fails (but
 not if it terminates normally).  Default is &#8216;false&#8217;.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-restart-delay"><span>restart_delay</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-restart-delay"><span>restart_delay</span></a></td>
 <td>The number of seconds to pause between restarts.  Default is 3 seconds.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-restart-limit"><span>restart_limit</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-restart-limit"><span>restart_limit</span></a></td>
 <td>The maximum number of restart attempts.  Default is 5.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-service-groups"><span>service_groups</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-service-groups"><span>service_groups</span></a></td>
 <td>A comma-separatedlist of service groups this service belongs to.  All
 uppercase services are reserved by the system.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-setpgrp"><span>setpgrp</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-setpgrp"><span>setpgrp</span></a></td>
 <td>If &#8216;true&#8217;, then the service will be isolated in its own process
 group upon startup.  This is the default.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-startup-pause"><span>startup_pause</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-startup-pause"><span>startup_pause</span></a></td>
 <td>The amount of time Chaperone will wait to see if a service fails
 immediately upon startup.  Defaults is 0.5 seconds.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-uid"><span>uid</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-uid"><span>uid</span></a></td>
 <td>The uid (name or number) of the user for this service. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-gid"><span>gid</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-gid"><span>gid</span></a></td>
 <td>The gid (name or number) of the group for this service. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
 </tbody>
@@ -342,8 +346,16 @@ expires.  <em>Note</em>: The default process timeout for
 forking services is 300 seconds.</td>
 <td>Service terminates
 abnormally during the
-process timeout.</td>
-<td>Never.<a class="footnote-reference" href="#f2" id="id2">[2]</a></td>
+process timeout, or
+the pidfile cannot be
+found (if specified)
+during the timeout
+period.</td>
+<td>Service terminates
+abnormally later despite
+retries, only if pidfile
+specifies.  Otherwise,
+never.<a class="footnote-reference" href="#f2" id="id2">[2]</a></td>
 </tr>
 <tr class="row-even"><td>oneshot</td>
 <td>A oneshot service is designed to execute scripts which
@@ -591,6 +603,24 @@ but permissions are incorrect, it is still considered a failure.</p>
 system start-up.</p>
 </dd></dl>
 
+<span class="target" id="service-pidfile"></span><dl class="describe">
+<dt>
+<code class="descname">pidfile: file-path</code></dt>
+<dd><p>This setting specifies the &#8220;PID file&#8221; which the service will create upon startup to indicate it&#8217;s controlling
+process ID.   This is valid only for forking services where it is assumed the service will create a detached
+process as it&#8217;s controlling process.</p>
+<p>When the <code class="docutils literal"><span class="pre">pidfile</span></code> directive exists:</p>
+<ol class="arabic simple">
+<li>Chaperone start the service command normally.</li>
+<li>If the executable starts and exits without error, Chaperone will watch for the appearance
+of the file specified in the <code class="docutils literal"><span class="pre">pidfile</span></code> directive.</li>
+<li>If the PID file does not appear within the timeframe given by the <a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a>,
+then it is considered a failure.</li>
+</ol>
+<p>If the <code class="docutils literal"><span class="pre">pidfile</span></code> is seen, and contains a valid integer process ID <em>which denotes a running process</em>, then
+Chaperone will monitor the status of that process for failures to determine the disposition of the service.</p>
+</dd></dl>
+
 <span class="target" id="service-process-timeout"></span><dl class="describe">
 <dt>
 <code class="descname">process_timeout: seconds</code></dt>
@@ -785,9 +815,7 @@ familiar with <code class="docutils literal"><span class="pre">systemd</span></c
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>Chaperone does not attempt &#8220;PID guessing&#8221; as <code class="docutils literal"><span class="pre">systemd</span></code> and some other process managers attempt to do.  The assumption
 is that &#8220;notify&#8221; will be the preferred means to determine if a service has started successfully, and to know what
-it&#8217;s PID is in case of a crash or internal notification.  However, it&#8217;s likely that a future version of chaperone
-will introduce a &#8220;pid_file&#8221; directive to allow forking services a way to provide information about their
-controlling PID.</td></tr>
+it&#8217;s PID is in case of a crash or internal notification.</td></tr>
 </tbody>
 </table>
 <table class="docutils footnote" frame="void" id="f3" rules="none">
