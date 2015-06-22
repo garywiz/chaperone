@@ -21,6 +21,9 @@ the ``chaperone-lamp`` Docker image by
 
 Any bugs should be reported as issues at https://github.com/garywiz/chaperone/issues.
 
+Current status of Chaperone and related repositories is located on the
+:ref:`Project Status <status>` page.
+
 Contents
 --------
 

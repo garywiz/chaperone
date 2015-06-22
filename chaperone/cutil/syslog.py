@@ -171,6 +171,8 @@ class _syslog_spec_matcher:
 class SyslogServerProtocol(ServerProtocol):
 
     def _parse_to_output(self, msg):
+        # For a description of what a valid syslog line can look like, see:
+        # http://www.rsyslog.com/doc/syslog_parsing.html
         match = _RE_SYSLOG.match(msg)
         if not match:
             pri = SysLogHandler.LOG_SYSLOG * 8 + SysLogHandler.LOG_ERR

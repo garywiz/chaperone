@@ -1,11 +1,8 @@
 Chaperone: A lean init-style startup manager for Docker-like containers
 -----------------------------------------------------------------------
 
-*IMPORTANT*:  This project has just begun and is is pre-Beta phase.  Check the status section
-below for release information and progress.
-
 This is a lean, full-featured process which runs at the root of a docker
-container tree.  It provides:
+container tree.
 
 * Monitoring for all processes in the container, automatically shutting down the
   container when the last process exits.
@@ -32,6 +29,14 @@ container tree.  It provides:
   for quick start-up for lean containers.
 * More...
 
+If you want to try it out quickly, the best place to start is on the
+[chaperone-docker](https://github.com/garywiz/chaperone-docker) repository
+page.  There is a quick section called "Try it out" that uses images
+available now on Docker Hub.
+
+For full details of features
+and usage: [see the documentation](http://garywiz.github.io/chaperone/index.html).
+
 There is some debate about whether docker containers should be transformed into
 complete systems (so-called "fat containers").  However, it is clear that many
 containers contain one or more services to provide a single "composite feature",
@@ -46,26 +51,11 @@ system services (such as runit).  Chaperone is designed to be self-contained.
 Status
 ------
 
-As of Saturday, 16-Jun-2015...
+This project is stable and ready for beta users.  We don't recommend using
+in production yet, however if you are currently starting up your container
+services with Bash scripts, Chaperone is probably a much better choice. 
 
-THIS PROJECT IS IN PRE-RELEASE PHASE, and has been uploaded here and to PyPi to
-prepare for a more formal release.  It is ready for Beta use, and documentation
-is now released and being completed.  The reference section is finished.
-
-Some status notes:
-
-* We are using this ourselves now in our pre-production containers, and very
-  happy with the simplicity of container setup and so far chaperone is quite
-  stable.
-* We're working to release two images, ``chaperone-baseimage`` as a instructive
-  example and starting point for chaperone containers as well as ``chaperone-lamp``
-  for a full LAMP stack designed to simplify development and production with
-  all needed features. Both will appear soon on github in source form and on
-  Docker Hub as usable images.
-* Further documentation is on the way.
-
-Watch this space for announcements as final touches and documentation
-are added in the next few weeks.
+Full status is [now part of the documentation](http://garywiz.github.io/chaperone/status.html).
 
 Downloading and Installing
 --------------------------
