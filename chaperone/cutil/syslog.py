@@ -8,6 +8,7 @@ from functools import partial
 
 from chaperone.cutil.logging import info, warn, debug
 from chaperone.cutil.misc import lazydict, maybe_remove
+from chaperone.cutil.servers import ServerProtocol, Server
 from chaperone.cutil.syslog_handlers import LogOutput
 from chaperone.cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
 
@@ -167,11 +168,7 @@ class _syslog_spec_matcher:
         return result
 
         
-class SyslogServerProtocol(asyncio.Protocol):
-
-    def __init__(self, parent):
-        self.parent = parent
-        super().__init__()
+class SyslogServerProtocol(ServerProtocol):
 
     def _parse_to_output(self, msg):
         match = _RE_SYSLOG.match(msg)
@@ -184,6 +181,9 @@ class SyslogServerProtocol(asyncio.Protocol):
             prog = os.path.basename(match.group('prog'))
             msg = match.group('date') + ' ' + prog + ' ' + match.group('rest')
         self.parent.writeLog(msg, prog, priority = pri & 7, facility = pri // 8)
+
+    def datagram_received(self, data, addr):
+        self.data_received(data)
 
     def data_received(self, data):
         try:
@@ -200,37 +200,39 @@ class SyslogServerProtocol(asyncio.Protocol):
                 self._parse_to_output(m)
         sys.stdout.flush()
 
-class SyslogServer:
+class SyslogServer(Server):
 
     _loglist = list()
     _server = None
     _log_socket = None
 
-    def __init__(self, logsock = "/dev/log"):
+    def __init__(self, logsock = "/dev/log", datagram = True):
+        self._datagram = datagram
         self._log_socket = logsock
-        
-    def run1(self):  # alternative additional datagram endpoint (experimental, probably not needed)
-        loop = asyncio.get_event_loop()
-        listen = loop.create_datagram_endpoint(SyslogServerProtocol, local_addr = ('127.0.0.1', SYSLOG_PORT))
-        return asyncio.async(listen)
 
-    def run(self):
-        loop = asyncio.get_event_loop()
-        maybe_remove(self._log_socket)
-        listen = loop.create_unix_server(partial(SyslogServerProtocol, self), path=self._log_socket)
-        future = asyncio.async(listen)
-        future.add_done_callback(self._run_done)
-        return future
+        try:
+            os.remove(logsock)
+        except:
+            pass
 
-    def _run_done(self, f):
-        # TODO: HANDLE ERRORS HERE IF FUTURE EXCEPTION
-        self._server = f.result()
+    def _create_server(self):
+        if not self._datagram:
+            return self.loop.create_unix_server(
+                SyslogServerProtocol.buildProtocl(parent = self), path=self._log_socket)
+
+        return self.loop.create_datagram_endpoint(
+            SyslogServerProtocol.buildProtocol(parent = self), family=socket.AF_UNIX)
+
+    def server_running(self):
+        # Bind the socket if it's a datagram
+        if self._datagram:
+            transport = self.server[0]
+            transport._sock.bind(self._log_socket)
         os.chmod(self._log_socket, 0o777)
 
     def close(self):
-        if self._server:
-            self._server.close()
-            maybe_remove(self._log_socket)
+        super().close()
+        maybe_remove(self._log_socket)
 
     def configure(self, config, minimum_priority = None):
         loglist = self._loglist = list()

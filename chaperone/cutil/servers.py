@@ -25,7 +25,7 @@ class Server:
     server = None
 
     def run(self):
-        loop = asyncio.get_event_loop()
+        self.loop = asyncio.get_event_loop()
         listen = self._create_server()
         future = asyncio.async(listen)
         future.add_done_callback(self._run_done)
@@ -34,6 +34,10 @@ class Server:
     def _run_done(self, f):
         # Handle errors here!
         self.server = f.result()
+        self.server_running()
+
+    def server_running(self):
+        pass
 
     def close(self):
         s = self.server
