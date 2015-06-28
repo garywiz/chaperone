@@ -77,14 +77,20 @@ class lazydict(dict):
         return copy.deepcopy(self)
 
 
-def maybe_remove(fn):
+def maybe_remove(fn, strict = False):
     """
-    Tries to remove a file but ignores a FileNotFoundError.
+    Tries to remove a file but ignores a FileNotFoundError or Permission error.  If an exception
+    would have been raised, returns the exception, otherwise None.
+
+    If "strict" then the file must either be missing, or successfully removed.  Other errors
+    will still raise exceptions.
     """
     try:
         os.remove(fn)
-    except FileNotFoundError:
-        pass
+    except (FileNotFoundError if strict else (FileNotFoundError, PermissionError)) as ex:
+        return ex
+
+    return None
 
 
         
@@ -287,6 +293,17 @@ def open_foruser(filename, mode = 'r', uid = None, gid = None, exists_ok = True)
 
 SIGDICT = dict((v,k) for k,v in sorted(signal.__dict__.items())
                if k.startswith('SIG') and not k.startswith('SIG_'))
+
+def remove_for_recreate(filename):
+    """
+    Indicates the intention to recreate the file at the given path.  This is function can be used
+    in advance to assure that
+       a) any existing file is gone, and
+       b) full permissions and directories exist for creation of a new file in it's place
+    """
+    ex = maybe_remove(filename, strict = True)
+    open_foruser(filename, mode='w').close()
+    os.remove(filename)
 
 def get_signal_name(signum):
     return SIGDICT.get(signum, "SIG%d" % signum)

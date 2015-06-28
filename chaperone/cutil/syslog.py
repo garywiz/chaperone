@@ -7,7 +7,7 @@ import sys
 from functools import partial
 
 from chaperone.cutil.logging import info, warn, debug
-from chaperone.cutil.misc import lazydict, maybe_remove
+from chaperone.cutil.misc import lazydict, maybe_remove, remove_for_recreate
 from chaperone.cutil.servers import ServerProtocol, Server
 from chaperone.cutil.syslog_handlers import LogOutput
 from chaperone.cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
@@ -221,6 +221,9 @@ class SyslogServer(Server):
         if not self._datagram:
             return self.loop.create_unix_server(
                 SyslogServerProtocol.buildProtocl(parent = self), path=self._log_socket)
+
+        # Assure we will be able to bind later
+        remove_for_recreate(self._log_socket)
 
         return self.loop.create_datagram_endpoint(
             SyslogServerProtocol.buildProtocol(parent = self), family=socket.AF_UNIX)

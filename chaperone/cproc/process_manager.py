@@ -230,7 +230,7 @@ class TopLevelProcess(objectplus):
             futures.append(cmdf)
         except PermissionError as ex:
             self._command = None
-            warn("command  service cannot be started: {0}", ex)
+            warn("command service cannot be started: {0}", ex)
 
         if futures:
             f = asyncio.gather(*futures)

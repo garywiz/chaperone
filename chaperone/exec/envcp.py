@@ -99,6 +99,7 @@ def main_entry():
             newf = open(destfile, 'w')
         except Exception as ex:
             print("error: cannot open output file {0}: {1}".format(destfile, ex))
+            exit(1)
 
         newf.write(env.expand(oldf.read()))
         newf.close()

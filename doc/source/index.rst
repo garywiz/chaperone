@@ -31,7 +31,7 @@ Contents
    :maxdepth: 2
 
    guide/chap-intro.rst
-   guide/chap-docker.rst
+   guide/chap-using.rst
    ref/index.rst
 
 Downloading and Installing
