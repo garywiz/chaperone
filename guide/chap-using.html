@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Introduction to Chaperone &mdash; chaperone 0.2.0 documentation</title>
+  <title>Using Chaperone &mdash; chaperone 0.2.0 documentation</title>
   
 
   
@@ -33,8 +33,8 @@
 
   
     <link rel="top" title="chaperone 0.2.0 documentation" href="../index.html"/>
-        <link rel="next" title="Using Chaperone" href="chap-using.html"/>
-        <link rel="prev" title="Chaperone: A lightweight, all-in-one process manager for lean containers" href="../index.html"/> 
+        <link rel="next" title="Using Chaperone with Docker" href="chap-docker.html"/>
+        <link rel="prev" title="Introduction to Chaperone" href="chap-intro.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -74,11 +74,11 @@
           
           
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Introduction to Chaperone</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chap-intro.html#overview">Overview</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="chap-using.html">Using Chaperone</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Using Chaperone</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="chap-other.html">Other Uses for Chaperone</a></li>
 </ul>
@@ -148,7 +148,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../index.html">Docs</a> &raquo;</li>
       
-    <li>Introduction to Chaperone</li>
+    <li>Using Chaperone</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -159,41 +159,20 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="introduction-to-chaperone">
-<span id="intro"></span><h1>Introduction to Chaperone<a class="headerlink" href="#introduction-to-chaperone" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>Container technologies like Docker and Rocket have changed dramatically the way
-we bundle and distribute applications. While many containers are built with
-a single contained process in mind, other applications require a small suite
-of processes bundled into the &#8220;black box&#8221; that containers provide.  When this
-happens, the need arises for a container control system, but the available
-technologies such as <code class="docutils literal"><span class="pre">systemd</span></code> or <code class="docutils literal"><span class="pre">upstart</span></code> are both too modular and
-too heavy, resulting in &#8220;fat containers&#8221; which introduce the very kinds of
-overhead container technologies are designed to eliminate.</p>
-<p>Chaperone is designed to solve this problem by providing a single, self-contained
-&#8220;caretaker&#8221; process which provides the following capabilities within the container:</p>
-<ul class="simple">
-<li>A robust process manager with service types for forking, oneshot, simple, and
-notify service types modelled after systemd.</li>
-<li>Dependency-based parallel start-up of services.</li>
-<li>A &#8220;cron&#8221; service type to schedule periodic tasks.</li>
-<li>A built-in highly configurable syslog service which can direct syslog
-messages to multiple output files and duplicate selected streams or severities
-to the container stdout as well.</li>
-<li>Control capabilities so that services can be stopped, started, or restarted easily
-at the command line or within application programs.</li>
-<li>Emulation of systemd&#8217;s <code class="docutils literal"><span class="pre">sd_notify</span></code> capability, allocating notify sockets
-for each service so that cgroups and other privileges are not needed
-within the container.</li>
-<li>Features to support the creation of &#8220;mini-systems&#8221; within a single directory
-so that system services can run in userspace, or be mounted on host shares
-to keep development processes and production processes as close to identical
-as possible (see <code class="docutils literal"><span class="pre">chaperone-lamp</span></code> for an example of how this can be realized).</li>
+  <div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>This section is being worked on and is not yet complete.  The <a class="reference internal" href="../ref/index.html#reference"><span>Chaperone Reference</span></a> is currently complete and ready to use.</p>
+<p class="last">For status information about Chaperone and documentation, see <a class="reference internal" href="../status.html#status"><span>Chaperone Project Status</span></a>.</p>
+</div>
+<div class="section" id="using-chaperone">
+<span id="chap-using"></span><h1>Using Chaperone<a class="headerlink" href="#using-chaperone" title="Permalink to this headline">¶</a></h1>
+<p>Chaperone is a simple, but full-featured process manager.  It is designed to be as flexible
+as possible.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chap-other.html">Other Uses for Chaperone</a></li>
 </ul>
-<p>In addition, many incidental features are present, such as process monitoring and
-zombie clean-up, clean shutdown and container restarts, and interactive console
-process detection so that applications know when they are being run interactively.</p>
 </div>
 </div>
 
@@ -203,10 +182,10 @@ process detection so that applications know when they are being run interactivel
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="chap-using.html" class="btn btn-neutral float-right" title="Using Chaperone" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="chap-docker.html" class="btn btn-neutral float-right" title="Using Chaperone with Docker" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../index.html" class="btn btn-neutral" title="Chaperone: A lightweight, all-in-one process manager for lean containers" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="chap-intro.html" class="btn btn-neutral" title="Introduction to Chaperone" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
