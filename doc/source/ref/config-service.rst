@@ -41,7 +41,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
    :ref:`command <service.command>`                  Specifies the command to execute.  The command is not processed by a shell,
                                                      but environment variable expansion is supported. |ENV|
    :ref:`enabled <service.enabled>`                  If 'false', the service will not be started, nor will it be required by
-                                                     any dependents.  Default is 'true'.
+                                                     any dependents.  Default is 'true'. |ENV|
    :ref:`stderr <service.stderr>`                    Either 'log' to write stderr to the syslog, or 'inherit' to write stderr
                                                      to the container's stderr file handle.   Default is 'log'. |ENV|
    :ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
@@ -113,9 +113,9 @@ an isolated situation affecting only the service itself.
    ================  ==========================================================  ========================= =========================
    simple            This is the default type.  Chaperone considers a service    Service terminates        Service terminates
                      "started" as soon as the startup grace period               abnormally during grace   abnormally later despite
-                     (defined by :ref:`startup_pause <service.startup_pause>`)   period.                   retries.
-                     elapses.
-                     If the service terminates normally at any time, the
+                     (defined by :ref:`startup_pause <service.startup_pause>`)   period or pidfile not     retries, or pidfile
+                     elapses.							 found (if specified) 	   not found (if specified)
+                     If the service terminates normally at any time, the	 before process timeout.   by process_timeout.
                      service is considered "started" until reset.
    forking           A forking service is expected to set up all                 Service terminates        Service terminates
                      communications channels and assure that the service         abnormally during the     abnormally later despite
@@ -196,6 +196,15 @@ Service Config Reference
 
    Services can be enabled and disabled dynamically while Chaperone is running using the
    :ref:`telchap command <telchap>`.
+
+   Since you can use environment variable expansions, it can be useful to make service startup conditional
+   based upon some environment variable setting, such as::
+
+     mysql.service: {
+       type: simple,
+       enabled: "$(ENABLE_MYSQL:+true)",
+       ...
+     }
 
 .. _service.env_inherit:
 
@@ -363,8 +372,8 @@ Patterns are standard filename 'glob' patterns.
 .. describe:: pidfile: file-path
 
    This setting specifies the "PID file" which the service will create upon startup to indicate it's controlling
-   process ID.   This is valid only for forking services where it is assumed the service will create a detached
-   process as it's controlling process.
+   process ID.   This is valid only for 'simple', and 'forking' services.  The appearance of the pidfile is an
+   indication that the service has been activated.
 
    When the ``pidfile`` directive exists:
 

@@ -43,7 +43,7 @@ marked with |ENV| support :ref:`environment variable expansion <env.expansion>`.
    :ref:`file <logging.file>`             Specifies an optional file for output. |ENV|
    :ref:`stderr <logging.stderr>`         Directs output to ``stderr`` (can be used with ``file``).
    :ref:`stdout <logging.stdout>`         Directs output to ``stdout`` (can be used with ``file``).
-   :ref:`enabled <logging.enabled>`       Can be set to ``false`` to disable this logging entry.
+   :ref:`enabled <logging.enabled>`       Can be set to ``false`` to disable this logging entry. |ENV|
    :ref:`overwrite <logging.overwrite>`   If ``file`` is provided, then setting this to ``true`` will overwrite
                                           the file upon opening.  By default, log files operate in append mode.
    :ref:`extended <logging.extended>`     Prefixes log entries with their facility and priority (useful primarily

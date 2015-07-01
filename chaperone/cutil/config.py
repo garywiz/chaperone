@@ -26,7 +26,7 @@ _config_schema = V.Any(
         V.Required('command'): str,
         'directory': str,
         'debug': bool,
-        'enabled': bool,
+        'enabled': V.Any(bool, str),
         'env_inherit': [ str ],
         'env_set': { str: str },
         'env_unset': [ str ],
@@ -62,7 +62,7 @@ _config_schema = V.Any(
         'uid': V.Any(str, int),
       },
       V.Match('^.+\.logging'): {
-        'enabled': bool,
+        'enabled': V.Any(bool, str),
         'extended': bool,
         'file': str,
         'selector': str,
@@ -88,6 +88,11 @@ def print_services(label, svlist):
         if p:
             print('  prereq:', p)
 
+# Note that we extend YAML by allowing an empty string to mean "false".  This makes some macro
+# expansions work better, such as ... enabled:"$(MYSQL_ENABLED:+true)"
+
+_RE_YAML_BOOL = re.compile(r'^\s*(?:(?P<true>y|true|yes|on)|(n|false|no|off|))\s*$', re.IGNORECASE)
+
 class _BaseConfig(object):
 
     name = None
@@ -98,6 +103,7 @@ class _BaseConfig(object):
 
     _repr_pat = None
     _expand_these = {}
+    _assure_bool = {}
     _settings_defaults = {}
     
     @classmethod
@@ -109,6 +115,17 @@ class _BaseConfig(object):
         return cls(kwargs, 
                    env=config.get_environment(),
                    settings=config.get_settings())
+
+    def _do_assure_bool(self, attr):
+        "Assures that the specified attribute is a legal boolean."
+        val = getattr(self, attr)
+        if val is None or isinstance(val, bool):
+            return
+        # First, try both 'true' and 'false' according to YAML conventions
+        match = _RE_YAML_BOOL.match(str(val))
+        if not match:
+            raise ChParameterError("invalid boolean parameter for '{0}': '{1}'".format(attr, val))
+        setattr(self, attr, bool(match.group('true')))
 
     def __init__(self, initdict, name = "MAIN", env = None, settings = None):
         self.name = name
@@ -128,7 +145,7 @@ class _BaseConfig(object):
 
         splitname = self.name.rsplit('.', 1)
         if len(splitname) == 2 and splitname[0] == splitname[0].upper():
-            raise ChParameterError("All uppercase names such as '{0}' are reserved for the system.".format(self.name))
+            raise ChParameterError("all-uppercase names such as '{0}' are reserved for the system.".format(self.name))
 
         # UID and GID are expanded according to the incoming environment,
         # since the new environment depends upon these.
@@ -148,6 +165,9 @@ class _BaseConfig(object):
 
         if self._expand_these:
             env.expand_attributes(self, *self._expand_these)
+
+        for attr in self._assure_bool:
+            self._do_assure_bool(attr)
 
         self.post_init()
 
@@ -203,7 +223,8 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_groups={0.service_groups}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args', 'pidfile'}
+    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args', 'pidfile', 'enabled'}
+    _assure_bool = {'enabled'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'startup_pause', 'ignore_failures'}
 
     system_group_names = ('IDLE', 'INIT')
@@ -258,7 +279,8 @@ class LogConfig(_BaseConfig):
     uid = None                  # used to control permissions on logfile creation
     gid = None
 
-    _expand_these = {'selector', 'file'}
+    _expand_these = {'selector', 'file', 'enabled'}
+    _assure_bool = {'enabled'}
 
     @property
     def shortname(self):
@@ -394,7 +416,7 @@ class ServiceDict(lazydict):
         def add_nodes(items):
             for item in items:
                 if hasattr(item, 'active'):
-                    raise Exception("Circular dependency in service declaration")
+                    raise Exception("circular dependency in service declaration")
                 item.active = True
                 add_nodes(item.refs)
                 del item.active

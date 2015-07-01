@@ -22,6 +22,9 @@ class SimpleProcess(SubProcess):
             if result is not None and result > 0:
                 raise Exception("{0} failed on start-up during {1}sec grace period".format(self.name, self.startup_pause))
 
+        # If there is a pidfile, sit here and wait for a bit
+        yield from self.wait_for_pidfile()
+
         # We have a successful start.  Monitor this service.
 
         self._fut_monitor = asyncio.async(self._monitor_service())
