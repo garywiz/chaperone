@@ -68,7 +68,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
    :ref:`optional <service.optional>`                If 'true', then if the command file is not present on the system,
                                                      the service will act as if it were not enabled.
    :ref:`pidfile <service.pidfile>`                  The full path to the file which will contain the process 'pid'
-                                                     upon startup. ('forking' type only) |ENV|
+                                                     upon startup. ('forking' and 'simple' types only) |ENV|
    :ref:`process_timeout <service.process_timeout>`  Specifies the amount of time Chaperone will wait for a service to start.
                                                      The default varies for each type of service.
                                                      See :ref:``service types <config.sect.type>`` for more
@@ -378,13 +378,16 @@ Patterns are standard filename 'glob' patterns.
    When the ``pidfile`` directive exists:
 
    1. Chaperone start the service command normally.
-   2. If the executable starts and exits without error, Chaperone will watch for the appearance
+   2. If the executable runs without error, Chaperone will watch for the appearance
       of the file specified in the ``pidfile`` directive.
    3. If the PID file does not appear within the timeframe given by the :ref:`process_timeout <service.process_timeout>`,
       then it is considered a failure.
 
    If the ``pidfile`` is seen, and contains a valid integer process ID *which denotes a running process*, then
    Chaperone will monitor the status of that process for failures to determine the disposition of the service.
+
+   For 'simple' service types, it is possible (and likely) that the PID value will be the same as the PID of the
+   originally running process, since 'simple' types are not expected to exit for the duration of their activity.
 
 .. _service.process_timeout:
 
