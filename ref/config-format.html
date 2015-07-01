@@ -171,7 +171,7 @@ You specify the configuration with the <a class="reference internal" href="comma
 If none is specified, the default <cite>/etc/chaperone.d</cite> is used.  If a directory is chosen, then only the
 top-level of the directory will be searched, and only files ending in <code class="docutils literal"><span class="pre">.conf</span></code> or <code class="docutils literal"><span class="pre">.yaml</span></code> will be
 recognised and read in alphabetic order.</p>
-<p>Configuration files are written using <a class="reference external" href="http://www.yaml.org/spec/1.2/spec.html">YAML Version 2</a>.<a class="footnote-reference" href="#f1" id="id1">[1]</a>  For example, you can
+<p>Configuration files are written using <a class="reference external" href="http://www.yaml.org/spec/1.2/spec.html">YAML Version 2</a>.  For example, you can
 define two chaperone services like this:</p>
 <div class="highlight-python"><div class="highlight"><pre>mysql.service:
   command: &quot;/etc/init.d/mysql start&quot;
@@ -193,7 +193,7 @@ apache2.service: {
 }
 </pre></div>
 </div>
-<p>The flow style is both easy to read, and works better when configurations become more complex.<a class="footnote-reference" href="#f2" id="id2">[2]</a>  So, throughout
+<p>The flow style is both easy to read, and works better when configurations become more complex.  So, throughout
 the chaperone documentation, we&#8217;ll stick to the flow format.</p>
 <p>Comments can be included both between lines and at the end of lines using the hash symbol (<code class="docutils literal"><span class="pre">#</span></code>).  Here is a complete well-commented
 configuration section for a sample service that&#8217;s included with the <code class="docutils literal"><span class="pre">chaperone-baseimage</span></code> docker image:</p>
@@ -229,19 +229,6 @@ sample.service: {
 }
 </pre></div>
 </div>
-<p class="rubric">Notes</p>
-<table class="docutils footnote" frame="void" id="f1" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>This is the text of footnote 1.</td></tr>
-</tbody>
-</table>
-<table class="docutils footnote" frame="void" id="f2" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>This is the text of footnote 2.</td></tr>
-</tbody>
-</table>
 </div>
 
 

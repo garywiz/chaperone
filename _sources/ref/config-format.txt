@@ -12,7 +12,7 @@ If none is specified, the default `/etc/chaperone.d` is used.  If a directory is
 top-level of the directory will be searched, and only files ending in ``.conf`` or ``.yaml`` will be
 recognised and read in alphabetic order.
 
-Configuration files are written using `YAML Version 2 <http://www.yaml.org/spec/1.2/spec.html>`_. [#f1]_  For example, you can
+Configuration files are written using `YAML Version 2 <http://www.yaml.org/spec/1.2/spec.html>`_.  For example, you can
 define two chaperone services like this::
 
   mysql.service:
@@ -34,7 +34,7 @@ looks very similar to JSON.  In flow format, the above looks like this::
     after: mysql.service,
   }
 
-The flow style is both easy to read, and works better when configurations become more complex. [#f2]_  So, throughout
+The flow style is both easy to read, and works better when configurations become more complex.  So, throughout
 the chaperone documentation, we'll stick to the flow format.
 
 Comments can be included both between lines and at the end of lines using the hash symbol (``#``).  Here is a complete well-commented
@@ -70,13 +70,3 @@ configuration section for a sample service that's included with the ``chaperone-
       'INTERACTIVE': '$(_CHAP_INTERACTIVE)',
     }
   }
-
-.. rubric:: Notes
-
-.. [#f1]
-
-   This is the text of footnote 1.
-
-.. [#f2]
-
-   This is the text of footnote 2.

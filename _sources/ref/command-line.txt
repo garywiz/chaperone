@@ -242,9 +242,9 @@ Option Reference Information
 
 .. option:: --user name-or-number
 
-   Normally, when Chaperone is started, it runs as the same user which executed the ``chaperone`` command.  However, in many
-   cases, it is desirable to have Chaperone spawn all services and use permissions of a different user.  This switch
-   specifies the user account under which Chaperone will start all processes and logging services.  For example, 
+   Normally, when Chaperone is started, it runs as the same user which executed the ``chaperone`` command (usually ``root``).
+   However, in many cases, it is desirable to have Chaperone spawn all services and use permissions of a different user. 
+   This switch specifies the user account under which Chaperone will start all processes and logging services.  For example, 
    assume you have an account within a container called ``appuser`` and all services should run under that user account.
    You would simply do this::
 
@@ -321,7 +321,7 @@ Option Reference Information
    Here is how you can see a sample::
 
      $ docker run -i --rm=true chapdev/chaperone-lamp --show-dependencies
-     init | mysql | apache2 | logrotate | sample
+                 init | mysql | apache2 | logrotate | sample
      init      | ====
      mysql     |     ========
      apache2   |             ==========

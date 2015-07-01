@@ -47,10 +47,10 @@ can be tailored separately for the needs of each service.  Entries below marked 
    :ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
                                                      to the container's stdout file handle.   Default is 'log'. |ENV|
 
-   :ref:`after <service.after>`                      A comma-separated list of services or service groups which cannot start
-                                                     until after this service has started.
-   :ref:`before <service.before>`                    A comma-separated list of services or service groups which must start
-                                                     before this service.
+   :ref:`after <service.after>`                      A comma-separated list of services or service groups which must start
+                                                     before this service is allowed ot start (dependencies).
+   :ref:`before <service.before>`                    A comma-separated list of services or service groups which cannot be
+                                                     started until this service starts successfully (dependents).
    :ref:`directory <service.directory>`              The directory where the command will be executed.  Otherwise, the account
                                                      home directory will be used. |ENV|
    :ref:`env_inherit <service.env_inherit>`          An array of patterns which can match one or more
@@ -113,14 +113,14 @@ an isolated situation affecting only the service itself.
    ================  ==========================================================  ========================= =========================
    simple            This is the default type.  Chaperone considers a service    Service terminates        Service terminates
                      "started" as soon as the startup grace period               abnormally during grace   abnormally later despite
-                     (defined by :ref:`startup_pause <service.startup_pause>`)   period or pidfile not     retries, or pidfile
-                     elapses.							 found (if specified) 	   not found (if specified)
-                     If the service terminates normally at any time, the	 before process timeout.   by process_timeout.
+                     (defined by :ref:`startup_pause <service.startup_pause>`)   period or pidfile not     retries.
+                     elapses.							 found (if specified) 	   
+                     If the service terminates normally at any time, the	 before process timeout. 
                      service is considered "started" until reset.
    forking           A forking service is expected to set up all                 Service terminates        Service terminates
                      communications channels and assure that the service         abnormally during the     abnormally later despite
-                     is ready for application use, then exit normally            process timeout, or       retries, only if pidfile
-                     before the                                                  the pidfile cannot be     specifies.  Otherwise,
+                     is ready for application use, then exit normally            process timeout, or       retries (only if pidfile
+                     before the                                                  the pidfile cannot be     specified).  Otherwise,
                      :ref:`process_timeout <service.process_timeout>`            found (if specified)      never. [#f2]_
                      expires.  *Note*: The default process timeout for           during the timeout
                      forking services is 300 seconds.                            period.
@@ -130,7 +130,7 @@ an isolated situation affecting only the service itself.
                      timeout for oneshot services is 60 seconds.                                           operation.
    notify            A notify service is expected to establish communication     Service terminates        Service sends a
                      with chaperone using the *sd_notify* protcol.  The          abnormally during the     failure notification.
-                     :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`                    process timeout
+                     :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`                    process timeout.
                      environment variable will be set, and chaperone will
                      consider the service started only when notified
                      appropriately. *Note*: The default process timeout

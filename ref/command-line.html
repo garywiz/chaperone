@@ -420,9 +420,9 @@ environment variable.  Only the options provided on the command line itself will
 <span class="target" id="option-user"></span><dl class="option">
 <dt id="cmdoption-chaperone--user">
 <code class="descname">--user</code><code class="descclassname"> name-or-number</code><a class="headerlink" href="#cmdoption-chaperone--user" title="Permalink to this definition">¶</a></dt>
-<dd><p>Normally, when Chaperone is started, it runs as the same user which executed the <code class="docutils literal"><span class="pre">chaperone</span></code> command.  However, in many
-cases, it is desirable to have Chaperone spawn all services and use permissions of a different user.  This switch
-specifies the user account under which Chaperone will start all processes and logging services.  For example,
+<dd><p>Normally, when Chaperone is started, it runs as the same user which executed the <code class="docutils literal"><span class="pre">chaperone</span></code> command (usually <code class="docutils literal"><span class="pre">root</span></code>).
+However, in many cases, it is desirable to have Chaperone spawn all services and use permissions of a different user.
+This switch specifies the user account under which Chaperone will start all processes and logging services.  For example,
 assume you have an account within a container called <code class="docutils literal"><span class="pre">appuser</span></code> and all services should run under that user account.
 You would simply do this:</p>
 <div class="highlight-python"><div class="highlight"><pre>docker run -d my_chaperone_image --user appuser
@@ -490,7 +490,7 @@ shows the relationship between services after Chaperone analyzes service
 dependencies.</p>
 <p>Here is how you can see a sample:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ docker run -i --rm=true chapdev/chaperone-lamp --show-dependencies
-init | mysql | apache2 | logrotate | sample
+            init | mysql | apache2 | logrotate | sample
 init      | ====
 mysql     |     ========
 apache2   |             ==========

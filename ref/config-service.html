@@ -217,12 +217,12 @@ to the container&#8217;s stderr file handle.   Default is &#8216;log&#8217;. <co
 to the container&#8217;s stdout file handle.   Default is &#8216;log&#8217;. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#service-after"><span>after</span></a></td>
-<td>A comma-separated list of services or service groups which cannot start
-until after this service has started.</td>
+<td>A comma-separated list of services or service groups which must start
+before this service is allowed ot start (dependencies).</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#service-before"><span>before</span></a></td>
-<td>A comma-separated list of services or service groups which must start
-before this service.</td>
+<td>A comma-separated list of services or service groups which cannot be
+started until this service starts successfully (dependents).</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#service-directory"><span>directory</span></a></td>
 <td>The directory where the command will be executed.  Otherwise, the account
@@ -340,9 +340,7 @@ found (if specified)
 before process timeout.</td>
 <td>Service terminates
 abnormally later despite
-retries, or pidfile
-not found (if specified)
-by process_timeout.</td>
+retries.</td>
 </tr>
 <tr class="row-odd"><td>forking</td>
 <td>A forking service is expected to set up all
@@ -361,8 +359,8 @@ during the timeout
 period.</td>
 <td>Service terminates
 abnormally later despite
-retries, only if pidfile
-specifies.  Otherwise,
+retries (only if pidfile
+specified).  Otherwise,
 never.<a class="footnote-reference" href="#f2" id="id2">[2]</a></td>
 </tr>
 <tr class="row-even"><td>oneshot</td>
@@ -388,7 +386,7 @@ appropriately. <em>Note</em>: The default process timeout
 for a notify service is 30 seconds.</td>
 <td>Service terminates
 abnormally during the
-process timeout</td>
+process timeout.</td>
 <td>Service sends a
 failure notification.</td>
 </tr>
