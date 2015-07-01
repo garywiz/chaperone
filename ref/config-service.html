@@ -206,7 +206,7 @@ but environment variable expansion is supported. <code class="kbd docutils liter
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#service-enabled"><span>enabled</span></a></td>
 <td>If &#8216;false&#8217;, the service will not be started, nor will it be required by
-any dependents.  Default is &#8216;true&#8217;.</td>
+any dependents.  Default is &#8216;true&#8217;. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#service-stderr"><span>stderr</span></a></td>
 <td>Either &#8216;log&#8217; to write stderr to the syslog, or &#8216;inherit&#8217; to write stderr
@@ -260,7 +260,7 @@ the service will act as if it were not enabled.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#service-pidfile"><span>pidfile</span></a></td>
 <td>The full path to the file which will contain the process &#8216;pid&#8217;
-upon startup. (&#8216;forking&#8217; type only) <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+upon startup. (&#8216;forking&#8217; and &#8216;simple&#8217; types only) <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a></td>
 <td>Specifies the amount of time Chaperone will wait for a service to start.
@@ -335,10 +335,14 @@ If the service terminates normally at any time, the
 service is considered &#8220;started&#8221; until reset.</td>
 <td>Service terminates
 abnormally during grace
-period.</td>
+period or pidfile not
+found (if specified)
+before process timeout.</td>
 <td>Service terminates
 abnormally later despite
-retries.</td>
+retries, or pidfile
+not found (if specified)
+by process_timeout.</td>
 </tr>
 <tr class="row-odd"><td>forking</td>
 <td>A forking service is expected to set up all
@@ -451,6 +455,15 @@ set to &#8216;false&#8217;, then the service will be ignored upon start-up, and 
 be considered satisfied.</p>
 <p>Services can be enabled and disabled dynamically while Chaperone is running using the
 <span class="xref std std-ref">telchap command</span>.</p>
+<p>Since you can use environment variable expansions, it can be useful to make service startup conditional
+based upon some environment variable setting, such as:</p>
+<div class="highlight-python"><div class="highlight"><pre>mysql.service: {
+  type: simple,
+  enabled: &quot;$(ENABLE_MYSQL:+true)&quot;,
+  ...
+}
+</pre></div>
+</div>
 </dd></dl>
 
 <span class="target" id="service-env-inherit"></span><dl class="describe">
@@ -611,18 +624,20 @@ system start-up.</p>
 <dt>
 <code class="descname">pidfile: file-path</code></dt>
 <dd><p>This setting specifies the &#8220;PID file&#8221; which the service will create upon startup to indicate it&#8217;s controlling
-process ID.   This is valid only for forking services where it is assumed the service will create a detached
-process as it&#8217;s controlling process.</p>
+process ID.   This is valid only for &#8216;simple&#8217;, and &#8216;forking&#8217; services.  The appearance of the pidfile is an
+indication that the service has been activated.</p>
 <p>When the <code class="docutils literal"><span class="pre">pidfile</span></code> directive exists:</p>
 <ol class="arabic simple">
 <li>Chaperone start the service command normally.</li>
-<li>If the executable starts and exits without error, Chaperone will watch for the appearance
+<li>If the executable runs without error, Chaperone will watch for the appearance
 of the file specified in the <code class="docutils literal"><span class="pre">pidfile</span></code> directive.</li>
 <li>If the PID file does not appear within the timeframe given by the <a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a>,
 then it is considered a failure.</li>
 </ol>
 <p>If the <code class="docutils literal"><span class="pre">pidfile</span></code> is seen, and contains a valid integer process ID <em>which denotes a running process</em>, then
 Chaperone will monitor the status of that process for failures to determine the disposition of the service.</p>
+<p>For &#8216;simple&#8217; service types, it is possible (and likely) that the PID value will be the same as the PID of the
+originally running process, since &#8216;simple&#8217; types are not expected to exit for the duration of their activity.</p>
 </dd></dl>
 
 <span class="target" id="service-process-timeout"></span><dl class="describe">
