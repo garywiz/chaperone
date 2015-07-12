@@ -40,6 +40,7 @@ fi
 # Run the lamp image using our local copy of chaperone as well as the local apps directory
 
 docker run -t -i -e "TERM=$TERM" -e "EMACS=$EMACS" --rm=true -v /home:/home \
+    --name run-$SUFFIX \
     --entrypoint $SANDBOX/bin/chaperone $IMAGE \
     --create $USER/$myuid \
     --config $APPSDIR/chaperone.d $* $bashcmd
