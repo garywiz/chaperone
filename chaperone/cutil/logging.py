@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 _root_logger = logging.getLogger(None)
 _stderr_handler = logging.StreamHandler()
-_syslog_handler = None
 
 _format = logging.Formatter()
 _stderr_handler.setFormatter(_format)
@@ -23,52 +22,12 @@ _root_logger.addHandler(_stderr_handler)
 def set_log_level(lev):
     logger.setLevel(syslog_info.syslog_to_python_lev(lev))
 
-
-class CustomSysLog(SysLogHandler):
-
-    def emit(self, record):
-        self.facility = getattr(record, '_facility', syslog_info.LOG_LOCAL5)
-        super().emit(record)
-
-
-class SysLogFormatter(logging.Formatter):
-    """
-    Handles formatting Python output in the same format as normal syslog daemons.
-    """
-
-    def __init__(self, program, pid):
-
-        self.default_program = program
-        self.default_pid = pid
-
-        super().__init__('{asctime} {program_name}[{program_pid}]: {message}', style='{')
-
-    def format(self, record):
-        if not hasattr(record, 'program_name'):
-            setattr(record, 'program_name', self.default_program)
-        if not hasattr(record, 'program_pid'):
-            setattr(record, 'program_pid', self.default_pid)
-        return super().format(record)
-
-    def formatTime(self, record, datefmt=None):
-        timestr = strftime('%b %d %H:%M:%S', self.converter(record.created))
-        # this may be picky, but people parse syslogs, let's not annoy them
-        if timestr[3:5] == ' 0':
-            return timestr.replace(' 0', '  ', 1)
-        return timestr
-
-        
-def enable_syslog_handler(enable = True):
-    global _syslog_handler
+def set_custom_handler(handler, enable = True):
     if enable:
-        _syslog_handler = CustomSysLog('/dev/log')
-        sf = SysLogFormatter(sys.argv[0] or '-', os.getpid())
-        _syslog_handler.setFormatter(sf)
-        _root_logger.addHandler(_syslog_handler)
+        _root_logger.addHandler(handler)
         _root_logger.removeHandler(_stderr_handler)
-    elif _syslog_handler:
-        _root_logger.removeHandler(_syslog_handler)
-        _syslog_handler = None
+    else:
+        _root_logger.removeHandler(handler)
         _root_logger.addHandler(_stderr_handler)
 
 def _versatile_logprint(delegate, fmt, *args, 
@@ -116,9 +75,9 @@ def _versatile_logprint(delegate, fmt, *args,
         delegate(fmt, **kwargs)
     elif '%' not in fmt:
         if '{' in fmt:
-            delegate('%s', fmt.format(*args) + trace)
+            delegate('%s', fmt.format(*args) + trace, **kwargs)
         else:
-            delegate('%s', " ".join([repr(a) for a in args]) + trace)
+            delegate('%s', " ".join([repr(a) for a in args]) + trace, **kwargs)
     else:
         delegate(fmt, *args, **kwargs)
 

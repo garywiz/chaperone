@@ -57,10 +57,14 @@ class CronProcess(SubProcess):
     def _cron_hit(self):
         if self.enabled:
             if self.running:
-                warn("cron service {0} is still running when next interval expired, will not run again", self.name)
+                self.logwarn("cron service {0} is still running when next interval expired, will not run again", self.name)
             else:
-                info("cron service {0} starting", self.name)
-                yield from super().start()
+                self.loginfo("cron service {0} starting", self.name)
+                try:
+                    yield from super().start()
+                except Exception as ex:
+                    self.logerror(ex, "cron service {0} failed to start: {1}", self.name, ex)
+                    yield from self.reset();
 
     @asyncio.coroutine
     def stop(self):

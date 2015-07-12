@@ -3,16 +3,17 @@ import socket
 import os
 import re
 import sys
+import logging
 
+from time import strftime
 from functools import partial
 
-from chaperone.cutil.logging import info, warn, debug
+from chaperone.cutil.logging import info, warn, debug, set_custom_handler
 from chaperone.cutil.misc import lazydict, maybe_remove, remove_for_recreate
 from chaperone.cutil.servers import ServerProtocol, Server
 from chaperone.cutil.syslog_handlers import LogOutput
-from chaperone.cutil.syslog_info import FACILITY_DICT, PRIORITY_DICT
 
-from logging.handlers import SysLogHandler
+import chaperone.cutil.syslog_info as syslog_info
 
 _RE_SPEC = re.compile(r'^(?P<fpfx>!?)(?:/(?P<regex>.+)/|\[(?P<prog>.+)\]|(?P<fac>[,*0-9a-zA-Z]+))\.(?P<pfx>!?=?)(?P<pri>[*a-zA-Z]+)$')
 _RE_SPECSEP = re.compile(r' *; *')
@@ -122,7 +123,7 @@ class _syslog_spec_matcher:
         elif gdict['prog'] is not None:
             c1 = '(g and "%s" == g.lower())' % gdict['prog'].lower()
         elif gdict['fac'] != '*':
-            faclist = [FACILITY_DICT.get(f) for f in gdict.get('fac', '').lower().split(',')]
+            faclist = [syslog_info.FACILITY_DICT.get(f) for f in gdict.get('fac', '').lower().split(',')]
             if None in faclist:
                 raise Exception("Invalid logging facility code, %s: %s" % (gdict['fac'], spec))
             c1 = '(' + ' or '.join(['f==%d' % f for f in faclist]) + ')'
@@ -135,7 +136,7 @@ class _syslog_spec_matcher:
         if pri == '*':
             c2 = 'True'
         else:
-            prival = PRIORITY_DICT.get(pri.lower())
+            prival = syslog_info.PRIORITY_DICT.get(pri.lower())
             if prival == None:
                 raise Exception("Invalid logging priority, %s: %s" % (pri, spec))
             if minpri is not None and minpri > prival:
@@ -162,27 +163,13 @@ class _syslog_spec_matcher:
         else:
             pos.append("(%s and %s)" % (c1, c2))
             
-    def match(self, msg, prog = None, priority = SysLogHandler.LOG_ERR, facility = SysLogHandler.LOG_SYSLOG):
+    def match(self, msg, prog = None, priority = syslog_info.LOG_ERR, facility = syslog_info.LOG_SYSLOG):
         result = self._match(self, priority, facility, prog, msg)
         #print('MATCH', prog, result, self.debugexpr)
         return result
 
         
 class SyslogServerProtocol(ServerProtocol):
-
-    def _parse_to_output(self, msg):
-        # For a description of what a valid syslog line can look like, see:
-        # http://www.rsyslog.com/doc/syslog_parsing.html
-        match = _RE_SYSLOG.match(msg)
-        if not match:
-            pri = SysLogHandler.LOG_SYSLOG * 8 + SysLogHandler.LOG_ERR
-            prog = "?"
-            msg = "??" + msg
-        else:
-            pri = int(match.group('pri'))
-            prog = os.path.basename(match.group('prog'))
-            msg = match.group('date') + ' ' + prog + ' ' + match.group('rest')
-        self.parent.writeLog(msg, prog, priority = pri & 7, facility = pri // 8)
 
     def datagram_received(self, data, addr):
         self.data_received(data)
@@ -199,7 +186,7 @@ class SyslogServerProtocol(ServerProtocol):
 
         for m in messages:
             if m:
-                self._parse_to_output(m)
+                self.parent.parse_to_output(m)
         sys.stdout.flush()
 
 class SyslogServer(Server):
@@ -207,6 +194,8 @@ class SyslogServer(Server):
     _loglist = list()
     _server = None
     _log_socket = None
+
+    _capture_handler = None     # our capture handler to redirect python logs
 
     def __init__(self, logsock = "/dev/log", datagram = True):
         self._datagram = datagram
@@ -236,6 +225,7 @@ class SyslogServer(Server):
         os.chmod(self._log_socket, 0o777)
 
     def close(self):
+        self.capture_python_logging(False)
         super().close()
         maybe_remove(self._log_socket)
 
@@ -254,8 +244,74 @@ class SyslogServer(Server):
         for m in self._loglist:
             m[0].reset_minimum_priority(minimum_priority)
 
+    def capture_python_logging(self, enable = True):
+        if enable:
+            if not self._capture_handler:
+                self._capture_handler = CustomSysLog(self)
+                set_custom_handler(self._capture_handler)
+        elif self._capture_handler:
+            set_custom_handler(self._capture_handler, False)
+            self._capture_handler = None
+
+    def parse_to_output(self, msg):
+        # For a description of what a valid syslog line can look like, see:
+        # http://www.rsyslog.com/doc/syslog_parsing.html
+        match = _RE_SYSLOG.match(msg)
+        if not match:
+            pri = syslog_info.LOG_SYSLOG * 8 + syslog_info.LOG_ERR
+            prog = "?"
+            msg = "??" + msg
+        else:
+            pri = int(match.group('pri'))
+            prog = os.path.basename(match.group('prog'))
+            msg = match.group('date') + ' ' + prog + ' ' + match.group('rest')
+        self.writeLog(msg, prog, priority = pri & 7, facility = pri // 8)
+
     def writeLog(self, msg, prog, priority, facility):
         for m in self._loglist:
             if m[0].match(msg, prog, priority, facility):
                 for logger in m[1]:
                     logger.writeLog(msg, prog, priority, facility)
+
+    
+class SysLogFormatter(logging.Formatter):
+    """
+    Handles formatting Python output in the same format as normal syslog daemons.
+    """
+
+    def __init__(self, program, pid):
+
+        self.default_program = program
+        self.default_pid = pid
+
+        super().__init__('{asctime} {program_name}[{program_pid}]: {message}', style='{')
+
+    def format(self, record):
+        if not hasattr(record, 'program_name'):
+            setattr(record, 'program_name', self.default_program)
+        if not hasattr(record, 'program_pid'):
+            setattr(record, 'program_pid', self.default_pid)
+        return super().format(record)
+
+    def formatTime(self, record, datefmt=None):
+        timestr = strftime('%b %d %H:%M:%S', self.converter(record.created))
+        # this may be picky, but people parse syslogs, let's not annoy them
+        if timestr[3:5] == ' 0':
+            return timestr.replace(' 0', '  ', 1)
+        return timestr
+
+        
+class CustomSysLog(logging.Handler):
+    """
+    A custom Python logging class that makes it easy to redirect Python output to our
+    internal syslog capture handler.
+    """
+
+    def __init__(self, owner):
+        super().__init__()
+        self._owner = owner
+        self.setFormatter(SysLogFormatter(sys.argv[0] or '-', os.getpid()))
+
+    def emit(self, record):
+        self.facility = getattr(record, '_facility', syslog_info.LOG_LOCAL5)
+        self._owner.parse_to_output("<{0}>".format(self.facility) + self.format(record))

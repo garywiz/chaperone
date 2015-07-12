@@ -17,7 +17,7 @@ from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.subproc import SubProcess, SubProcessFamily
 from chaperone.cutil.config import ServiceConfig
 from chaperone.cutil.env import Environment
-from chaperone.cutil.logging import warn, info, debug, error, set_log_level, enable_syslog_handler
+from chaperone.cutil.logging import warn, info, debug, error, set_log_level
 from chaperone.cutil.misc import lazydict, objectplus
 from chaperone.cutil.syslog import SyslogServer
 
@@ -127,7 +127,6 @@ class TopLevelProcess(objectplus):
 
     def _final_stop(self):
         if self._syslog:
-            enable_syslog_handler(False)
             self._syslog.close()
         if self._command:
             self._command.close()
@@ -195,7 +194,7 @@ class TopLevelProcess(objectplus):
        return future
 
     def _syslog_started(self, f):
-        enable_syslog_handler()
+        self._syslog.capture_python_logging()
         info("Switching all chaperone logging to /dev/log")
 
     def _system_started(self, startup, future=None):
