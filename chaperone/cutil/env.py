@@ -219,11 +219,11 @@ class Environment(lazydict):
             # Handle both :- and :+
             if (oper == '-' and k not in primary) or (oper == '+' and k in primary):
                 use_repl = repl
-                k = None        # this is not a self-referential forward reference
+                k = None        # non self-referential forward reference
             elif k not in primary:
                 return ''
-            elif k in result:
-                return result[k]
+            elif k in result and parent != k:
+                return result[k] # non self-referential reference to result-in-progress
             else:
                 val = primary[k]
 

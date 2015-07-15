@@ -111,6 +111,22 @@ CONFIG4c = {
     }
 }
 
+ENV7 = {
+    "FIRSTPORT": '999',
+    "ALTPORT": "777",
+}
+
+CONFIG7a = {
+    'env_set': {
+        "FIRSTPORT": '$(FIRSTPORT:-443)',
+        "SECONDPORT": '$(SECONDPORT:-443)',
+        "THIRDPORT": '$(FIRSTPORT:-443)',
+        "FOURTHPORT": '$(ALTPORT:-443)',
+    }
+}
+
+RESULT7 = "[('ALTPORT', '777'), ('FIRSTPORT', '999'), ('FOURTHPORT', '777'), ('SECONDPORT', '443'), ('THIRDPORT', '999')]"
+
 def printdict(d):
     for k in sorted(d.keys()):
         print("{0} = {1}".format(k,d[k]))
@@ -167,6 +183,13 @@ class TestEnvOrder(unittest.TestCase):
         envc = Environment(envb, CONFIG4c)
         self.assertEqual(canonical(envc.expanded()),
                          "[('MISCPATH', '/mislibs'), ('PATH', '/usr/python/bin:/usr/local/bin:/bin'), ('PYAGAIN', '/mislibs:/pythonlibs:'), ('PYPATH', '/pythonlibs:'), ('THEREPATH', '/mislibs:/there')]")
+
+    def test_expand7(self):
+        "Test some self-referential anomalies"
+        env = Environment(ENV7, CONFIG7a).expanded()
+        envstr = canonical(env)
+        #print('RESULT7 = "' + envstr + '"')
+        self.assertEqual(envstr, RESULT7)
 
 if __name__ == '__main__':
     unittest.main()
