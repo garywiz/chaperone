@@ -1,8 +1,10 @@
 import re
 import os
+import subprocess
 from fnmatch import fnmatch
 
 from chaperone.cutil.misc import lookup_user, lazydict
+from chaperone.cutil.logging import error, debug, warn
 
 ##
 ## ALL chaperone configuration variables defined here for easy reference
@@ -22,6 +24,7 @@ ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone run
 # However, more levels of nesting are not supported and will cause substitutions to be unrecognised.
 
 _RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={}]+(?::(?:[^={}]|{[^=}]+})+)?})')
+_RE_BACKTICK = re.compile(r'`([^`]+)`')
 
 # Parsing for operators within expansions
 _RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$')
@@ -41,6 +44,9 @@ class Environment(lazydict):
     # cases like:
     #    'PATH': '/usr/local:$(PATH)'
     _shadow = None
+
+    # A class variable to keep track of backtick expansions so we don't do them more than once
+    _cls_btcache = dict()
 
     def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
         """
@@ -230,16 +236,48 @@ class Environment(lazydict):
         recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0), k)
 
         if use_repl is not None:
-            val = _RE_ENVVAR.sub(recurse, use_repl)
+            val = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, use_repl))
         elif result is self:
-            val = _RE_ENVVAR.sub(recurse, val)
+            val = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, val))
         else:
             # Looks odd, but needed to seed the result to assure we ignore recursion later
             result[k] = val
-            val = result[k] = _RE_ENVVAR.sub(recurse, val)
+            val = result[k] = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, val))
 
         return val
     
+    def _backtick_expand(self, m):
+        """
+        Performs rudimentary backtick expansion after all other environment variables have been
+        expanded.   Because these are cached, the user should not expect results to differ
+        for different environment contexts, nor should the environment itself be relied upon.
+        """
+
+        cmd = m.group(1)
+        result = self._cls_btcache.get(cmd)
+
+        if result is None:
+            if self.uid:
+                pwrec = lookup_user(self.uid, self.gid)
+            else:
+                pwrec = None
+
+            def _proc_setup():
+                if pwrec:
+                    os.setgid(pwrec.pw_gid)
+                    os.setuid(pwrec.pw_uid)
+
+            try:
+                result = subprocess.check_output(cmd, shell=True, preexec_fn=_proc_setup)
+                result = result.decode()
+            except Exception as ex:
+                error(ex, "Backtick expansion returned error: " + str(ex))
+                result = ""
+
+            self._cls_btcache[cmd] = result = result.replace("\n", " ")
+
+        return result
+
     def get_public_environment(self):
         """
         Public variables are those which are exported to the application and do NOT start with an
