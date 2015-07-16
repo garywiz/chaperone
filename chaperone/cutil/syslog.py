@@ -18,8 +18,7 @@ import chaperone.cutil.syslog_info as syslog_info
 _RE_SPEC = re.compile(r'^(?P<fpfx>!?)(?:/(?P<regex>.+)/|\[(?P<prog>.+)\]|(?P<fac>[,*0-9a-zA-Z]+))\.(?P<pfx>!?=?)(?P<pri>[*a-zA-Z]+)$')
 _RE_SPECSEP = re.compile(r' *; *')
 
-_RE_SYSLOG = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?P<prog>[^ \[]+)(?P<rest>(?:\[\d+\])?: .+)$', re.DOTALL)
-
+_RE_RFC3164 = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?:(?P<host>[^ :\[]+) )?(?P<tag>[^ :\[]+)(?P<rest>[:\[ ].+)$', re.DOTALL)
 class _syslog_spec_matcher:
     """
     This class supports matching a classic syslog.conf spec:
@@ -256,22 +255,25 @@ class SyslogServer(Server):
     def parse_to_output(self, msg):
         # For a description of what a valid syslog line can look like, see:
         # http://www.rsyslog.com/doc/syslog_parsing.html
-        match = _RE_SYSLOG.match(msg)
+
+        match = _RE_RFC3164.match(msg)
         if not match:
             pri = syslog_info.LOG_SYSLOG * 8 + syslog_info.LOG_ERR
-            prog = "?"
-            msg = "??" + msg
+            logattrs = { 'tag': '?', 'format_error': True, 'host' : None }
         else:
-            pri = int(match.group('pri'))
-            prog = os.path.basename(match.group('prog'))
-            msg = match.group('date') + ' ' + prog + ' ' + match.group('rest')
-        self.writeLog(msg, prog, priority = pri & 7, facility = pri // 8)
+            logattrs = match.groupdict()
+            pri = int(logattrs['pri'])
+            logattrs['tag'] = os.path.basename(logattrs['tag'])
 
-    def writeLog(self, msg, prog, priority, facility):
+        logattrs['raw'] = msg
+
+        self.writeLog(logattrs, priority = pri & 7, facility = pri // 8)
+
+    def writeLog(self, logattrs, priority, facility):
         for m in self._loglist:
-            if m[0].match(msg, prog, priority, facility):
+            if m[0].match(logattrs['raw'], logattrs['tag'], priority, facility):
                 for logger in m[1]:
-                    logger.writeLog(msg, prog, priority, facility)
+                    logger.writeLog(logattrs, priority, facility)
 
     
 class SysLogFormatter(logging.Formatter):

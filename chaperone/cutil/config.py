@@ -60,6 +60,7 @@ _config_schema = V.Any(
         'startup_pause': V.Any(float, int),
         'shutdown_timeout': V.Any(float, int),
         'uid': V.Any(str, int),
+        'logrec_hostname': str,
       },
       V.Match('^.+\.logging'): {
         'enabled': V.Any(bool, str),
@@ -71,6 +72,7 @@ _config_schema = V.Any(
         'overwrite': bool,
         'uid': V.Any(str, int),
         'gid': V.Any(str, int),
+        'logrec_hostname': str,
      },
    }
 )
@@ -278,9 +280,11 @@ class LogConfig(_BaseConfig):
     extended = False            # include facility/priority information
     uid = None                  # used to control permissions on logfile creation
     gid = None
+    logrec_hostname = None      # hostname used to override hostname in syslog record
 
-    _expand_these = {'selector', 'file', 'enabled'}
+    _expand_these = {'selector', 'file', 'enabled', 'logrec_hostname'}
     _assure_bool = {'enabled'}
+    _settings_defaults = {'logrec_hostname'}
 
     @property
     def shortname(self):

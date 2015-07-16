@@ -1,10 +1,13 @@
 import sys
 import os
+import socket
 
 from time import time, localtime, strftime
 
 from chaperone.cutil.misc import lazydict, open_foruser
 from chaperone.cutil.syslog_info import get_syslog_info
+
+_our_hostname = socket.gethostname()
 
 class LogOutput:
     name = None
@@ -45,7 +48,13 @@ class LogOutput:
     def close(self):
         pass
 
-    def writeLog(self, msg, prog, priority, facility):
+    def writeLog(self, logattrs, priority, facility):
+        if logattrs.get('format_error'):
+            msg = "??" + logattrs['raw']
+        else:
+            msg = (logattrs['date'] + ' ' + 
+                   (self.config.logrec_hostname or logattrs['host'] or _our_hostname) + ' ' + 
+                   logattrs['tag'] + ' ' + logattrs['rest'])
         if self.config.extended:
             msg = get_syslog_info(facility, priority) + " " + msg
         self.write(msg)
