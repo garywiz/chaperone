@@ -53,9 +53,10 @@ class LogOutput:
         if logattrs.get('format_error'):
             msg = "??" + logattrs['raw']
         else:
+            # Note that 'rest' always starts with a ':', '[' or ' '.
             msg = (logattrs['date'] + ' ' + 
                    (self.config.logrec_hostname or logattrs['host'] or _our_hostname) + ' ' + 
-                   logattrs['tag'] + ' ' + logattrs['rest'])
+                   logattrs['tag'] + logattrs['rest'])
         if self.config.extended:
             msg = get_syslog_info(facility, priority) + " " + msg
         self.write(msg)
