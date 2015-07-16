@@ -254,7 +254,9 @@ class Environment(lazydict):
         """
 
         cmd = m.group(1)
-        result = self._cls_btcache.get(cmd)
+        key = '{0}:{1}:{2}'.format(self.uid, self.gid, cmd)
+
+        result = self._cls_btcache.get(key)
 
         if result is None:
             if self.uid:
@@ -274,7 +276,7 @@ class Environment(lazydict):
                 error(ex, "Backtick expansion returned error: " + str(ex))
                 result = ""
 
-            self._cls_btcache[cmd] = result = result.replace("\n", " ")
+            self._cls_btcache[key] = result = result.replace("\n", " ")
 
         return result
 
