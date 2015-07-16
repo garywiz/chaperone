@@ -35,24 +35,27 @@ marked with |ENV| support :ref:`environment variable expansion <env.expansion>`.
 
 .. table:: Logging Directives Quick Reference
 
-   =====================================  =============================================================================
-   logging keyword                        meaning
-   =====================================  =============================================================================
-   :ref:`selector <logging.selector>`     Specifies the syslog-compatible selection filter for this logging entry.
-		  			  |ENV|
-   :ref:`file <logging.file>`             Specifies an optional file for output. |ENV|
-   :ref:`stderr <logging.stderr>`         Directs output to ``stderr`` (can be used with ``file``).
-   :ref:`stdout <logging.stdout>`         Directs output to ``stdout`` (can be used with ``file``).
-   :ref:`enabled <logging.enabled>`       Can be set to ``false`` to disable this logging entry. |ENV|
-   :ref:`overwrite <logging.overwrite>`   If ``file`` is provided, then setting this to ``true`` will overwrite
-                                          the file upon opening.  By default, log files operate in append mode.
-   :ref:`extended <logging.extended>`     Prefixes log entries with their facility and priority (useful primarily
-                                          for debugging).
-   :ref:`uid <logging.uid>`               The uid (name or number) for permissions on created files and directories. 
-   	     				  |ENV|
-   :ref:`gid <logging.gid>`               The gid (name or number) for permissions on created files and directories.
-      	     				  |ENV|
-   =====================================  =============================================================================
+   ================================================= =============================================================================
+   logging keyword                        	     meaning
+   ================================================= =============================================================================
+   :ref:`selector <logging.selector>`     	     Specifies the syslog-compatible selection filter for this logging entry.
+		  			  	     |ENV|
+   :ref:`file <logging.file>`             	     Specifies an optional file for output. |ENV|
+   :ref:`stderr <logging.stderr>`         	     Directs output to ``stderr`` (can be used with ``file``).
+   :ref:`stdout <logging.stdout>`         	     Directs output to ``stdout`` (can be used with ``file``).
+   :ref:`syslog_host <logging.syslog_host>`          Directs output to the host or IP address specified (can be used in
+   		     				     combination with ``file``, ``stderr``, and ``stdout``.
+   :ref:`enabled <logging.enabled>`       	     Can be set to ``false`` to disable this logging entry. |ENV|
+   :ref:`logrec_hostname <logging.logrec_hostname>`  Overrides the normal hostname inserted in syslog output records.
+   :ref:`overwrite <logging.overwrite>`   	     If ``file`` is provided, then setting this to ``true`` will overwrite
+                                          	     the file upon opening.  By default, log files operate in append mode.
+   :ref:`extended <logging.extended>`     	     Prefixes log entries with their facility and priority (useful primarily
+                                          	     for debugging).
+   :ref:`uid <logging.uid>`               	     The uid (name or number) for permissions on created files and directories. 
+   	     				  	     |ENV|
+   :ref:`gid <logging.gid>`               	     The gid (name or number) for permissions on created files and directories.
+      	     				  	     |ENV|
+   ================================================= =============================================================================
 
 .. _logging.sect.selectors:
 
@@ -152,7 +155,7 @@ will select messages of **err**, **crit**, **alert**, or **emerge**, whereas::
   selector: '*.*;*.!err'
 
 will select messages of **debug**, **info**, **notice** or **warn**.   If you want to specify a priority
-which is exact (either for exclusion or inclusion), use the `=` prefix.  The following selector
+which is exact (either for exclusion or inclusion), use the ``=`` prefix.  The following selector
 includes log entries *only* if they are at level 'debug'::
 
   selector: '*.=debug'
@@ -196,8 +199,8 @@ Logging Config Reference
        automatically.  This means you can create jobs to do log-rotation, or manually rename or move the existing logfile
        and Chaperone will take notice and assure a new log file is opened.
 
-   Note that you can combine this directive with :ref:`stdout <logging.stdout>` and :ref:`stderr <logging.stderr>`.  Output will
-   be simultaneously written to all chosen locations.
+   Note that you can combine this directive with :ref:`stdout <logging.stdout>`, :ref:`stderr <logging.stderr>`, and
+   :ref:`syslog_host <logging.syslog_host>`.  Output will be simultaneously written to all chosen locations.
 
 .. _logging.stdout:
 
@@ -205,8 +208,8 @@ Logging Config Reference
 
    If this is 'true', then all selected syslog records will be copied to the 'stdout' of the container.  Defaults to 'false'.
 
-   Note that you can combine this directive with :ref:`stderr <logging.stderr>` and :ref:`file <logging.file>`.  Output will
-   be simultaneously written to all chosen locations.
+   Note that you can combine this directive with :ref:`stderr <logging.stderr>`, :ref:`file <logging.file>`, and
+   :ref:`syslog_host <logging.syslog_host>`.  Output will be simultaneously written to all chosen locations.
 
 .. _logging.stderr:
 
@@ -214,8 +217,41 @@ Logging Config Reference
 
    If this is 'true', then all selected syslog records will be copied to the 'stderr' of the container.  Defaults to 'false'.
 
-   Note that you can combine this directive with :ref:`stdout <logging.stdout>` and :ref:`file <logging.file>`.  Output will
-   be simultaneously written to all chosen locations.
+   Note that you can combine this directive with :ref:`stdout <logging.stdout>`, :ref:`file <logging.file>`, and
+   :ref:`syslog_host <logging.syslog_host>`.  Output will be simultaneously written to all chosen locations.
+
+.. _logging.syslog_host:
+
+.. describe:: syslog_host hostname-or-ip
+
+   When set, chaperone will send all matching log records to the remote host specified by ``hostname-or-ip``.  The remote
+   host should be running a ``syslog`` daemon on UDP port 514.
+
+   Since UDP is a connectionless protocol, no error will be given if the remote host is unreachable, or is
+   not running the ``syslog`` daemon.  Packets will silently be sent and ignored.
+
+   Note that you can combine this directive with :ref:`stdout <logging.stdout>`, :ref:`stderr <logging.stderr>`, and 
+   :ref:`file <logging.file>`. Output will be simultaneously written to all chosen locations.
+
+.. _logging.logrec_hostname:
+
+.. describe:: logrec_hostname hostname-string
+
+   Normally, syslog records include the hostname of the current host.  For example::
+
+      Jul 16 02:53:54 813703fb4021 sudo : pam_unix(sudo:session): session closed for user root
+
+   Note in the above line, that the string ``813703fb4021`` is the hostname of the current machine, which in the
+   case of Docker, is a randomly generated string.
+
+   You can use this directive to force the hostname to a particular string.  For example, you could set 
+   ``logrec_hostname`` to ``dirserv-1``, which would cause the above sample line to
+   instead be written like this::
+
+      Jul 16 02:53:54 dirserv-1 sudo : pam_unix(sudo:session): session closed for user root
+
+   This can be useful when logs are being consolidated using remote logging, and some consistent means of identifying
+   the log source is desirable.
 
 .. _logging.enabled:
 

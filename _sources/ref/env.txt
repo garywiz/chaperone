@@ -1,5 +1,7 @@
 .. _ch.env:
 
+.. include:: /includes/defs.rst
+
 Environment Variables
 =====================
 
@@ -124,6 +126,44 @@ the directive (for example, the :ref:`service directory <service.directory>` dir
    ``NOTIFY_SOCKET`` will be set only if a socket is allocated when the process is run.  However, Chaperone
    assures that such environment variables use late-expansion so that templates such as the above can
    be created and inherited by both logging and service declarations.
+
+Backtick Expansion
+******************
+
+Chaperone supports backtick expansion similar to most command shells.  Backtick expansion can be used wherever
+environment variables can be used (denoted by the |ENV| symbol in the directive documentation).   Any valid
+system command can be included, and the output will be substituted for the backtick expression.   For example,
+to set an environment variable to the default gateway (normally the Docker bridged network)::
+
+    settings: {
+      env_set: {
+        "GATEWAY_IP": "`ip route | awk '/default/ { print $3 }'`"
+      }
+   }
+
+Backtick expansions are not intended to be a general-purpose shell escape, but intended for situations (like the
+example) where some system information needs to be collected for configuration purposes.    Specifically,
+backtick expansion have the following characteristics:
+
+* Backticks will be processed *after* all dependent environment variables are expanded.
+* Expansions are done only once, even if they are present in multiple locations.  Thus, the backtick
+  expression `\`date\`` will expand to the same value no matter how many times it is used.
+* The environment passed to the backtick command will be *the initial chaperone environment* before
+  any directives are processed.
+* Backtick expansions will be performed as the user specified by the `uid` and `gid` relevant to the
+  section where the backtick expansion is used.
+
+However, note that backtick expansions may include references to other environment variables, such as::
+
+  settings: {
+    env_set: {
+      "LOCALDATE": "`TZ=${TZ} date`",
+      "TZ": "America/Los_Angeles",
+    }
+
+Note in the above that the `TZ` variable will be expanded first (if necessary) before the backtick
+expression.
+
 
 Variable Reference
 ------------------

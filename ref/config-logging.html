@@ -117,6 +117,7 @@
 <li class="toctree-l3"><a class="reference internal" href="env.html#managing-environment-variables">Managing Environment Variables</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="env.html#environment-inheritance">Environment Inheritance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="env.html#backtick-expansion">Backtick Expansion</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="env.html#variable-reference">Variable Reference</a></li>
@@ -187,8 +188,8 @@ marked with <code class="kbd docutils literal"><span class="pre">$ENV</span></co
 <table border="1" class="docutils" id="id2">
 <span id="table-logging-quick"></span><caption><span class="caption-number">Table 4 </span><span class="caption-text">Logging Directives Quick Reference</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col width="32%" />
-<col width="68%" />
+<col width="39%" />
+<col width="61%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">logging keyword</th>
@@ -209,8 +210,15 @@ marked with <code class="kbd docutils literal"><span class="pre">$ENV</span></co
 <tr class="row-odd"><td><a class="reference internal" href="#logging-stdout"><span>stdout</span></a></td>
 <td>Directs output to <code class="docutils literal"><span class="pre">stdout</span></code> (can be used with <code class="docutils literal"><span class="pre">file</span></code>).</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#logging-enabled"><span>enabled</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#logging-syslog-host"><span>syslog_host</span></a></td>
+<td>Directs output to the host or IP address specified (can be used in
+combination with <code class="docutils literal"><span class="pre">file</span></code>, <code class="docutils literal"><span class="pre">stderr</span></code>, and <code class="docutils literal"><span class="pre">stdout</span></code>.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#logging-enabled"><span>enabled</span></a></td>
 <td>Can be set to <code class="docutils literal"><span class="pre">false</span></code> to disable this logging entry. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#logging-logrec-hostname"><span>logrec_hostname</span></a></td>
+<td>Overrides the normal hostname inserted in syslog output records.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#logging-overwrite"><span>overwrite</span></a></td>
 <td>If <code class="docutils literal"><span class="pre">file</span></code> is provided, then setting this to <code class="docutils literal"><span class="pre">true</span></code> will overwrite
@@ -323,7 +331,7 @@ of that level <em>or greater severity</em> are selected:</p>
 </pre></div>
 </div>
 <p>will select messages of <strong>debug</strong>, <strong>info</strong>, <strong>notice</strong> or <strong>warn</strong>.   If you want to specify a priority
-which is exact (either for exclusion or inclusion), use the <cite>=</cite> prefix.  The following selector
+which is exact (either for exclusion or inclusion), use the <code class="docutils literal"><span class="pre">=</span></code> prefix.  The following selector
 includes log entries <em>only</em> if they are at level &#8216;debug&#8217;:</p>
 <div class="highlight-python"><div class="highlight"><pre>selector: &#39;*.=debug&#39;
 </pre></div>
@@ -363,24 +371,54 @@ automatically.  This means you can create jobs to do log-rotation, or manually r
 and Chaperone will take notice and assure a new log file is opened.</p>
 </li>
 </ol>
-<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a> and <a class="reference internal" href="#logging-stderr"><span>stderr</span></a>.  Output will
-be simultaneously written to all chosen locations.</p>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a>, <a class="reference internal" href="#logging-stderr"><span>stderr</span></a>, and
+<a class="reference internal" href="#logging-syslog-host"><span>syslog_host</span></a>.  Output will be simultaneously written to all chosen locations.</p>
 </dd></dl>
 
 <span class="target" id="logging-stdout"></span><dl class="describe">
 <dt>
 <code class="descname">stdout ( false | true )</code></dt>
 <dd><p>If this is &#8216;true&#8217;, then all selected syslog records will be copied to the &#8216;stdout&#8217; of the container.  Defaults to &#8216;false&#8217;.</p>
-<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stderr"><span>stderr</span></a> and <a class="reference internal" href="#logging-file"><span>file</span></a>.  Output will
-be simultaneously written to all chosen locations.</p>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stderr"><span>stderr</span></a>, <a class="reference internal" href="#logging-file"><span>file</span></a>, and
+<a class="reference internal" href="#logging-syslog-host"><span>syslog_host</span></a>.  Output will be simultaneously written to all chosen locations.</p>
 </dd></dl>
 
 <span class="target" id="logging-stderr"></span><dl class="describe">
 <dt>
 <code class="descname">stderr ( false | true )</code></dt>
 <dd><p>If this is &#8216;true&#8217;, then all selected syslog records will be copied to the &#8216;stderr&#8217; of the container.  Defaults to &#8216;false&#8217;.</p>
-<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a> and <a class="reference internal" href="#logging-file"><span>file</span></a>.  Output will
-be simultaneously written to all chosen locations.</p>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a>, <a class="reference internal" href="#logging-file"><span>file</span></a>, and
+<a class="reference internal" href="#logging-syslog-host"><span>syslog_host</span></a>.  Output will be simultaneously written to all chosen locations.</p>
+</dd></dl>
+
+<span class="target" id="logging-syslog-host"></span><dl class="describe">
+<dt>
+<code class="descname">syslog_host hostname-or-ip</code></dt>
+<dd><p>When set, chaperone will send all matching log records to the remote host specified by <code class="docutils literal"><span class="pre">hostname-or-ip</span></code>.  The remote
+host should be running a <code class="docutils literal"><span class="pre">syslog</span></code> daemon on UDP port 514.</p>
+<p>Since UDP is a connectionless protocol, no error will be given if the remote host is unreachable, or is
+not running the <code class="docutils literal"><span class="pre">syslog</span></code> daemon.  Packets will silently be sent and ignored.</p>
+<p>Note that you can combine this directive with <a class="reference internal" href="#logging-stdout"><span>stdout</span></a>, <a class="reference internal" href="#logging-stderr"><span>stderr</span></a>, and
+<a class="reference internal" href="#logging-file"><span>file</span></a>. Output will be simultaneously written to all chosen locations.</p>
+</dd></dl>
+
+<span class="target" id="logging-logrec-hostname"></span><dl class="describe">
+<dt>
+<code class="descname">logrec_hostname hostname-string</code></dt>
+<dd><p>Normally, syslog records include the hostname of the current host.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>Jul 16 02:53:54 813703fb4021 sudo : pam_unix(sudo:session): session closed for user root
+</pre></div>
+</div>
+<p>Note in the above line, that the string <code class="docutils literal"><span class="pre">813703fb4021</span></code> is the hostname of the current machine, which in the
+case of Docker, is a randomly generated string.</p>
+<p>You can use this directive to force the hostname to a particular string.  For example, you could set
+<code class="docutils literal"><span class="pre">logrec_hostname</span></code> to <code class="docutils literal"><span class="pre">dirserv-1</span></code>, which would cause the above sample line to
+instead be written like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>Jul 16 02:53:54 dirserv-1 sudo : pam_unix(sudo:session): session closed for user root
+</pre></div>
+</div>
+<p>This can be useful when logs are being consolidated using remote logging, and some consistent means of identifying
+the log source is desirable.</p>
 </dd></dl>
 
 <span class="target" id="logging-enabled"></span><dl class="describe">
