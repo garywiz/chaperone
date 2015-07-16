@@ -1,6 +1,7 @@
 import sys
 import os
 import socket
+import asyncio
 
 from time import time, localtime, strftime
 
@@ -82,6 +83,71 @@ class StderrHandler(LogOutput):
     config_match = lambda c: c.stderr
 
 LogOutput.register(StderrHandler)
+
+
+class RemoteClientProtocol:
+    def __init__(self, loop):
+        self.loop = loop
+        self.transport = None
+
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def send(self, message):
+        self.transport.sendto(message.encode())
+
+    def datagram_received(self, data, addr):
+        pass
+
+    def error_received(self, exc):
+        pass
+
+    def connection_lost(self, exc):
+        self.transport = None
+
+    def close(self):
+        if self.transport:
+            self.transport.close()
+
+
+class RemoteHandler(LogOutput):
+
+    config_match = lambda c: c.syslog_host is not None
+
+    _pending = None             # a pending future to setup this handler
+    _protocol = None            # protocol for this logger
+
+    @classmethod
+    def getName(cls, config):
+        return "syslog_host:" + config.syslog_host
+
+    @asyncio.coroutine
+    def setup_handler(self):
+        loop = asyncio.get_event_loop()
+        connect = loop.create_datagram_endpoint(lambda: RemoteClientProtocol(loop),
+                                                remote_addr=(self.config.syslog_host, 514))
+        (transport, protocol) = yield from connect
+        self._pending = None
+        self._protocol = protocol
+
+    def __init__(self, config):
+        super().__init__(config)
+        self._pending = asyncio.async(self.setup_handler())
+
+    def write(self, data):
+        if self._protocol:
+            self._protocol.send(data)
+
+    def close(self):
+        if self._pending:
+            if not self._pending.cancelled():
+                self._pending.cancel()
+            self._pending = None
+        if self._protocol:
+            self._protocol.close()
+            self._protocol = None
+
+LogOutput.register(RemoteHandler)
 
 
 class FileHandler(LogOutput):

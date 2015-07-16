@@ -66,6 +66,7 @@ _config_schema = V.Any(
         'enabled': V.Any(bool, str),
         'extended': bool,
         'file': str,
+        'syslog_host': str,
         'selector': str,
         'stderr': bool,
         'stdout': bool,
@@ -281,8 +282,9 @@ class LogConfig(_BaseConfig):
     uid = None                  # used to control permissions on logfile creation
     gid = None
     logrec_hostname = None      # hostname used to override hostname in syslog record
+    syslog_host = None          # remote IP of syslog handler
 
-    _expand_these = {'selector', 'file', 'enabled', 'logrec_hostname'}
+    _expand_these = {'selector', 'file', 'enabled', 'logrec_hostname', 'syslog_host'}
     _assure_bool = {'enabled'}
     _settings_defaults = {'logrec_hostname'}
 

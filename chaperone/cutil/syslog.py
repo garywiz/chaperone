@@ -225,6 +225,9 @@ class SyslogServer(Server):
 
     def close(self):
         self.capture_python_logging(False)
+        for logitem in self._loglist:
+            for m in logitem[1]:
+                m.close()
         super().close()
         maybe_remove(self._log_socket)
 
