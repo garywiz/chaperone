@@ -43,4 +43,5 @@ docker run -t -i -e "TERM=$TERM" -e "EMACS=$EMACS" --rm=true -v /home:/home \
     --name run-$SUFFIX \
     --entrypoint $SANDBOX/bin/chaperone $IMAGE \
     --create $USER/$myuid \
+    --default-home / \
     --config $APPSDIR/chaperone.d $* $bashcmd

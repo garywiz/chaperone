@@ -1,0 +1,41 @@
+#!/bin/bash
+# Used to create an apps directory here in the sandbox which runs a
+# standard docker image, however uses the local chaperone sources.
+# Creates a data-only "var" directory instead of a full apps directory
+# to test things like --default-home
+
+if [ $# == 0 ]; then
+    echo "usage: testvar image-suffix"
+    exit 1
+fi
+
+# the cd trick assures this works even if the current directory is not current.
+cd ${0%/*}
+
+SUFFIX=$1
+shift				# remaining arguments are for chaperone
+
+IMAGE=chapdev/chaperone-$SUFFIX
+SANDBOX=$PWD
+VARDIR=$SANDBOX/var-$SUFFIX
+
+bashcmd="/bin/bash --rcfile $SANDBOX/bash.bashrc"
+if [ "$1" == "-" ]; then
+  bashcmd=""
+  shift
+fi
+
+myuid=`id -u`
+mygid=`id -g`
+
+# Run the lamp image using our local copy of chaperone as well as the local var-only directory
+
+mkdir -p $VARDIR
+
+docker run -t -i -e "TERM=$TERM" -e "EMACS=$EMACS" --rm=true -v /home:/sandbox \
+    -v $VARDIR:/apps/var \
+    --name run-$SUFFIX \
+    --entrypoint /sandbox${SANDBOX#/home}/bin/chaperone $IMAGE \
+    --create $USER/$myuid \
+    --default-home / \
+    $* $bashcmd

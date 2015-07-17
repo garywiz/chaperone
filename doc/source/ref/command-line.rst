@@ -39,6 +39,9 @@ command-line switch                	       		       function
                                    	       		       By default, all processes run as ``root``.
 :ref:`--create-user=newuser[/uid/gid] <option.create-user>`    Create a new user upon start-up with optional ``uid`` and ``gid``.  Then
                                    	       		       run as if ``--user=<user>`` was specified.
+:ref:`--default-home=directory <option.default-home>`          If :ref:`--create-user <option.create-user>` specifies a user whose
+			       				       home directory does not exist, then create the new user account with this
+							       directory as the user's home directory.
 :ref:`--show-dependencies <option.show-dependencies>`	       Display service dependency graph, then exit.
 :ref:`--task <option.task>`				       Run in "task mode".  This implies ``--log-level=err``, ``--disable-services``,
                                    	       		       and ``--exitkills``.  This switch is useful when the container publishes
@@ -304,6 +307,43 @@ Option Reference Information
       ``uid`` or ``gid`` are correct, and proceed silently.
 
       If the user credentials are defined differently, then an error will occur.
+
+
+.. _option.default-home:
+
+.. option:: --default-home directory
+
+   This option is meaningful only when used in combination with :ref:`--create-user <option.create-user>`
+   and specifies the home diretory to use if the user's home directory does not exist.
+
+   This switch can be useful if a user's home directory may optionally be mounted as part
+   of a volume mount, or if no such mount is provided, the user directory can default to an
+   alternate location within the container itself.
+
+   For example, assume that a container normally accepts a mount-point for ``/home``, where
+   the specified user (in this case ``joebloggs``) has a pre-existing home directory,
+   as follows::
+
+     docker run -v /home:/home myimage --create-user joebloggs --config apps/chaperone.conf
+
+   In this case, chaperone would find it's configuration in ``/home/joebloggs/apps/chaperone.conf``.
+
+   But, if you wanted the container to be more versatile, you may want to create an
+   application directory *inside* the container as well so that the container could run
+   with either an internal configuration, or an external configuration to simplify
+   development.
+
+   So, the following could be used to provide a default home::
+
+     docker run -v myimage --create-user joebloggs --default-home /defhome \
+         --config apps/chaperone.conf
+
+   The above command would instead find chaperone's configuration in ``/defhome/apps/chaperone.conf``,
+   providing that no directory ``/home/joebloggs`` exists inside the container.
+
+   Typically, when a container is first built, this switch is included in the
+   :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>` environment variable.  Doing so allows the container
+   to be executed with a home directory mountpoint, or without.
 
 
 .. _option.show-dependencies:

@@ -212,7 +212,7 @@ def groupadd(name, gid):
     raise ChSystemError("Unable to add a group with name={0} and GID={1}".format(name, gid))
 
 
-def useradd(name, uid = None, gid = None):
+def useradd(name, uid = None, gid = None, home = None):
     """
     Adds a user to the system given an optional UID and numeric GID.
     """
@@ -222,6 +222,8 @@ def useradd(name, uid = None, gid = None):
         ucmd += ['-u', str(uid)]
     if gid is not None:
         ucmd += ['-g', str(gid)]
+    if home is not None:
+        ucmd += ['--home-dir', home]
     
     ucmd += [name]
 
@@ -240,6 +242,8 @@ def useradd(name, uid = None, gid = None):
         ucmd += " -u " + str(uid)
     if gid is not None:
         ucmd += " -G " + str(gid)
+    if home is not None:
+        ucmd += " -h '{0}'".format(home)
 
     ucmd += " " + name
 
@@ -251,8 +255,57 @@ def useradd(name, uid = None, gid = None):
 
     raise ChSystemError("Error while trying to add user: {0}\ntried:\n{1}".format(name, tried))
     
+
+def userdel(name):
+    """
+    Removes a user from the system.
+    """
+    del_ex = ChSystemError("Error while trying to remove user: {0}".format(name))
+
+    # try gnu tools first
+    try:
+        if subprocess.call(['userdel', name]) == 0:
+            return
+        raise del_ex
+    except FileNotFoundError:
+        pass
+
+    # try busybox-style adduser
+    if subprocess.call("deluser " + name, shell=True) == 0:
+        return
+
+    raise del_ex
     
-def maybe_create_user(user, uid = None, gid = None):
+    
+# User Directories Directory cache
+_udd = None
+
+def get_user_directories_directory():
+    """
+    Determines the directory where user directories are stored.  This is actually
+    not that easy, and different systems have different ways of doing it.  So,
+    we try adding a user called '_chaptest_' just to see where the directory goes,
+    and use that.
+    """
+    global _udd
+
+    if _udd is not None:
+        return _udd
+
+    try:
+        testuser = "_chaptest_"
+        useradd(testuser)
+        userinfo = lookup_user(testuser)
+
+        _udd = os.path.dirname(userinfo.pw_dir)
+
+        userdel(testuser)
+    except:
+        _udd = "/"              # default if any error occurs
+
+    return _udd
+
+def maybe_create_user(user, uid = None, gid = None, default_home = None):
     """
     If the user does not exist, then create one with the given name, and optionally
     the specified uid.  If a gid is specified, create a group with the same name as the 
@@ -283,7 +336,7 @@ def maybe_create_user(user, uid = None, gid = None):
             raise ChParameterError("User {0} exists, but does not have expected GID={1}".format(user, gid))
         return
 
-    # Now, we need to create the user, and optionally the group
+    # Now, we need to create the user, and optionally the group.
 
     if gid is not None:
 
@@ -305,7 +358,17 @@ def maybe_create_user(user, uid = None, gid = None):
             
         gid = newgid              # always will be the group name
 
-    useradd(user, uid, gid)
+    # Test to see if the user directory itself already exists, which should be the case.
+    # If it doesn't, then use the default, if provided.
+
+    home = None
+
+    if default_home:
+        udd = get_user_directories_directory()
+        if not os.path.exists(os.path.join(udd, user)):
+            home = default_home
+
+    useradd(user, uid, gid, home)
 
 
 def _assure_dir_for(path, pwrec, gid):

@@ -2,7 +2,8 @@
 Lightweight process and service manager
 
 Usage:
-    chaperone [--config=<file_or_dir>] [--user=<name> | --create-user=<newuser>]
+    chaperone [--config=<file_or_dir>]
+              [--user=<name> | --create-user=<newuser>] [--default-home=<dir>]
               [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
               [--debug] [--force] [--disable-services] [--no-defaults] [--version] [--show-dependencies]
               [--task]
@@ -12,6 +13,8 @@ Options:
     --config=<file_or_dir>   Specifies file or directory for configuration (default is /etc/chaperone.d)
     --create-user=<newuser>  Create a new user with an optional UID (name or name/uid), 
                              then run as if --user was specified.
+    --default-home=<dir>     If the --create-user home directory does not exist, then use this
+                             directory as the default home directory for the new user instead.
     --debug                  Turn on debugging features (same as --log-level=DEBUG)
     --disable-services       Does not run any services, only the given command (troubleshooting)
     --exitkills              When given command exits, kill the system (default if container running interactive)
@@ -126,7 +129,7 @@ def main_entry():
             exit(1)
          udata = match.groupdict()
          try:
-            maybe_create_user(udata['user'], udata['uid'], udata['gid'])
+            maybe_create_user(udata['user'], udata['uid'], udata['gid'], options['--default-home'])
          except Exception as ex:
             print("--create-user failure: {0}".format(ex))
             exit(1)
