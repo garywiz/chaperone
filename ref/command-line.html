@@ -229,16 +229,21 @@ By default, all processes run as <code class="docutils literal"><span class="pre
 <td>Create a new user upon start-up with optional <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code>.  Then
 run as if <code class="docutils literal"><span class="pre">--user=&lt;user&gt;</span></code> was specified.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#option-default-home"><span>&#8211;default-home=directory</span></a></td>
+<td>If <a class="reference internal" href="#option-create-user"><span>&#8211;create-user</span></a> specifies a user whose
+home directory does not exist, then create the new user account with this
+directory as the user&#8217;s home directory.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
 <td>Display service dependency graph, then exit.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
 <td>Run in &#8220;task mode&#8221;.  This implies <code class="docutils literal"><span class="pre">--log-level=err</span></code>, <code class="docutils literal"><span class="pre">--disable-services</span></code>,
 and <code class="docutils literal"><span class="pre">--exitkills</span></code>.  This switch is useful when the container publishes
 commands which must run in isolation, such as displaying container internal
 information such as version information.</td>
 </tr>
-<tr class="row-even"><td>&#8211;version</td>
+<tr class="row-odd"><td>&#8211;version</td>
 <td>Displays the chaperone version number.</td>
 </tr>
 </tbody>
@@ -478,6 +483,37 @@ is first started and when it is started again.  So, if the user name specified b
 <code class="docutils literal"><span class="pre">uid</span></code> or <code class="docutils literal"><span class="pre">gid</span></code> are correct, and proceed silently.</p>
 <p class="last">If the user credentials are defined differently, then an error will occur.</p>
 </div>
+</dd></dl>
+
+<span class="target" id="option-default-home"></span><dl class="option">
+<dt id="cmdoption-chaperone--default-home">
+<code class="descname">--default-home</code><code class="descclassname"> directory</code><a class="headerlink" href="#cmdoption-chaperone--default-home" title="Permalink to this definition">¶</a></dt>
+<dd><p>This option is meaningful only when used in combination with <a class="reference internal" href="#option-create-user"><span>&#8211;create-user</span></a>
+and specifies the home diretory to use if the user&#8217;s home directory does not exist.</p>
+<p>This switch can be useful if a user&#8217;s home directory may optionally be mounted as part
+of a volume mount, or if no such mount is provided, the user directory can default to an
+alternate location within the container itself.</p>
+<p>For example, assume that a container normally accepts a mount-point for <code class="docutils literal"><span class="pre">/home</span></code>, where
+the specified user (in this case <code class="docutils literal"><span class="pre">joebloggs</span></code>) has a pre-existing home directory,
+as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -v /home:/home myimage --create-user joebloggs --config apps/chaperone.conf
+</pre></div>
+</div>
+<p>In this case, chaperone would find it&#8217;s configuration in <code class="docutils literal"><span class="pre">/home/joebloggs/apps/chaperone.conf</span></code>.</p>
+<p>But, if you wanted the container to be more versatile, you may want to create an
+application directory <em>inside</em> the container as well so that the container could run
+with either an internal configuration, or an external configuration to simplify
+development.</p>
+<p>So, the following could be used to provide a default home:</p>
+<div class="highlight-python"><div class="highlight"><pre>docker run -v myimage --create-user joebloggs --default-home /defhome \
+    --config apps/chaperone.conf
+</pre></div>
+</div>
+<p>The above command would instead find chaperone&#8217;s configuration in <code class="docutils literal"><span class="pre">/defhome/apps/chaperone.conf</span></code>,
+providing that no directory <code class="docutils literal"><span class="pre">/home/joebloggs</span></code> exists inside the container.</p>
+<p>Typically, when a container is first built, this switch is included in the
+<a class="reference internal" href="env.html#env-chap-options"><span>_CHAP_OPTIONS</span></a> environment variable.  Doing so allows the container
+to be executed with a home directory mountpoint, or without.</p>
 </dd></dl>
 
 <span class="target" id="option-show-dependencies"></span><dl class="option">
