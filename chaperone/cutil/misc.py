@@ -155,7 +155,7 @@ def lookup_user(uid, gid = None):
         (pwrec.pw_name,
          pwrec.pw_passwd,
          pwrec.pw_uid,
-         lookup_gid(gid),
+         lookup_group(gid, True),
          pwrec.pw_gecos,
          pwrec.pw_dir,
          pwrec.pw_shell)
@@ -164,9 +164,12 @@ def lookup_user(uid, gid = None):
     return retval
 
 
-def lookup_gid(gid, must_exist = False):
+def lookup_group(gid, optional = False):
     """
     Looks up a user using either a name or integer user value.
+    If 'optional' is true, then does not require that the group exist, and always
+    returns the numeric value of 'gid', or the mapping from 'gid' if it is a name.
+    Otherwise returns the group record.
     """
     intgid = None
 
@@ -176,20 +179,79 @@ def lookup_gid(gid, must_exist = False):
         pass
     
     if intgid is not None:
-        if not must_exist:
+        if optional:
             return intgid
         findit = grp.getgrgid
     else:
         findit = grp.getgrnam
 
     try:
-        pwrec = findit(gid)
+        grrec = findit(gid)
     except KeyError:
         raise ChNotFoundError("specified group ('{0}') does not exist".format(gid))
 
-    return pwrec.gr_gid
+    return grrec.gr_gid if optional else grrec
 
 
+def groupadd(name, gid):
+    """
+    Adds a group to the system with the specified name and GID.
+    """
+    # First, try the gnu tools way
+    try:
+        if subprocess.call(['groupadd', '-g', str(gid), name]) == 0:
+            return
+        raise ChSystemError("Unable to add a group with name={0} and GID={1}".format(name, gid))
+    except FileNotFoundError:
+        pass
+
+    # Now, try using 'addgroup' with the busybox syntax
+    if subprocess.call("addgroup -g {0} {1}".format(gid, name), shell=True) == 0:
+        return
+
+    raise ChSystemError("Unable to add a group with name={0} and GID={1}".format(name, gid))
+
+
+def useradd(name, uid = None, gid = None):
+    """
+    Adds a user to the system given an optional UID and numeric GID.
+    """
+
+    ucmd = ['useradd', '--no-create-home']
+    if uid is not None:
+        ucmd += ['-u', str(uid)]
+    if gid is not None:
+        ucmd += ['-g', str(gid)]
+    
+    ucmd += [name]
+
+    tried = " ".join(ucmd)
+
+    # try gnu tools first
+    try:
+        if subprocess.call(ucmd) == 0:
+            return
+        raise ChSystemError("Error while trying to add user: {0} ({1})".format(name, tried))
+    except FileNotFoundError:
+        pass
+
+    ucmd = "adduser -D -H"
+    if uid is not None:
+        ucmd += " -u " + str(uid)
+    if gid is not None:
+        ucmd += " -G " + str(gid)
+
+    ucmd += " " + name
+
+    tried += "\n" + ucmd
+
+    # try busybox-style adduser
+    if subprocess.call(ucmd, shell=True) == 0:
+        return
+
+    raise ChSystemError("Error while trying to add user: {0}\ntried:\n{1}".format(name, tried))
+    
+    
 def maybe_create_user(user, uid = None, gid = None):
     """
     If the user does not exist, then create one with the given name, and optionally
@@ -217,21 +279,17 @@ def maybe_create_user(user, uid = None, gid = None):
     if pwrec:
         if uid is not None and uid != pwrec.pw_uid:
             raise ChParameterError("User {0} exists, but does not have expected UID={1}".format(user, uid))
-        if gid is not None and lookup_gid(gid, True) != pwrec.pw_gid:
+        if gid is not None and lookup_group(gid).gr_gid != pwrec.pw_gid:
             raise ChParameterError("User {0} exists, but does not have expected GID={1}".format(user, gid))
         return
 
     # Now, we need to create the user, and optionally the group
 
-    ucmd = ['useradd', '--no-create-home']
-    if uid is not None:
-        ucmd += ['-u', str(uid)]
-
     if gid is not None:
 
         create_group = False
         try:
-            newgid = lookup_gid(gid, must_exist = True) # name or number
+            newgid = lookup_group(gid).gr_name # always use name
         except ChNotFoundError:
             create_group = True
             try:
@@ -242,16 +300,12 @@ def maybe_create_user(user, uid = None, gid = None):
                 raise ChParameterError("Group does not exist: {0}".format(gid))
 
         if create_group:
-            if subprocess.call(['groupadd', '-g', str(newgid), user]):
-                raise ChSystemError("Unable to add a group with name={0} and GID={1}".format(user, newgid))
-            newgid = lookup_gid(user, must_exist = True)
+            groupadd(user, newgid)
+            newgid = lookup_group(user).gr_name
             
-        ucmd += ['-g', str(newgid)]  # use this gid to create our user
+        gid = newgid              # always will be the group name
 
-    ucmd += [user]
-
-    if subprocess.call(ucmd):
-        raise ChSystemError("Error while trying to add user: {0}".format(' '.join(ucmd)))
+    useradd(user, uid, gid)
 
 
 def _assure_dir_for(path, pwrec, gid):
