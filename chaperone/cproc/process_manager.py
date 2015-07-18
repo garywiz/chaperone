@@ -26,7 +26,7 @@ class TopLevelProcess(objectplus):
     exit_when_no_processes = True
     send_sighup = False
 
-    _shutdown_timeout = 5
+    _shutdown_timeout = None
     _ignore_signals = False
     _services_started = False
     _syslog = None
@@ -47,7 +47,7 @@ class TopLevelProcess(objectplus):
         self._pending = set()
 
         # wait at least 0.5 seconds, zero is totally pointless
-        self._shutdown_timeout = config.get_settings().get('shutdown_timeout', 10) or 0.5
+        self._shutdown_timeout = config.get_settings().get('shutdown_timeout', 8) or 0.5
 
         policy = asyncio.get_event_loop_policy()
         w = self._watcher = InitChildWatcher()
@@ -155,11 +155,14 @@ class TopLevelProcess(objectplus):
             if not p.cancelled():
                 p.cancel()
 
-        # Tell the family it's been nice
+        # Tell the family it's been nice.  It's unlikely we won't have a process family, but
+        # it's optional, so we should handle the situation.
 
         if self._family:
             for f in self._family.values():
                 yield from f.final_stop()
+            # let normal shutdown happen
+            yield from asyncio.sleep(self._shutdown_timeout)
 
         try:
             os.kill(-1, signal.SIGTERM) # first try a sig term
@@ -170,6 +173,11 @@ class TopLevelProcess(objectplus):
             self._no_processes(True)
             return
 
+        if self._family:
+            yield from asyncio.sleep(2) # these processes are unknowns
+        else:
+            yield from asyncio.sleep(self._shutdown_timeout)
+            
         yield from asyncio.sleep(self._shutdown_timeout)
         if self._all_killed:
             return
@@ -185,7 +193,6 @@ class TopLevelProcess(objectplus):
 
     def activate_result(self, future):
         self._pending.discard(future)
-        debug("DISPATCH RESULT", future)
 
     def activate(self, cr):
        future = asyncio.async(cr)
@@ -197,10 +204,16 @@ class TopLevelProcess(objectplus):
         self._syslog.capture_python_logging()
         info("Switching all chaperone logging to /dev/log")
 
+    def _system_coro_check(self, f):
+        if f.exception():
+            error("system startup cancelled due to error: {0}".format(f.exception()))
+            self.kill_system()
+
     def _system_started(self, startup, future=None):
         info(self.version + ", ready.")
         if startup:
-            self.activate(startup)
+            future = self.activate(startup)
+            future.add_done_callback(self._system_coro_check)
 
     def run_event_loop(self, startup_coro = None):
         """

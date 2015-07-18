@@ -300,7 +300,7 @@ def get_user_directories_directory():
         _udd = os.path.dirname(userinfo.pw_dir)
 
         userdel(testuser)
-    except:
+    except Exception:
         _udd = "/"              # default if any error occurs
 
     return _udd

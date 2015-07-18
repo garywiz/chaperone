@@ -191,6 +191,7 @@ def main_entry():
                                              name="CONSOLE",
                                              exec_args=[cmd] + options['<args>'],
                                              uid=user,
+                                             kill_signal=("SIGHUP" if tty else None),
                                              setpgrp=not tty,
                                              exit_kills=kill_switch,
                                              service_groups="IDLE",
@@ -198,11 +199,6 @@ def main_entry():
                                              stderr='inherit', stdout='inherit')
          extra_services = [cmdsvc]
 
-      try:
-         yield from tlp.run_services(extra_services, extra_only = options['--disable-services'])
-      except Exception as ex:
-         error(ex, "System startup cancelled due to error: {0}", ex)
-         service_errors = True
-         tlp.kill_system()
+      yield from tlp.run_services(extra_services, extra_only = options['--disable-services'])
 
    tlp.run_event_loop(startup_done())

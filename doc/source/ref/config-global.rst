@@ -47,7 +47,7 @@ Entries below marked with |ENV| support :ref:`environment variable expansion <en
 						       See :ref:`service process_timeout <service.process_timeout>` for more
 						       information.
    :ref:`shutdown_timeout <settings.shutdown_timeout>` The amount of time Chaperone will wait for services to complete shutdown
-						       before forcing a kill with SIGKILL.  Default is 10 seconds.
+						       before forcing a kill with SIGKILL.  Default is 8 seconds.
    :ref:`startup_pause <settings.startup_pause>`       Specifies the ``startup_pause`` default for services.
    :ref:`uid <settings.uid>`                           The default uid (name or number) for all services and logging tasks.
 						       Overrides the value specified by :ref:`--user <option.user>` or

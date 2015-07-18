@@ -1,0 +1,5 @@
+#!/bin/bash
+# Useful for testing if you want to inject a shell BEFORE chaperone starts by changing the entry point.
+
+export ENTARGS="$*"
+exec /bin/bash

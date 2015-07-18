@@ -14,7 +14,7 @@ def PATCH_CLASS(module, clsname, member, oldstr, newfunc):
         should_be = ''.join(inspect.getsourcelines(getattr(cls, member))[0])
         if should_be == oldstr:
             setattr(cls, member, newfunc)
-    except:
+    except Exception:
         pass
 
 

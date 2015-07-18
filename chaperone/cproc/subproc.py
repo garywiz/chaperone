@@ -52,6 +52,8 @@ class SubProcess(object):
 
     _pwrec = None               # the pwrec looked up for execution user/group
     _cond_starting = None       # a condition which, if present, indicates that this service is starting
+    _cond_exception = None      # exception which was raised during startup (for other waiters)
+
     _started = False            # true if a start has occurred, either successful or not
     _starts_allowed = 0         # number of starts permitted before we give up
     _prereq_cache = None
@@ -329,13 +331,20 @@ class SubProcess(object):
             yield from cond_starting.acquire()
             yield from cond_starting.wait()
             cond_starting.release()
+            # This is an odd situation.  Since every waiter expects start() to succeed, or
+            # raise an exception, we need to be sure we raise the exception that happened
+            # in the original start() request.
+            if self._cond_exception:
+                raise self._cond_exception
             return
 
         cond_starting = self._cond_starting = asyncio.Condition()
+        self._cond_exception = None
 
         # Now we can procede
 
         try:
+
             prereq = self.prerequisites
             if prereq:
                 for p in prereq:
@@ -350,7 +359,7 @@ class SubProcess(object):
                     yield from asyncio.sleep(service.idle_delay)
 
                 # STOP if the system is no longer alive because a prerequisite failed
-                if not self.family.controller.system_alive:
+                if not self.family.system_alive:
                     return
 
             try:
@@ -359,10 +368,13 @@ class SubProcess(object):
                 if service.ignore_failures:
                     self.loginfo("service {0} ignoring failures. Exception: {1}", service.name, ex)
                 else:
+                    self._cond_exception = ex
+                    self.logdebug("{0} received exception during attempted start. Exception: {1}", service.name, ex)
                     raise
 
         finally:
             self._started = True
+
             yield from cond_starting.acquire()
             cond_starting.notify_all()
             cond_starting.release()
@@ -442,11 +454,15 @@ class SubProcess(object):
         if not self.pidfile:
             return
 
+        self.logdebug("{0} waiting for PID file: {1}".format(self.name, self.pidfile))
+
         pidsleep = 0.02         # work incrementally up to no more than process_timeout
         minsleep = 3
         expires = time() + self.process_timeout
 
         while time() < expires:
+            if not self.family.system_alive:
+                return
             yield from asyncio.sleep(pidsleep)
             # ramp up until we hit the minsleep ceiling
             pidsleep = min(pidsleep*2, minsleep)
@@ -569,7 +585,7 @@ class SubProcess(object):
         if self.pidfile:
             try:
                 os.remove(self.pidfile)
-            except:
+            except Exception:
                 pass
 
         # Reset any non-ready dependents
@@ -587,8 +603,8 @@ class SubProcess(object):
     @asyncio.coroutine
     def final_stop(self):
         "Called when the whole system is killed, but before drastic measures are taken."
-        if self._exit_event:
-            self._exit_event = None
+        self._exit_event = None
+        self.terminate()
         for p in list(self._pending):
             if not p.cancelled():
                 p.cancel()
@@ -675,6 +691,10 @@ class SubProcessFamily(lazydict):
         df.add_rows(self.values())
         return df
     
+    @property
+    def system_alive(self):
+        return self.controller.system_alive
+
     @asyncio.coroutine
     def run(self, servicelist = None):
         """

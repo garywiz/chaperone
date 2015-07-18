@@ -50,7 +50,7 @@ class CronProcess(SubProcess):
         # Start up cron
         try:
             self._cron.start()
-        except:
+        except Exception:
             raise ChParameterError("not a valid cron interval specification, '{0}'".format(self.interval))
 
     @asyncio.coroutine

@@ -202,7 +202,7 @@ class SyslogServer(Server):
 
         try:
             os.remove(logsock)
-        except:
+        except Exception:
             pass
 
     def _create_server(self):
@@ -312,11 +312,28 @@ class CustomSysLog(logging.Handler):
     internal syslog capture handler.
     """
 
+    PRIORITY_NAMES = {
+        "ALERT":    syslog_info.LOG_ALERT,
+        "CRIT":     syslog_info.LOG_CRIT,
+        "CRITICAL": syslog_info.LOG_CRIT,
+        "DEBUG":    syslog_info.LOG_DEBUG,
+        "EMERG":    syslog_info.LOG_EMERG,
+        "ERR":      syslog_info.LOG_ERR,
+        "ERROR":    syslog_info.LOG_ERR,        #  DEPRECATED
+        "INFO":     syslog_info.LOG_INFO,
+        "NOTICE":   syslog_info.LOG_NOTICE,
+        "PANIC":    syslog_info.LOG_EMERG,      #  DEPRECATED
+        "WARN":     syslog_info.LOG_WARNING,    #  DEPRECATED
+        "WARNING":  syslog_info.LOG_WARNING,
+        }
+
     def __init__(self, owner):
         super().__init__()
         self._owner = owner
         self.setFormatter(SysLogFormatter(sys.argv[0] or '-', os.getpid()))
 
     def emit(self, record):
-        self.facility = getattr(record, '_facility', syslog_info.LOG_LOCAL5)
-        self._owner.parse_to_output("<{0}>".format(self.facility) + self.format(record))
+        facility = getattr(record, '_facility', syslog_info.LOG_LOCAL5)
+        priority = self.PRIORITY_NAMES.get(record.levelname, syslog_info.LOG_ERR)
+
+        self._owner.parse_to_output("<{0}>".format(facility << 3 | priority) + self.format(record))
