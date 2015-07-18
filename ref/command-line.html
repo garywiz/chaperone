@@ -277,6 +277,11 @@ command line).</li>
 </ol>
 <p>Once started, Chaperone monitors all services, performs logging, and cleans up zombie processes when
 they exit.   When it receives a <code class="docutils literal"><span class="pre">SIGTERM</span></code> it will shutdown all processes in an orderly fashion.</p>
+<p>Note that when a command is specified on the chaperone command line, chaperone starts a <code class="docutils literal"><span class="pre">CONSOLE</span></code> service internally.
+This service can be managed just like any other servce, and shows up in service listings when using the <span class="xref std std-ref">telchap</span>
+command.   If chaperone is started in an interactive environment (has a pseudo-tty as <code class="docutils literal"><span class="pre">stdin</span></code>), it uses
+<code class="docutils literal"><span class="pre">SIGHUP</span></code> to terminate the process. Otherwise, it uses <code class="docutils literal"><span class="pre">SIGTERM</span></code> as usual.   This is to accomodate login
+shells such <code class="docutils literal"><span class="pre">bash</span></code> and <code class="docutils literal"><span class="pre">sh</span></code>, which expect this behavior.</p>
 </div>
 <div class="section" id="option-reference-information">
 <h2>Option Reference Information<a class="headerlink" href="#option-reference-information" title="Permalink to this headline">¶</a></h2>

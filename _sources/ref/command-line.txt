@@ -87,6 +87,13 @@ Once started, Chaperone monitors all services, performs logging, and cleans up z
 they exit.   When it receives a ``SIGTERM`` it will shutdown all processes in an orderly fashion.
 
 
+Note that when a command is specified on the chaperone command line, chaperone starts a ``CONSOLE`` service internally.
+This service can be managed just like any other servce, and shows up in service listings when using the :ref:`telchap <telchap>`
+command.   If chaperone is started in an interactive environment (has a pseudo-tty as ``stdin``), it uses
+``SIGHUP`` to terminate the process. Otherwise, it uses ``SIGTERM`` as usual.   This is to accomodate login
+shells such ``bash`` and ``sh``, which expect this behavior.
+
+
 Option Reference Information
 ----------------------------
 
