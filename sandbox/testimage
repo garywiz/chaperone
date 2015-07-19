@@ -33,7 +33,7 @@ mygid=`id -g`
 # Copy the apps into this sandbox directory so we can work on it.
 
 if [ ! -d $APPSDIR ]; then
-    docker run -i --rm=true -v /home:/home $IMAGE --disable --exitkills --log err \
+    docker run -i --rm=true -v /home:/home $IMAGE --disable --exitkills --log err --user root \
 	/bin/bash -c "cp -a /apps $APPSDIR; chown -R $myuid:$mygid $APPSDIR"
 fi
 

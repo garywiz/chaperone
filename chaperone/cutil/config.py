@@ -41,6 +41,7 @@ _config_schema = V.Any(
         'startup_pause': V.Any(float, int),
         'restart': bool,
         'restart_limit': int,
+        'restart_delay': int,
         'service_groups': str,
         'setpgrp': bool,
         'stderr': V.Any('log', 'inherit'),
