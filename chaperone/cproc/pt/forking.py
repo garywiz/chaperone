@@ -6,8 +6,8 @@ class ForkingProcess(SubProcess):
     @asyncio.coroutine
     def process_started_co(self):
         result = yield from self.timed_wait(self.process_timeout, self._exit_timeout)
-        if result is not None and result > 0:
-            yield from self._abnormal_exit(result)
+        if result is not None and not result.normal_exit:
+            raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
         yield from self.wait_for_pidfile()
         
     def _exit_timeout(self):
