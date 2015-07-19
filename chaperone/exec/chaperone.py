@@ -118,22 +118,25 @@ def main_entry():
       error("--task can only be used if a shell command is specified as an argument")
       exit(1)
 
-   user = options['--user']
+   # It's possible that BOTH --create-user and --user exist due to the way _CHAP_OPTIONS is overlaid
+   # with command line options.  So, in such a case, note that we ignore --user.
 
-   if user is None:
-      create = options['--create-user']
-      if create:
-         match = RE_CREATEUSER.match(create)
-         if not match:
-            print("Invalid format for --create-user argument: {0}".format(create))
-            exit(1)
-         udata = match.groupdict()
-         try:
-            maybe_create_user(udata['user'], udata['uid'], udata['gid'], options['--default-home'])
-         except Exception as ex:
-            print("--create-user failure: {0}".format(ex))
-            exit(1)
-         user = udata['user']
+   create = options['--create-user']
+
+   if create is None:
+      user = options['--user']
+   else:
+     match = RE_CREATEUSER.match(create)
+     if not match:
+        print("Invalid format for --create-user argument: {0}".format(create))
+        exit(1)
+     udata = match.groupdict()
+     try:
+        maybe_create_user(udata['user'], udata['uid'], udata['gid'], options['--default-home'])
+     except Exception as ex:
+        print("--create-user failure: {0}".format(ex))
+        exit(1)
+     user = udata['user']
 
    extras = None
    if options['--ignore-failures']:

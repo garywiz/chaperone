@@ -19,8 +19,11 @@ class SimpleProcess(SubProcess):
                 result = yield from self.timed_wait(self.startup_pause)
             except asyncio.TimeoutError:
                 result = None
-            if result is not None and result > 0:
-                raise Exception("{0} failed on start-up during {1}sec grace period".format(self.name, self.startup_pause))
+            if result is not None and not result.normal_exit:
+                if self.ignore_failures:
+                    warn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
+                else:
+                    raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
 
         # If there is a pidfile, sit here and wait for a bit
         yield from self.wait_for_pidfile()
