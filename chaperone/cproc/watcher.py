@@ -49,6 +49,10 @@ class InitChildWatcher(BaseChildWatcher):
             "Caught subprocesses termination from unknown pids: %s",
             collateral_victims)
 
+    @property
+    def number_of_waiters(self):
+        return len(self._callbacks)
+
     def add_no_processes_handler(self, callback, *args):
         self._no_processes = partial(callback, *args)
 

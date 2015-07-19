@@ -158,11 +158,15 @@ class TopLevelProcess(objectplus):
         # Tell the family it's been nice.  It's unlikely we won't have a process family, but
         # it's optional, so we should handle the situation.
 
+        wait_done = False       # indicates if shutdown_timeout has expired
+
         if self._family:
             for f in self._family.values():
                 yield from f.final_stop()
             # let normal shutdown happen
-            yield from asyncio.sleep(self._shutdown_timeout)
+            if self._watcher.number_of_waiters > 0:
+                yield from asyncio.sleep(self._shutdown_timeout)
+                wait_done = True
 
         try:
             os.kill(-1, signal.SIGTERM) # first try a sig term
@@ -173,12 +177,11 @@ class TopLevelProcess(objectplus):
             self._no_processes(True)
             return
 
-        if self._family:
-            yield from asyncio.sleep(2) # these processes are unknowns
+        if wait_done:                   # give a short wait just so the signals fire
+            yield from asyncio.sleep(1) # these processes are unknowns
         else:
             yield from asyncio.sleep(self._shutdown_timeout)
             
-        yield from asyncio.sleep(self._shutdown_timeout)
         if self._all_killed:
             return
 

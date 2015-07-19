@@ -34,7 +34,7 @@ if options['--ignore-signals']:
     signal.signal(signal.SIGHUP, lambda signum, frame: print("ignoring SIGHUP"))
     signal.signal(signal.SIGINT, lambda signum, frame: print("ignoring SIGINT"))
 else:
-    signal.signal(signal.SIGTERM, lambda signum, frame: not print("received SIGTERM"))
+    signal.signal(signal.SIGTERM, lambda signum, frame: print("received SIGTERM") or exit() )
     signal.signal(signal.SIGHUP, lambda signum, frame: not print("received SIGHUP"))
     signal.signal(signal.SIGINT, lambda signum, frame: not print("received SIGINT"))
 

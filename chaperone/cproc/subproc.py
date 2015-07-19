@@ -633,7 +633,7 @@ class SubProcess(object):
     def timed_wait(self, timeout, func = None):
         """
         Timed wait waits for process completion.  If process completion occurs normally, the
-        resultcode for process startup is returned.
+        returncode for process startup is returned.
 
         Upon timeout either:
         1.  asyncio.TimeoutError is raised if 'func' is not provided, or...
@@ -647,6 +647,9 @@ class SubProcess(object):
             if not func:
                 raise
             result = func()
+        except asyncio.CancelledError:
+            result = self.returncode
+
         return result
 
     @asyncio.coroutine

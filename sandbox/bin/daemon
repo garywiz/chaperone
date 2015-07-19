@@ -4,7 +4,7 @@
 Forks a process in a daemon-like fashion for testing.
 
 Usage:
-    fork [--wait=seconds] [--ignore-signals] [--exit=code] COMMAND [ARGS ...]
+    daemon [--wait=seconds] [--ignore-signals] [--exit=code] COMMAND [ARGS ...]
 """
 
 import signal
