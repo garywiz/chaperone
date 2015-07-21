@@ -34,7 +34,7 @@
   
     <link rel="top" title="chaperone 0.2.0 documentation" href="../index.html"/>
         <link rel="up" title="Using Chaperone" href="chap-using.html"/>
-        <link rel="next" title="Other Uses for Chaperone" href="chap-other.html"/>
+        <link rel="next" title="A Simple Docker Example" href="chap-docker-simple.html"/>
         <link rel="prev" title="Using Chaperone" href="chap-using.html"/> 
 
   
@@ -80,7 +80,18 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="reference internal" href="chap-using.html">Using Chaperone</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="">Using Chaperone with Docker</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Using Chaperone with Docker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="chap-docker-simple.html">A Simple Docker Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#creating-a-dockerfile">Creating a Dockerfile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#adding-chaperone-s-configuration-file">Adding Chaperone&#8217;s Configuration File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#exposing-ports-and-running-chaperone">Exposing Ports and Running Chaperone</a></li>
+<li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#building-the-image">Building the Image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#running-the-container">Running the Container</a></li>
+<li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#what-s-next">What&#8217;s Next?</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="chap-other.html">Other Uses for Chaperone</a></li>
 </ul>
 </li>
@@ -163,12 +174,7 @@
 </div>
           <div role="main" class="document">
             
-  <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p>This section is being worked on and is not yet complete.  The <a class="reference internal" href="../ref/index.html#reference"><span>Chaperone Reference</span></a> is currently complete and ready to use.</p>
-<p class="last">For status information about Chaperone and documentation, see <a class="reference internal" href="../status.html#status"><span>Chaperone Project Status</span></a>.</p>
-</div>
-<div class="section" id="using-chaperone-with-docker">
+  <div class="section" id="using-chaperone-with-docker">
 <span id="chap-docker"></span><h1>Using Chaperone with Docker<a class="headerlink" href="#using-chaperone-with-docker" title="Permalink to this headline">¶</a></h1>
 <p>While Chaperone is a general-purpose program that can be used to manage any small hierarchy of
 processes, it was designed specifically to solve problems encountered when creating containers.</p>
@@ -180,6 +186,19 @@ functionality into multiple processes to better exploit CPU resources.</p>
 <p>The moment a container contains even two cooperating proceses, the problem of management
 arises, and <code class="docutils literal"><span class="pre">chaperone</span></code> was designed to solve multi-process management simple
 and well-contained.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="chap-docker-simple.html">A Simple Docker Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html#creating-a-dockerfile">Creating a Dockerfile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html#adding-chaperone-s-configuration-file">Adding Chaperone&#8217;s Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html#exposing-ports-and-running-chaperone">Exposing Ports and Running Chaperone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html#building-the-image">Building the Image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html#running-the-container">Running the Container</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html#what-s-next">What&#8217;s Next?</a></li>
+</ul>
+</li>
+</ul>
+</div>
 </div>
 
 
@@ -188,7 +207,7 @@ and well-contained.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="chap-other.html" class="btn btn-neutral float-right" title="Other Uses for Chaperone" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="chap-docker-simple.html" class="btn btn-neutral float-right" title="A Simple Docker Example" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="chap-using.html" class="btn btn-neutral" title="Using Chaperone" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

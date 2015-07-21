@@ -1,6 +1,3 @@
-
-.. include:: /includes/incomplete.rst
-
 .. _chap.docker:
 
 Using Chaperone with Docker
@@ -18,3 +15,8 @@ functionality into multiple processes to better exploit CPU resources.
 The moment a container contains even two cooperating proceses, the problem of management
 arises, and ``chaperone`` was designed to solve multi-process management simple
 and well-contained.
+
+.. toctree::
+   :maxdepth: 2
+
+   chap-docker-simple.rst

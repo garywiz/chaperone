@@ -1,0 +1,361 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>A Simple Docker Example &mdash; chaperone 0.2.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="chaperone 0.2.0 documentation" href="../index.html"/>
+        <link rel="up" title="Using Chaperone with Docker" href="chap-docker.html"/>
+        <link rel="next" title="Other Uses for Chaperone" href="chap-other.html"/>
+        <link rel="prev" title="Using Chaperone with Docker" href="chap-docker.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> chaperone
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="chap-intro.html">Introduction to Chaperone</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="chap-intro.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="chap-using.html">Using Chaperone</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="">A Simple Docker Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creating-a-dockerfile">Creating a Dockerfile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#adding-chaperone-s-configuration-file">Adding Chaperone&#8217;s Configuration File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exposing-ports-and-running-chaperone">Exposing Ports and Running Chaperone</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-the-image">Building the Image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-the-container">Running the Container</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-s-next">What&#8217;s Next?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="chap-other.html">Other Uses for Chaperone</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ref/index.html">Chaperone Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ref/command-line.html">Chaperone Command Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ref/command-line.html#command-quick-reference">Command Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/command-line.html#chaperone-command-execution">Chaperone Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/command-line.html#option-reference-information">Option Reference Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ref/config.html">Chaperone Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-format.html">Configuration File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-global.html">Configuration: Global Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-global.html#settings-reference">Settings Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-service.html">Configuration: Service Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-service.html#service-quick-reference">Service Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-service.html#service-types">Service Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-service.html#service-config-reference">Service Config Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/config-logging.html">Configuration: Logging Declarations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-logging.html#syslog-selectors">Syslog Selectors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../ref/env.html">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#overview-and-quick-reference">Overview and Quick Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#managing-environment-variables">Managing Environment Variables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ref/env.html#environment-inheritance">Environment Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/env.html#environment-variable-expansion">Environment Variable Expansion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ref/env.html#backtick-expansion">Backtick Expansion</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#variable-reference">Variable Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ref/env.html#notify-socket">Notify Socket</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">chaperone</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="chap-using.html">Using Chaperone</a> &raquo;</li>
+      
+          <li><a href="chap-docker.html">Using Chaperone with Docker</a> &raquo;</li>
+      
+    <li>A Simple Docker Example</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="a-simple-docker-example">
+<span id="chap-docker"></span><h1>A Simple Docker Example<a class="headerlink" href="#a-simple-docker-example" title="Permalink to this headline">¶</a></h1>
+<p>The following example creates a simple Docker container running an Apache daemon and an SSH server, both
+managed by Chaperone.</p>
+<p>In this example, we&#8217;ll use Chaperone to run both processes as <code class="docutils literal"><span class="pre">root</span></code>, configured to work exactly
+as they were configured in the Ubuntu distrubution.  This example is based upon a
+<a class="reference external" href="https://docs.docker.com/articles/using_supervisord/">similar example from docker.com</a> which
+uses <a class="reference external" href="http://supervisord.org">Supervisor</a> as it&#8217;s process manager.  Chaperone provides a far
+more powerful featureset than &#8216;supervisor&#8217; with a much smaller container footprint.</p>
+<div class="section" id="creating-a-dockerfile">
+<h2>Creating a Dockerfile<a class="headerlink" href="#creating-a-dockerfile" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;ll start by creating a basic <code class="docutils literal"><span class="pre">Dockerfile</span></code> for our new image:</p>
+<div class="highlight-python"><div class="highlight"><pre>FROM ubuntu:14.04
+MAINTAINER garyw@blueseastech.com
+</pre></div>
+</div>
+<p>Now, we can install <code class="docutils literal"><span class="pre">openssh-server</span></code>, <code class="docutils literal"><span class="pre">apache2</span></code>, and <code class="docutils literal"><span class="pre">python3-pip</span></code>, then use
+<code class="docutils literal"><span class="pre">pip3</span></code> to install Chaperone itself.  We also need to create a few directories
+that will be needed by the installed software:</p>
+<div class="highlight-python"><div class="highlight"><pre>RUN apt-get update &amp;&amp; \
+    apt-get install -y openssh-server apache2 python3-pip &amp;&amp; \
+    pip3 install chaperone
+RUN mkdir -p /var/lock/apache2 /var/run/apache2 /var/run/sshd /etc/chaperone.d
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-chaperone-s-configuration-file">
+<h2>Adding Chaperone&#8217;s Configuration File<a class="headerlink" href="#adding-chaperone-s-configuration-file" title="Permalink to this headline">¶</a></h2>
+<p>Now, let&#8217;s add a configuration file for Chaperone.   Chaperone looks in
+<code class="docutils literal"><span class="pre">/etc/chaperone.d</span></code> by default and will read any configuration files it finds there.
+So, we&#8217;ll copy our single configuration there so Chaperone reads it upon startup:</p>
+<div class="highlight-python"><div class="highlight"><pre>COPY chaperone.conf /etc/chaperone.d/chaperone.conf
+</pre></div>
+</div>
+<p>Let&#8217;s take a look at what&#8217;s inside <code class="docutils literal"><span class="pre">chaperone.conf</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>sshd.service: {
+  command: &quot;/usr/sbin/sshd -D&quot;
+}
+
+apache2.service: {
+  command: &quot;bash -c &#39;source /etc/apache2/envvars &amp;&amp; exec /usr/sbin/apache2 -DFOREGROUND&#39;&quot;,
+}
+
+console.logging: {
+  selector: &#39;*.warn&#39;,
+  stdout: true,
+}
+</pre></div>
+</div>
+<p>The above is a complete configuration file with three sections.  the first two start up
+both <code class="docutils literal"><span class="pre">sshd</span></code> and <code class="docutils literal"><span class="pre">apache2</span></code>.  The third section tells Chaperone to intercept all <code class="docutils literal"><span class="pre">syslog</span></code>
+messages and redirect them to <code class="docutils literal"><span class="pre">stdout</span></code>.  That way, we&#8217;ll be able to use the <code class="docutils literal"><span class="pre">docker</span> <span class="pre">logs</span></code>
+command to inspect the status of the running container.</p>
+<p>The above is really a simple configuration, but you can use the complete <a class="reference internal" href="../ref/config-service.html#service"><span>set of service directives</span></a>
+to control how each service behaves.</p>
+</div>
+<div class="section" id="exposing-ports-and-running-chaperone">
+<h2>Exposing Ports and Running Chaperone<a class="headerlink" href="#exposing-ports-and-running-chaperone" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s finish our <code class="docutils literal"><span class="pre">Dockerfile</span></code> by exposing some required ports and specifying Chaperone
+as the <code class="docutils literal"><span class="pre">ENTRYPOINT</span></code> so that Chaperone will start first and manage our container:</p>
+<div class="highlight-python"><div class="highlight"><pre>EXPOSE 22 80
+ENTRYPOINT [&quot;/usr/local/bin/chaperone&quot;]
+</pre></div>
+</div>
+<p>Here, we&#8217;ve exposed ports 22 and 80 on the container and we&#8217;re running the
+<code class="docutils literal"><span class="pre">/usr/local/bin/chaperone</span></code> binary when the container launches.</p>
+</div>
+<div class="section" id="building-the-image">
+<h2>Building the Image<a class="headerlink" href="#building-the-image" title="Permalink to this headline">¶</a></h2>
+<p>We can now build our new image:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker built -t &lt;yourname&gt;/chap-sample .
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-the-container">
+<h2>Running the Container<a class="headerlink" href="#running-the-container" title="Permalink to this headline">¶</a></h2>
+<p>Once you&#8217;ve built an image, you can launch a container from it:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker run -p 22 -p 80 -t -i &lt;yourname&gt;/chap-sample
+
+Jul 21 04:08:19 6d3e4eee4265 apache2[6]: AH00558: apache2: Could not reliably determine the server&#39;s fully qualified domain name, using 172.17.0.90. Set the &#39;ServerName&#39; directive globally to suppress this message
+</pre></div>
+</div>
+<p>And when you want to stop it, just use <code class="docutils literal"><span class="pre">Ctrl-C</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>C-c C-c^C
+Ctrl-C ... killing chaperone.
+Jul 21 04:08:23 6d3e4eee4265 chaperone[1]: Request made to kill system. (forced)
+Jul 21 04:08:23 6d3e4eee4265 chaperone[1]: sshd.service terminated abnormally with &lt;ProcStatus signal=2&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?<a class="headerlink" href="#what-s-next" title="Permalink to this headline">¶</a></h2>
+<p>You can build upon the above simple sample if you want.  That gives you maximum flexibility to design
+your container service environmetn exactly as you want.  If so, we recommend you scan the
+<a class="reference internal" href="../ref/index.html#reference"><span>Chaperone Reference</span></a> section so you know what features are available.</p>
+<p>If you want, you can also use the complete set of pre-built Chaperone images
+<a class="reference external" href="https://registry.hub.docker.com/repos/chapdev/">available here on Docker Hub</a>.  These images
+are excellent examples of complete Chaperone-managed development and production environments.
+You can learn more by reading the introduction to these
+images <a class="reference external" href="https://github.com/garywiz/chaperone-docker">on their GitHub page</a>.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="chap-other.html" class="btn btn-neutral float-right" title="Other Uses for Chaperone" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="chap-docker.html" class="btn btn-neutral" title="Using Chaperone with Docker" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Gary J. Wisniewski.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+  
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-59042532-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</div>
+
+
+</body>
+</html>
