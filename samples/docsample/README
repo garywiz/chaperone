@@ -1,0 +1,5 @@
+This is a sample designed as a substitute for the Docker "supervisor" sample
+at: https://docs.docker.com/articles/using_supervisord/
+
+It is updated for Ubuntu 14.04 as well as uses Chaperone as it's supervisor daemon.
+

@@ -1,6 +1,3 @@
-
-.. include:: /includes/incomplete.rst
-
 .. _chap.using:
 
 Using Chaperone
