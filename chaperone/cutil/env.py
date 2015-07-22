@@ -23,11 +23,11 @@ ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone run
 #      $(VAR:-$(VAL))
 # However, more levels of nesting are not supported and will cause substitutions to be unrecognised.
 
-_RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={}]+(?::(?:[^={}]|{[^=}]+})+)?})')
-_RE_BACKTICK = re.compile(r'`([^`]+)`')
+_RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={}]+(?::(?:[^={}]|{[^=}]+})+)?})', re.DOTALL)
+_RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
-_RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$')
+_RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$', re.DOTALL)
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
 

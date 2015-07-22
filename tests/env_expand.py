@@ -62,9 +62,11 @@ ENV3 = {
     "MAYBE7": '$(HOME:+blach.${MAYBE8:+8here})/foo',
     "MAYBE8": '$(HOAX:-${MAYBE7:-7here})/foo',
     "MAYBE9": '$(HOME:+blach.${MAYBE10:-10here})/foo',
+    "HASNL": "Line One\nLine Two",
+    "EXPNL": "$(HOME:+$(HASNL)\nAnd more to go)",
 }
 
-RESULT3 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-$(HOAX:-$(MAYBE11:-11here))/foo/foo'), ('MAYBE11', 'to-$(HOAX:-$(MAYBE11:-11here))/foo'), ('MAYBE12', 'circA-circB-circA-$(MAYBE13:-10gone)'), ('MAYBE13', 'circB-circA-$(MAYBE13:-10gone)'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-$(HOAX:-$(MAYBE11:-11here))/foo/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps')]"
+RESULT3 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('EXPNL', 'Line One\\nLine Two\\nAnd more to go'), ('HASNL', 'Line One\\nLine Two'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-$(HOAX:-$(MAYBE11:-11here))/foo/foo'), ('MAYBE11', 'to-$(HOAX:-$(MAYBE11:-11here))/foo'), ('MAYBE12', 'circA-circB-circA-$(MAYBE13:-10gone)'), ('MAYBE13', 'circB-circA-$(MAYBE13:-10gone)'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-$(HOAX:-$(MAYBE11:-11here))/foo/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps')]"
 
 ENV4 = {
     "HOME": '/usr/garyw',
@@ -131,8 +133,13 @@ def printdict(d):
     for k in sorted(d.keys()):
         print("{0} = {1}".format(k,d[k]))
 
-def canonical(d):
-    return str([(k,d[k]) for k in sorted(d.keys())])
+def canonical(d, nl = False):
+    if not nl:
+        return str([(k,d[k]) for k in sorted(d.keys())])
+    result = list()
+    for k in sorted(d.keys()):
+        result.append("('{0}', '{1}')".format(k, d[k].replace("\n", "\\\\n")))
+    return "[" + (', '.join(result)) + "]";
 
 class TestEnvOrder(unittest.TestCase):
 
@@ -152,7 +159,7 @@ class TestEnvOrder(unittest.TestCase):
         env = Environment(from_env = ENV3).expanded()
         #printdict(env)
         envstr = canonical(env)
-        #print('RESULT3 = "' + envstr + '"')
+        #print('RESULT3 = "' + canonical(env, True) + '"')
         self.assertEqual(envstr, RESULT3)
 
     def test_expand4(self):
