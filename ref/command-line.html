@@ -228,33 +228,36 @@ services.</td>
 <td>Force the syslog log output level to this value.  (one of &#8216;emerg&#8217;, &#8216;alert&#8217;, &#8216;crit&#8217;,
 &#8216;err&#8217;, &#8216;warn&#8217;, &#8216;notice&#8217;, &#8216;info&#8217;, or &#8216;debug).</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-no-defaults"><span>&#8211;no-defaults</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-no-console-log"><span>&#8211;no-console-log</span></a></td>
+<td>Forces &#8216;stderr&#8217; and &#8216;stdout&#8217; to <em>false</em> for all logging services.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-no-defaults"><span>&#8211;no-defaults</span></a></td>
 <td>Ignore the <a class="reference internal" href="env.html#env-chap-options"><span>_CHAP_OPTIONS</span></a> environment variable,
 if present.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#option-user"><span>&#8211;user=username</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-user"><span>&#8211;user=username</span></a></td>
 <td>Run all processes as <code class="docutils literal"><span class="pre">user</span></code> (uid number or name).  The user must exist.
 By default, all processes run as <code class="docutils literal"><span class="pre">root</span></code>.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-create-user"><span>&#8211;create-user=newuser[/uid/gid]</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#option-create-user"><span>&#8211;create-user=newuser[/uid/gid]</span></a></td>
 <td>Create a new user upon start-up with optional <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code>.  Then
 run as if <code class="docutils literal"><span class="pre">--user=&lt;user&gt;</span></code> was specified.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#option-default-home"><span>&#8211;default-home=directory</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-default-home"><span>&#8211;default-home=directory</span></a></td>
 <td>If <a class="reference internal" href="#option-create-user"><span>&#8211;create-user</span></a> specifies a user whose
 home directory does not exist, then create the new user account with this
 directory as the user&#8217;s home directory.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
 <td>Display service dependency graph, then exit.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
 <td>Run in &#8220;task mode&#8221;.  This implies <code class="docutils literal"><span class="pre">--log-level=err</span></code>, <code class="docutils literal"><span class="pre">--disable-services</span></code>,
 and <code class="docutils literal"><span class="pre">--exitkills</span></code>.  This switch is useful when the container publishes
 commands which must run in isolation, such as displaying container internal
 information such as version information.</td>
 </tr>
-<tr class="row-odd"><td>&#8211;version</td>
+<tr class="row-even"><td>&#8211;version</td>
 <td>Displays the chaperone version number.</td>
 </tr>
 </tbody>
@@ -432,6 +435,16 @@ for example, would cause Chaperone to behave as if the declaration looked like t
 switch in such cases is redundant.</p>
 </dd></dl>
 
+<span class="target" id="option-no-console-log"></span><dl class="option">
+<dt id="cmdoption-chaperone--no-console-log">
+<code class="descname">--no-console-log</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--no-console-log" title="Permalink to this definition">¶</a></dt>
+<dd><p>This switch unsets any <a class="reference internal" href="config-logging.html#logging-stdout"><span>stdout</span></a> and <a class="reference internal" href="config-logging.html#logging-stderr"><span>stderr</span></a> logging directives, thus disabling
+any logging to the console.</p>
+<p>Disabling console output can be useful in special-case situations, such as when a command-line command wishes to dump
+container internals to <code class="docutils literal"><span class="pre">stdout</span></code> in some format (such as <code class="docutils literal"><span class="pre">gzip</span></code>) which may be corrupted if inadvertent console
+messages are produced.</p>
+</dd></dl>
+
 <span class="target" id="option-no-defaults"></span><dl class="option">
 <dt id="cmdoption-chaperone--no-defaults">
 <code class="descname">--no-defaults</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--no-defaults" title="Permalink to this definition">¶</a></dt>
@@ -595,7 +608,7 @@ start.</p>
 <dd><p>This is a convenience switch which is presently equivalent to combining:</p>
 <blockquote>
 <div><ul class="simple">
-<li><a class="reference internal" href="#option-log-level"><span>&#8211;log-level err</span></a>,</li>
+<li><a class="reference internal" href="#option-no-console-log"><span>&#8211;no-console-log</span></a>,</li>
 <li><a class="reference internal" href="#option-disable-services"><span>&#8211;disable-services</span></a>, and</li>
 <li><a class="reference internal" href="#option-exitkills"><span>&#8211;exitkills</span></a>.</li>
 </ul>
