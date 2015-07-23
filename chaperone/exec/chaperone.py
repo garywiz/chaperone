@@ -4,7 +4,7 @@ Lightweight process and service manager
 Usage:
     chaperone [--config=<file_or_dir>]
               [--user=<name> | --create-user=<newuser>] [--default-home=<dir>]
-              [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>]
+              [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>] [--no-console-log]
               [--debug] [--force] [--disable-services] [--no-defaults] [--version] [--show-dependencies]
               [--task]
               [<command> [<args> ...]]
@@ -21,6 +21,7 @@ Options:
     --force                  If chaperone normally refuses, do it anyway and take the risk.
     --ignore-failures        Assumes that "ignore_failures:true" was specified on all services (troubleshooting)
     --log-level=<level>      Specify log level filtering, such as INFO, DEBUG, etc.
+    --no-console-log         Disable all logging to stdout and stderr (useful when the container produces non-log output)
     --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
     --no-defaults            Ignores any default options in the CHAPERONE_OPTIONS environment variable
     --user=<name>            Start first process as user (else root)
@@ -78,8 +79,8 @@ def main_entry():
    options = docopt(__doc__, options_first=True, version=VERSION_MESSAGE)
 
    if options['--task']:
-      options['--log-level'] = 'err'
       options['--disable-services'] = True
+      options['--no-console-log'] = True
       options['--exitkills'] = True
       os.environ[ENV_TASK_MODE] = '1'
 
@@ -143,7 +144,8 @@ def main_entry():
       extras = {'ignore_failures': True}
       
    try:
-      config = Configuration.configFromCommandSpec(options['--config'], user=user, extra_settings=extras)
+      config = Configuration.configFromCommandSpec(options['--config'], user=user, extra_settings=extras,
+                                                   disable_console_log=options['--no-console-log'])
       services = config.get_services()
    except Exception as ex:
       error(ex, "Configuration Error: {0}", ex)
@@ -171,6 +173,8 @@ def main_entry():
 
    if tlp.debug:
       config.dump()
+
+   # Set proctitle and go
 
    proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
    if cmd:

@@ -448,7 +448,7 @@ class Configuration(object):
     _env = None                 # calculated environment
 
     @classmethod
-    def configFromCommandSpec(cls, spec, user = None, default = None, extra_settings = None):
+    def configFromCommandSpec(cls, spec, user = None, default = None, extra_settings = None, disable_console_log = False):
         """
         A command specification (typically specified with the --config=<file_or_dir> command
         line option) is used to create a configuration object.   The target may be either a file
@@ -478,12 +478,12 @@ class Configuration(object):
         if os.path.isdir(trypath):
             return cls(*[os.path.join(trypath, f) for f in sorted(os.listdir(trypath))
                          if f.endswith('.yaml') or f.endswith('.conf')],
-                       default = default, uid = user, extra_settings = extra_settings)
+                       default = default, uid = user, extra_settings = extra_settings, disable_console_log = disable_console_log)
 
 
-        return cls(trypath, default = default, uid = user, extra_settings = extra_settings)
+        return cls(trypath, default = default, uid = user, extra_settings = extra_settings, disable_console_log = disable_console_log)
         
-    def __init__(self, *args, default = None, uid = None, extra_settings = None):
+    def __init__(self, *args, default = None, uid = None, extra_settings = None, disable_console_log = False):
         """
         Given one or more files, load our configuration.  If no configuration is provided,
         then use the configuration specified by the default.
@@ -508,6 +508,18 @@ class Configuration(object):
         s = self.get_settings()
         self.uid = s.get('uid', self.uid)
         self.gid = s.get('gid', self.gid)
+
+        # Special case used by --no-console-log.  It really was just easiest to do it this way
+        # rather than try to build some special notion of "console logging" into the log services
+        # backends.
+
+        if disable_console_log:
+            for k,v in self._conf.items():
+                if k.endswith('.logging'):
+                    if 'stdout' in v:
+                        del v['stdout']
+                    if 'stderr' in v:
+                        del v['stderr']
 
     def _merge(self, items):
         if type(items) == list:

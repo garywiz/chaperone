@@ -273,6 +273,7 @@ class SyslogServer(Server):
         self.writeLog(logattrs, priority = pri & 7, facility = pri // 8)
 
     def writeLog(self, logattrs, priority, facility):
+        #print("\nWRITELOG", priority, facility, logattrs)
         for m in self._loglist:
             if m[0].match(logattrs['raw'], logattrs['tag'], priority, facility):
                 for logger in m[1]:
