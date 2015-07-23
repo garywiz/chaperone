@@ -33,6 +33,7 @@ command-line switch                	       		       function
                                    	       		       services.
 :ref:`--log-level=level <option.log-level>`		       Force the syslog log output level to this value.  (one of 'emerg', 'alert', 'crit',
                                    	       		       'err', 'warn', 'notice', 'info', or 'debug).
+:ref:`--no-console-log <option.no-console-log>`                Forces 'stderr' and 'stdout' to *false* for all logging services.
 :ref:`--no-defaults <option.no-defaults>`		       Ignore the :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>` environment variable,
                                    	       		       if present.
 :ref:`--user=username <option.user>`			       Run all processes as ``user`` (uid number or name).  The user must exist.
@@ -241,6 +242,17 @@ Option Reference Information
    Note also that using the :ref:`--debug <option.debug>` switch automatically sets the log level to 'debug', so use of this
    switch in such cases is redundant.
 
+.. _option.no-console-log:
+
+.. option:: --no-console-log
+
+   This switch unsets any :ref:`stdout <logging.stdout>` and :ref:`stderr <logging.stderr>` logging directives, thus disabling
+   any logging to the console.
+
+   Disabling console output can be useful in special-case situations, such as when a command-line command wishes to dump
+   container internals to ``stdout`` in some format (such as ``gzip``) which may be corrupted if inadvertent console
+   messages are produced.
+
 .. _option.no-defaults:
 
 .. option:: --no-defaults
@@ -419,7 +431,7 @@ Option Reference Information
 
    This is a convenience switch which is presently equivalent to combining:
 
-     * :ref:`--log-level err <option.log-level>`,
+     * :ref:`--no-console-log <option.no-console-log>`,
      * :ref:`--disable-services <option.disable-services>`, and
      * :ref:`--exitkills <option.exitkills>`.
 
