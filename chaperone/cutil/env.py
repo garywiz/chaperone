@@ -27,7 +27,7 @@ _RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^=
 _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
-_RE_OPERS = re.compile(r'^([^:]+):([-+])(.*)$', re.DOTALL)
+_RE_OPERS = re.compile(r'^([^:]+):([-+_])(.*)$', re.DOTALL)
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
 
@@ -223,10 +223,10 @@ class Environment(lazydict):
             if parent == k:     # self-referential
                 primary = self._get_shadow_environment(k) or _DICT_CONST
             # Handle both :- and :+
-            if (oper == '-' and k not in primary) or (oper == '+' and k in primary):
+            if ((oper == '-' or oper == '_') and k not in primary) or (oper == '+' and k in primary):
                 use_repl = repl
                 k = None        # non self-referential forward reference
-            elif k not in primary:
+            elif k not in primary or oper == '_':
                 return ''
             elif k in result and parent != k:
                 return result[k] # non self-referential reference to result-in-progress

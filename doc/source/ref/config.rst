@@ -1,4 +1,4 @@
-.. chapereone documentation
+.. chaperone documentation
    configuration directives
 
 .. _config:

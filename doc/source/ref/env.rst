@@ -8,7 +8,7 @@ Environment Variables
 Overview and Quick Reference
 ----------------------------
 
-Chaperone-specific environment variables are descirbed here.  Because environment variables
+Chaperone-specific environment variables are described here.  Because environment variables
 are an important configuration component for many applications, Chaperone tries to make
 sure any Chaperone-specific variables do not automatically pollute the environment, and
 yet are available when needed.
@@ -92,6 +92,9 @@ Environment variable directives (as well as some others), can contain environmen
 ``$(ENVVAR:-default)``
   Inserts the environment variable if it is present, otherwise, expands to the string specified by ``default`` (which can
   be blank).
+
+``$(ENVVAR:_default)``
+  If the environment variable is defined, inserts the empty string, otherwise expands to the string specified by ``default``.
 
 ``$(ENVVAR:+ifpresent)``
   Inserts ``ifpresent`` if the environment variable *is defined*, otherwise inserts the empty string.

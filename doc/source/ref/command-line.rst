@@ -1,4 +1,4 @@
-.. chapereone documentation n
+.. chaperone documentation n
    command line documentation
 
 Chaperone Command Reference
@@ -57,7 +57,7 @@ Chaperone goes through a set of startup phases in order to establish a working e
 
 1.  Chaperone first examines the environment looking for the :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>` variable.
     If found, Chaperone uses it to establish default values.  The remaining environment variables will be passed to
-    running services depending upon the both global and per-service setetings.
+    running services depending upon the both global and per-service settings.
 
 2.  Command line options are read and combined with any default options to form the final command option set.
     Configuration information is optional, and if no configuration is found, it is not considered an error.
@@ -65,7 +65,7 @@ Chaperone goes through a set of startup phases in order to establish a working e
 3.  Once configuration information is present, chaperone proceeds to start it's internal ``syslog`` service,
     creating sockets such as ``/dev/log`` and starts it's internal command processor which accepts
     commands at ``/dev/chaperone`` or interactive commands (via :ref:`telchap <telchap>`) at
-    ``/dev/chaperone.sock``.  Chaperone also sets up utility envionment variables such as
+    ``/dev/chaperone.sock``.  Chaperone also sets up utility environment variables such as
     :ref:`_CHAP_INTERACTIVE <env._CHAP_INTERACTIVE>` so that they can be used in service configurations.
 
 4.  If a command and arguments are provided on the command line, an "IDLE" oneshot service is configured
@@ -88,9 +88,9 @@ they exit.   When it receives a ``SIGTERM`` it will shutdown all processes in an
 
 
 Note that when a command is specified on the chaperone command line, chaperone starts a ``CONSOLE`` service internally.
-This service can be managed just like any other servce, and shows up in service listings when using the :ref:`telchap <telchap>`
+This service can be managed just like any other service, and shows up in service listings when using the :ref:`telchap <telchap>`
 command.   If chaperone is started in an interactive environment (has a pseudo-tty as ``stdin``), it uses
-``SIGHUP`` to terminate the process. Otherwise, it uses ``SIGTERM`` as usual.   This is to accomodate login
+``SIGHUP`` to terminate the process. Otherwise, it uses ``SIGTERM`` as usual.   This is to accommodate login
 shells such ``bash`` and ``sh``, which expect this behavior.
 
 
@@ -116,7 +116,7 @@ Option Reference Information
 
    specifies that the contents of the directory ``chaperone.d`` should be scanned and any file
    ending with ``.conf`` or ``.yaml`` will be read (in alphabetic order) to create the final
-   configuration.   To understand how Chapeone handles directives which occur in multiple
+   configuration.   To understand how Chaperone handles directives which occur in multiple
    files, see :ref:`config.file-format`.
 
    If not specified, defaults to ``/etc/chaperone.d``, or uses the default option set in
@@ -321,7 +321,7 @@ Option Reference Information
 .. option:: --default-home directory
 
    This option is meaningful only when used in combination with :ref:`--create-user <option.create-user>`
-   and specifies the home diretory to use if the user's home directory does not exist.
+   and specifies the home directory to use if the user's home directory does not exist.
 
    This switch can be useful if a user's home directory may optionally be mounted as part
    of a volume mount, or if no such mount is provided, the user directory can default to an
@@ -357,7 +357,7 @@ Option Reference Information
 
 .. option:: --show-dependencies
 
-   More complex service scenrios which use service directives :ref:`before <service.before>`,
+   More complex service scenarios which use service directives :ref:`before <service.before>`,
    :ref:`after <service.after>` and :ref:`service_groups <service.service_groups>` can sometimes
    require debugging to assure the startup sequence is correct.
 
@@ -417,7 +417,7 @@ Option Reference Information
 
 .. option:: --task
 
-   This is a convience switch which is presently equivalent to combining:
+   This is a convenience switch which is presently equivalent to combining:
 
      * :ref:`--log-level err <option.log-level>`,
      * :ref:`--disable-services <option.disable-services>`, and
@@ -445,4 +445,3 @@ Option Reference Information
 
    See the :ref:`get-chaplocal <get-chaplocal>` task for an example
    of how this switch has been used in practice.
-

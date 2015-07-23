@@ -11,7 +11,7 @@ Configuration: Logging Declarations
 Logging Quick Reference
 -----------------------
 
-Chaperone has its own internal ``syslog`` service which listens on the ``/dev/log`` socket.  Hoewver, by default,
+Chaperone has its own internal ``syslog`` service which listens on the ``/dev/log`` socket.  However, by default,
 none of the messages sent to the syslog will be stored or output unless logging declarations are made.
 
 The simplest logging directive tells chaperone what to do with log entries using a superset of the familiar
@@ -185,7 +185,7 @@ Logging Config Reference
 
    Chaperone supports two special features for logging filenames:
 
-   1.  You can include substitutions within a log filename using the '%' substituion set compatible 
+   1.  You can include substitutions within a log filename using the '%' substitution set compatible 
        with `strftime <http://man7.org/linux/man-pages/man3/strftime.3.html>`_.  If so, Chaperone will close and
        reopen the log file whenever the name changes.  For example::
 

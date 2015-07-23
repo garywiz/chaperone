@@ -33,24 +33,6 @@ ENV3 = {
     "TWO": '$(HOME) and $(APPS-DIR)',
     "MAYBE1": '$(HOAX)/foo',
     "MAYBE10": '$(HOAX:-$(MAYBE11:-11here))/foo',
-    "MAYBE11": 'to-$(MAYBE100:-10gone)',
-    "MAYBE2": '$(HOAX:-blach)/footwo',
-    "MAYBE3": '$(HOAX:+blach)/foo',
-    "MAYBE4": '$(HOME:-blach)/foo',
-    "MAYBE5": '$(HOME:+blach)/foo',
-    "MAYBE6": '$(HOAX:-$(MAYBE2))/foo',
-    "MAYBE7": '$(HOME:+blach.${MAYBE8:+8here})/foo',
-    "MAYBE8": '$(HOAX:-${MAYBE7:-7here})/foo',
-    "MAYBE9": '$(HOME:+blach.${MAYBE10:-10here})/foo',
-}
-
-ENV3 = {
-    "HOME": '/usr/garyw',
-    "APPS-DIR": '$(HOME)/apps',
-    "ANOTHER": '$(APPS-DIR)/theap',
-    "TWO": '$(HOME) and $(APPS-DIR)',
-    "MAYBE1": '$(HOAX)/foo',
-    "MAYBE10": '$(HOAX:-$(MAYBE11:-11here))/foo',
     "MAYBE11": 'to-$(MAYBE10:-10gone)',              # will trigger recursion
     "MAYBE12": 'circA-$(MAYBE13:-10gone)',           # will trigger recursion
     "MAYBE13": 'circB-$(MAYBE12:-10gone)',
@@ -81,6 +63,7 @@ ENV4 = {
     "MAYBE2": '$(HOAX:-blach)/footwo',
     "MAYBE3": '$(HOAX:+blach)/foo',
     "MAYBE4": '$(HOME:-blach)/foo',
+    "MAYBE4B": '$(HOME:_blach)/foo and $(HUME:_bleech)',
     "MAYBE5": '$(HOME:+blach)/foo',
     "MAYBE6": '$(HOAX:-$(MAYBE2))/foo',
     "MAYBE7": '$(HOME:+blach.${MAYBE8:+8here})/foo',
@@ -90,7 +73,7 @@ ENV4 = {
     "UBERNEST-NOT": 'nest:$(HOME:+$(HOAX:-inside$(TWO))) and:$(ANOTHER)',
 }
 
-RESULT4 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-10gone/foo'), ('MAYBE11', 'to-10gone'), ('MAYBE12', 'circA-10gone'), ('MAYBE13', 'circB-circA-10gone'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-10gone/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps'), ('UBERNEST', 'nest:inside/usr/garyw and /usr/garyw/apps and:/usr/garyw/apps/theap'), ('UBERNEST-NOT', 'nest:$(HOAX:-inside/usr/garyw and /usr/garyw/apps) and:/usr/garyw/apps/theap')]"
+RESULT4 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-10gone/foo'), ('MAYBE11', 'to-10gone'), ('MAYBE12', 'circA-10gone'), ('MAYBE13', 'circB-circA-10gone'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE4B', '/foo and bleech'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-10gone/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps'), ('UBERNEST', 'nest:inside/usr/garyw and /usr/garyw/apps and:/usr/garyw/apps/theap'), ('UBERNEST-NOT', 'nest:$(HOAX:-inside/usr/garyw and /usr/garyw/apps) and:/usr/garyw/apps/theap')]"
 
 ENV4a = {
     'PATH': '/bin',

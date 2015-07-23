@@ -1,4 +1,4 @@
-.. chapereone documentation
+.. chaperone documentation
    configuration directives
 
 .. _config.file-format:
@@ -10,7 +10,7 @@ Chaperone's configuration is contained either in a single file, or a directory o
 You specify the configuration with the :ref:`--config <option.config>` switch on the command line.
 If none is specified, the default `/etc/chaperone.d` is used.  If a directory is chosen, then only the
 top-level of the directory will be searched, and only files ending in ``.conf`` or ``.yaml`` will be
-recognised and read in alphabetic order.
+recognized and read in alphabetic order.
 
 Configuration files are written using `YAML Version 2 <http://www.yaml.org/spec/1.2/spec.html>`_.  For example, you can
 define two chaperone services like this::
