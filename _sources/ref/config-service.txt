@@ -1,4 +1,4 @@
-.. chapereone documentation
+.. chaperone documentation
    configuration directives
 
 .. include:: /includes/defs.rst
@@ -77,7 +77,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
                                                      not if it terminates normally).  Default is 'false'.
    :ref:`restart_delay <service.restart_delay>`      The number of seconds to pause between restarts.  Default is 3 seconds.
    :ref:`restart_limit <service.restart_limit>`      The maximum number of restart attempts.  Default is 5.
-   :ref:`service_groups <service.service_groups>`    A comma-separatedlist of service groups this service belongs to.  All
+   :ref:`service_groups <service.service_groups>`    A comma-separated list of service groups this service belongs to.  All
                                                      uppercase services are reserved by the system.
    :ref:`setpgrp <service.setpgrp>`                  If 'true', then the service will be isolated in its own process
                                                      group upon startup.  This is the default.
@@ -173,7 +173,7 @@ Service Config Reference
    :ref:`environment variable expansion <env.expansion>` and "tilde" expansion for user names are supported, though
    "tilde" expansion is supported only on the command name itself, not on arguments.
 
-   Note that the command line is *not* passed to a shell, so other shell metacharacters or shell environment variable
+   Note that the command line is *not* passed to a shell, so other shell meta-characters or shell environment variable
    syntax not supported.
 
    The first token on the command line must be an executable program available in the ``PATH``.  If it is not found,
@@ -262,7 +262,7 @@ Patterns are standard filename 'glob' patterns.
 
 .. describe:: after: "service-or-group, ..."
 
-   Specifies one or more services or service groups which must be started sucessfully before this service
+   Specifies one or more services or service groups which must be started successfully before this service
    will start.
 
    The value specified is a comma-separated list of services or service groups.  Services are always
@@ -398,7 +398,7 @@ Patterns are standard filename 'glob' patterns.
    and is ignored for other types:
 
    For `oneshot` services:
-      Chaperone assumes that a oneshot service is only started once it completes its task succesfully, and
+      Chaperone assumes that a oneshot service is only started once it completes its task successfully, and
       therefore waits ``process_timeout`` seconds before allowing dependent services ot start.  For oneshot
       services the default process timeout is *60 seconds*.
 
@@ -437,7 +437,7 @@ Patterns are standard filename 'glob' patterns.
 .. describe:: restart_limit: number-of-retries
 
    This value indicate the number of restarts which will be performed when a service fails.  Once the service
-   starts sucessfully, the restart counter is reset.
+   starts successfully, the restart counter is reset.
 
 .. _service.service_groups:
 

@@ -291,7 +291,7 @@ not if it terminates normally).  Default is &#8216;false&#8217;.</td>
 <td>The maximum number of restart attempts.  Default is 5.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#service-service-groups"><span>service_groups</span></a></td>
-<td>A comma-separatedlist of service groups this service belongs to.  All
+<td>A comma-separated list of service groups this service belongs to.  All
 uppercase services are reserved by the system.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#service-setpgrp"><span>setpgrp</span></a></td>
@@ -445,7 +445,7 @@ a full description of what chaperone service types are and how they behave.</p>
 <dd><p>The <code class="docutils literal"><span class="pre">command</span></code> option defines the command and arguments which will be executed when the service is started.  Both
 <a class="reference internal" href="env.html#env-expansion"><span>environment variable expansion</span></a> and &#8220;tilde&#8221; expansion for user names are supported, though
 &#8220;tilde&#8221; expansion is supported only on the command name itself, not on arguments.</p>
-<p>Note that the command line is <em>not</em> passed to a shell, so other shell metacharacters or shell environment variable
+<p>Note that the command line is <em>not</em> passed to a shell, so other shell meta-characters or shell environment variable
 syntax not supported.</p>
 <p>The first token on the command line must be an executable program available in the <code class="docutils literal"><span class="pre">PATH</span></code>.  If it is not found,
 it will be considered an error.  However, if <a class="reference internal" href="#service-optional"><span>optional</span></a>
@@ -529,7 +529,7 @@ This will provide much more flexibility.</p>
 <span class="target" id="service-after"></span><dl class="describe">
 <dt>
 <code class="descname">after: &quot;service-or-group, ...&quot;</code></dt>
-<dd><p>Specifies one or more services or service groups which must be started sucessfully before this service
+<dd><p>Specifies one or more services or service groups which must be started successfully before this service
 will start.</p>
 <p>The value specified is a comma-separated list of services or service groups.  Services are always
 identified with a <code class="docutils literal"><span class="pre">.service</span></code> suffix.  Otherwise, the reference is to a service group.  Thus:</p>
@@ -658,7 +658,7 @@ the service has failed.   This value is meaningful for process types <cite>onesh
 and is ignored for other types:</p>
 <dl class="docutils">
 <dt>For <cite>oneshot</cite> services:</dt>
-<dd>Chaperone assumes that a oneshot service is only started once it completes its task succesfully, and
+<dd>Chaperone assumes that a oneshot service is only started once it completes its task successfully, and
 therefore waits <code class="docutils literal"><span class="pre">process_timeout</span></code> seconds before allowing dependent services ot start.  For oneshot
 services the default process timeout is <em>60 seconds</em>.</dd>
 <dt>For <cite>forking</cite> services:</dt>
@@ -694,7 +694,7 @@ issues may be transient (such as routers rebooting).</p>
 <dt>
 <code class="descname">restart_limit: number-of-retries</code></dt>
 <dd><p>This value indicate the number of restarts which will be performed when a service fails.  Once the service
-starts sucessfully, the restart counter is reset.</p>
+starts successfully, the restart counter is reset.</p>
 </dd></dl>
 
 <span class="target" id="service-service-groups"></span><dl class="describe">

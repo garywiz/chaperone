@@ -1,4 +1,4 @@
-.. chapereone documentation
+.. chaperone documentation
    configuration directives
 
 .. include:: /includes/defs.rst
@@ -110,7 +110,7 @@ This delay is useful in at least two common situations:
 
 1. When service startup may cause log messages to appear at the console,
    the console program (usually a shell) may have its prompt interleaved with console messages.
-   This delay decreases the liklihood of this happening.
+   This delay decreases the likelihood of this happening.
 
 2. When services of type :ref:`simple <service.sect.type>` are used, there is no real way to determine
    if services have fully started.  However, the idle delay does nothing except add a "fudge factor",

@@ -180,7 +180,7 @@
 <span id="logging"></span><h1>Configuration: Logging Declarations<a class="headerlink" href="#configuration-logging-declarations" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="logging-quick-reference">
 <h2>Logging Quick Reference<a class="headerlink" href="#logging-quick-reference" title="Permalink to this headline">¶</a></h2>
-<p>Chaperone has its own internal <code class="docutils literal"><span class="pre">syslog</span></code> service which listens on the <code class="docutils literal"><span class="pre">/dev/log</span></code> socket.  Hoewver, by default,
+<p>Chaperone has its own internal <code class="docutils literal"><span class="pre">syslog</span></code> service which listens on the <code class="docutils literal"><span class="pre">/dev/log</span></code> socket.  However, by default,
 none of the messages sent to the syslog will be stored or output unless logging declarations are made.</p>
 <p>The simplest logging directive tells chaperone what to do with log entries using a superset of the familiar
 <a class="reference external" href="http://linux.die.net/man/5/syslog.conf">syslogd configuration format</a>.  For example, the following will
@@ -368,7 +368,7 @@ to the home directory of the logging user (implicitly defined, or defined by the
 directive to cause syslog output to be directed to <code class="docutils literal"><span class="pre">stdout</span></code>.</p>
 <p>Chaperone supports two special features for logging filenames:</p>
 <ol class="arabic">
-<li><p class="first">You can include substitutions within a log filename using the &#8216;%&#8217; substituion set compatible
+<li><p class="first">You can include substitutions within a log filename using the &#8216;%&#8217; substitution set compatible
 with <a class="reference external" href="http://man7.org/linux/man-pages/man3/strftime.3.html">strftime</a>.  If so, Chaperone will close and
 reopen the log file whenever the name changes.  For example:</p>
 <div class="highlight-python"><div class="highlight"><pre>filename: &quot;$(APPS_DIR)/var/log/app-messages-%a.log&quot;
