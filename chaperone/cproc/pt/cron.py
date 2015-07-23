@@ -44,7 +44,7 @@ class CronProcess(SubProcess):
         """
         Takes over startup and sets up our cron loop to handle starts instead.
         """
-        if not self.enabled:
+        if not self.enabled or self._cron.handle:
             return
 
         # Start up cron
@@ -53,13 +53,15 @@ class CronProcess(SubProcess):
         except Exception:
             raise ChParameterError("not a valid cron interval specification, '{0}'".format(self.interval))
 
+        self.loginfo("cron service {0} scheduled using interval spec '{1}'".format(self.name, self.interval))
+
     @asyncio.coroutine
     def _cron_hit(self):
         if self.enabled:
             if self.running:
                 self.logwarn("cron service {0} is still running when next interval expired, will not run again", self.name)
             else:
-                self.loginfo("cron service {0} starting", self.name)
+                self.loginfo("cron service {0} running CMD ( {1} )", self.name, self.command)
                 try:
                     yield from super().start()
                 except Exception as ex:

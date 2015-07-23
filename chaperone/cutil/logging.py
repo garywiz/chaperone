@@ -13,22 +13,31 @@ logger = logging.getLogger(__name__)
 
 _root_logger = logging.getLogger(None)
 _stderr_handler = logging.StreamHandler()
+_cur_level = logging.NOTSET
 
 _format = logging.Formatter()
 _stderr_handler.setFormatter(_format)
 
 _root_logger.addHandler(_stderr_handler)
 
+
 def set_log_level(lev):
-    logger.setLevel(syslog_info.syslog_to_python_lev(lev))
+    global _cur_level
+
+    _cur_level = syslog_info.syslog_to_python_lev(lev)
+    logger.setLevel(_cur_level)
+
 
 def set_custom_handler(handler, enable = True):
     if enable:
         _root_logger.addHandler(handler)
         _root_logger.removeHandler(_stderr_handler)
+        logger.setLevel(logging.DEBUG)
     else:
         _root_logger.removeHandler(handler)
         _root_logger.addHandler(_stderr_handler)
+        logger.setLevel(_cur_level)
+
 
 def _versatile_logprint(delegate, fmt, *args, 
                         facility=None, exceptions=False, 

@@ -328,7 +328,7 @@ class CustomSysLog(logging.Handler):
         }
 
     def __init__(self, owner):
-        super().__init__()
+        super().__init__(logging.DEBUG) # enable all levels since we manage filtering ourselves
         self._owner = owner
         self.setFormatter(SysLogFormatter(sys.argv[0] or '-', os.getpid()))
 
