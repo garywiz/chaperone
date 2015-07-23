@@ -40,7 +40,7 @@ setup(
                         'voluptuous>=0.8.7', 'aiocron>=0.3'],
 
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
