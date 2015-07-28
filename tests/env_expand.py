@@ -112,6 +112,26 @@ CONFIG7a = {
 
 RESULT7 = "[('ALTPORT', '777'), ('FIRSTPORT', '999'), ('FOURTHPORT', '777'), ('SECONDPORT', '443'), ('THIRDPORT', '999')]"
 
+ENV8 = {
+    "ONE": "number-1",
+    "TWO": "number-2",
+    "THREE": "number-3",
+    "IFONE": "set $(ONE:|onlyifone)",
+    "IFNOTONE": "ONE: $(ONE:|is_set|not_set)",
+    "IFNOTXXX": "XXX: $(XXX:|is_set|not_set)",
+    "IFNOTYYY": "XXX: $(XXX:|is_set|$(IFNOTYYY))",
+    "IFNOTZZZ": "XXX: $(XXX:|is_set|$(IFNOTXXX))",
+    "TRIO1": "T1-ONE: $(ONE:|number-1|It^s ^number-1^|It is not ^number-1^)",
+    "TRIO2": "T2-ONE: $(ONE:|number-2|It^s ^number-2^|It is not ^number-2^)",
+    "TRIO3a": "T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)",
+    "TRIO3b": "T3b-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3a)^ correctly|Does not match correctly)",
+    "TRIO3c": "T3c-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(IFNOTXXX)^ correctly|Does not match correctly)",
+    "TRIO3d": "T3d-IFONE: $(IFNOTZZZ:|XXX: XXY: not_set|matches ^$(IFNOTXXX)^ correctly|Does not match correctly with $(IFNOTZZZ))",
+    "MUSTBE": "$(ONE:?Variable ONE is required)",
+}
+
+RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
+
 def printdict(d):
     for k in sorted(d.keys()):
         print("{0} = {1}".format(k,d[k]))
@@ -180,6 +200,14 @@ class TestEnvOrder(unittest.TestCase):
         envstr = canonical(env)
         #print('RESULT7 = "' + envstr + '"')
         self.assertEqual(envstr, RESULT7)
+
+    def test_expand8(self):
+        "Test conditional expansion"
+        env = Environment(from_env = ENV8).expanded()
+        #printdict(env)
+        envstr = canonical(env)
+        #print('RESULT8 = "' + envstr + '"')
+        self.assertEqual(envstr, RESULT8)
 
 if __name__ == '__main__':
     unittest.main()

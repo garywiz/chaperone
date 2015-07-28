@@ -4,6 +4,7 @@ import subprocess
 from fnmatch import fnmatch
 
 from chaperone.cutil.misc import lookup_user, lazydict
+from chaperone.cutil.errors import ChVariableError
 from chaperone.cutil.logging import error, debug, warn
 
 ##
@@ -27,7 +28,7 @@ _RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^=
 _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
-_RE_OPERS = re.compile(r'^([^:]+):([-+_])(.*)$', re.DOTALL)
+_RE_OPERS = re.compile(r'^([^:]+):([-|?+_])(.*)$', re.DOTALL)
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
 
@@ -204,6 +205,9 @@ class Environment(lazydict):
         use_repl = None
         val = None
 
+        recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0), k)
+        reval = lambda buf: buf
+
         # We are the primary source of values unless we discover a self-referential
         # variable later.
         primary = self    
@@ -222,20 +226,39 @@ class Environment(lazydict):
             (k, oper, repl) = match.groups()
             if parent == k:     # self-referential
                 primary = self._get_shadow_environment(k) or _DICT_CONST
-            # Handle both :- and :+
-            if ((oper == '-' or oper == '_') and k not in primary) or (oper == '+' and k in primary):
-                use_repl = repl
-                k = None        # non self-referential forward reference
-            elif k not in primary or oper == '_':
-                return ''
-            elif k in result and parent != k:
-                return result[k] # non self-referential reference to result-in-progress
-            else:
-                val = primary[k]
 
-        recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0), k)
+
+            # Handle ? and |
+            if oper == '?':
+                if k not in primary:
+                    raise ChVariableError(_RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, repl)))
+
+            elif oper == '|':
+                vts = repl.split('|', 3)
+                if len(vts) == 1:
+                    oper = '+'  # identical to '+' operator
+                elif len(vts) == 2:
+                    use_repl = vts[0] if k in primary else vts[1]
+                elif len(vts) == 3:
+                    def reval(buf):
+                        retval = vts[1] if buf.lower() == vts[0].lower() else vts[2]
+                        r = _RE_BACKTICK.sub(self._backtick_expand, 
+                                             _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0)), retval))
+                        return r
+
+            # Handle both :- and :+ and non-value-based | cases
+            if use_repl is None:
+                if ((oper == '-' or oper == '_') and k not in primary) or (oper == '+' and k in primary):
+                    use_repl = repl
+                elif k not in primary or oper == '_':
+                    return reval('')
+                elif k in result and parent != k:
+                    return reval(result[k]) # non self-referential reference to result-in-progress
+                else:
+                    val = primary[k]
 
         if use_repl is not None:
+            k = None        # non self-referential forward reference
             val = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, use_repl))
         elif result is self:
             val = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, val))
@@ -244,7 +267,7 @@ class Environment(lazydict):
             result[k] = val
             val = result[k] = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, val))
 
-        return val
+        return reval(val)
     
     def _backtick_expand(self, m):
         """

@@ -1,3 +1,12 @@
+## 0.2.25 (2015-07-27)
+
+Enhancements:
+
+ - Added the ``:?`` and ``:|`` environemnt variable expansion options.  The first works similarly
+   to bash and raises an error if a variable is not defined.  The second adds more versatility to
+   expansions by allowing the expansion to depend upon the particular value of a variable.
+-  Added documntation for the above.
+
 ## 0.2.24 (2015-07-27)
 
 Bug Fixes:

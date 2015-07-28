@@ -12,3 +12,6 @@ class ChSystemError(ChError):
 
 class ChProcessError(ChError):
     pass
+
+class ChVariableError(ChError):
+    pass
