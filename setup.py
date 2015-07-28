@@ -15,6 +15,27 @@ def read(fname):
 def get_version():
     return subprocess.check_output([sys.executable, os.path.join("chaperone/cproc/version.py")]).decode().strip()
 
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
+
+requires_list = ['docopt>=0.6.2', 'PyYAML>=3.1.1', 'voluptuous>=0.8.7', 'aiocron>=0.3']
+
+if which('gcc'):
+    requires_list += ["setproctitle>=1.1.8"]
+
 setup(
     name = "chaperone",
     version = get_version(),
@@ -36,8 +57,7 @@ setup(
     url = "http://github.com/garywiz/chaperone",
     keywords = "docker init systemd syslog",
 
-    install_requires = ['docopt>=0.6.2', 'setproctitle>=1.1.8', 'PyYAML>=3.1.1',
-                        'voluptuous>=0.8.7', 'aiocron>=0.3'],
+    install_requires = requires_list,
 
     classifiers = [
         "Development Status :: 4 - Beta",

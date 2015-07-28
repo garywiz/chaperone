@@ -50,7 +50,6 @@ import re
 import asyncio
 import subprocess
 
-from setproctitle import setproctitle
 from functools import partial
 from docopt import docopt
 
@@ -179,7 +178,12 @@ def main_entry():
    proctitle = "[" + os.path.basename(sys.argv[0]) + "]"
    if cmd:
       proctitle += " " + cmd
-   setproctitle(proctitle)
+
+   try:
+      from setproctitle import setproctitle
+      setproctitle(proctitle)
+   except ImportError:
+      pass
 
    # Define here so we can share scope
 

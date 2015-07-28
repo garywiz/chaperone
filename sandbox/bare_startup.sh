@@ -5,6 +5,6 @@
 echo Bare Ubuntu startup
 # Start up an apt-get proxy which runs on our host in another container, if it's present
 /setup/ct_setproxy
-cd $SANDBOX/..
-python3 setup.py install
+cd $SANDBOX/../dist
+pip3 install chaperone-*.tar.gz
 exec bash -i
