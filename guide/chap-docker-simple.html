@@ -181,7 +181,7 @@
 <p>The following example creates a simple Docker container running an Apache daemon and an SSH server, both
 managed by Chaperone.</p>
 <p>In this example, we&#8217;ll use Chaperone to run both processes as <code class="docutils literal"><span class="pre">root</span></code>, configured to work exactly
-as they were configured in the Ubuntu distrubution.  This example is based upon a
+as they were configured in the Ubuntu distribution.  This example is based upon a
 <a class="reference external" href="https://docs.docker.com/articles/using_supervisord/">similar example from docker.com</a> which
 uses <a class="reference external" href="http://supervisord.org">Supervisor</a> as it&#8217;s process manager.  Chaperone provides a far
 more powerful featureset than &#8216;supervisor&#8217; with a much smaller container footprint.</p>
@@ -246,7 +246,7 @@ ENTRYPOINT [&quot;/usr/local/bin/chaperone&quot;]
 <div class="section" id="building-the-image">
 <h2>Building the Image<a class="headerlink" href="#building-the-image" title="Permalink to this headline">¶</a></h2>
 <p>We can now build our new image:</p>
-<div class="highlight-python"><div class="highlight"><pre>$ docker built -t &lt;yourname&gt;/chap-sample .
+<div class="highlight-python"><div class="highlight"><pre>$ docker build -t &lt;yourname&gt;/chap-sample .
 </pre></div>
 </div>
 </div>

@@ -8,7 +8,7 @@ The following example creates a simple Docker container running an Apache daemon
 managed by Chaperone. 
 
 In this example, we'll use Chaperone to run both processes as ``root``, configured to work exactly
-as they were configured in the Ubuntu distrubution.  This example is based upon a 
+as they were configured in the Ubuntu distribution.  This example is based upon a 
 `similar example from docker.com <https://docs.docker.com/articles/using_supervisord/>`_ which 
 uses `Supervisor <http://supervisord.org>`_ as it's process manager.  Chaperone provides a far
 more powerful featureset than 'supervisor' with a much smaller container footprint.
@@ -79,7 +79,7 @@ Building the Image
 
 We can now build our new image::
 
-   $ docker built -t <yourname>/chap-sample .
+   $ docker build -t <yourname>/chap-sample .
 
 Running the Container
 ---------------------
