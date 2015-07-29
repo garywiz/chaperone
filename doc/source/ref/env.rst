@@ -83,7 +83,7 @@ In each case, Chaperone processes each set of directives in the same way:
 Environment Variable Expansion
 ******************************
 
-Environment variable directives (as well as some others), can contain environment variable expansions, as indicated below:
+Environment variable directives (as well as some others), can contain bash-inspired [#f1]_ environment variable expansions, as indicated below:
 
 ``$(ENVVAR)`` or ``${ENVVAR}``
   Expands to the specified environment variable.  If the environment variable is not defined, the expansion text
@@ -111,6 +111,13 @@ Environment variable directives (as well as some others), can contain environmen
 ``$(ENVVAR:|check-val|equal|notequal)``
   Compares the expanded value of ``ENVVAR`` to ``check-val`` using case-insensitive comparison.  If they are
   equal, then inserts ``equal`` otherwise inserts ``notequal``.
+
+``$(ENVVAR/regex/repl/[i])``
+  Expands the named environment variable, then performs a regular expression substitution using ``regex`` with
+  the replacement string ``repl``.   If either contains slashes, they must be escaped using a backslash.
+  The optional flags can be set to ``i`` if case-insensitive matching is required.  Parenthesized groups
+  in ``regex`` can be referred to in the replacement as ``\n`` where 'n' is zero to refer to the entire 
+  matched string, or 1-n to specify the group number.
 
 The forms above are patterned after ``bash`` and can be useful in cases where defaults are required.  For example,
 if you wanted to specify the user for a service in the event no user was otherwise specified::
@@ -297,3 +304,13 @@ Notify Socket
    which is the path to a UNIX domain socket created privately within the
    container.  The service should use this environment variable to trigger
    notifications compatible with
+
+.. rubric:: Notes
+
+.. [#f1]
+
+   Originally, the intent was to duplicate ``bash`` environment variable expansion syntax as compatibly as possible.
+   Over time, however, it became clear that pattern matching replacements such as ``${NAME/*.jpg/something}`` relied
+   upon many arcane ``bash`` details such as arrays and filename globbing.  Therefore, while the basic environment
+   tests (such as those for defaults as in ``$(HOME:-/home)``) are compatible, a more useful set of regex-based
+   features were added to eliminate the need for many ``bash`` substitution options.

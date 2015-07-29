@@ -3,9 +3,9 @@ import os
 import subprocess
 from fnmatch import fnmatch
 
-from chaperone.cutil.misc import lookup_user, lazydict
-from chaperone.cutil.errors import ChVariableError
 from chaperone.cutil.logging import error, debug, warn
+from chaperone.cutil.misc import lookup_user, lazydict
+from chaperone.cutil.errors import ChVariableError, ChParameterError
 
 ##
 ## ALL chaperone configuration variables defined here for easy reference
@@ -28,7 +28,8 @@ _RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^=
 _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
-_RE_OPERS = re.compile(r'^([^:]+):([-|?+_])(.*)$', re.DOTALL)
+_RE_OPERS = re.compile(r'^([^:]+):([-|?+_/])(.*)$', re.DOTALL)
+_RE_SLASHOP = re.compile(r'^(.+)(?<!\\)/(.*)(?<!\\)/([i]*)$', re.DOTALL)
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
 
@@ -201,11 +202,20 @@ class Environment(lazydict):
         return result
 
     def _expand_into(self, k, result, default = None, parent = None):
+        """
+        Internal workhorse that expands the variable 'k' INTO the given result dictionary.
+        The result dictionary will conatin the expanded values.   The result dictionary is
+        also a cache for nested and recursive environment expansion.
+
+        'default' indicates the replacement if no variable is found.
+        'parent' is the name of the variable which was being expanded in the last
+                 recursion, to catch the special case of self-referential variables.
+        """
+
         match = _RE_OPERS.match(k)
         use_repl = None
         val = None
 
-        recurse = lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0), k)
         reval = lambda buf: buf
 
         # We are the primary source of values unless we discover a self-referential
@@ -227,12 +237,22 @@ class Environment(lazydict):
             if parent == k:     # self-referential
                 primary = self._get_shadow_environment(k) or _DICT_CONST
 
+            # Handle ? and | and /
 
-            # Handle ? and |
             if oper == '?':
                 if k not in primary:
-                    raise ChVariableError(_RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, repl)))
+                    raise ChVariableError(self._recurse(result, repl))
 
+            elif oper == '/':
+                smatch = _RE_SLASHOP.match(repl)
+                if not smatch:
+                    raise ChParameterError("invalid regex replacement syntax in '{0}'".format(match.group(0)))
+
+                def reval(buf, 
+                          pat=(smatch.group(3) and "(?" + smatch.group(3) + ")") + smatch.group(1),
+                          repl=smatch.group(2)):
+                    return self._recurse(result, re.sub(pat, repl.replace('\/', '/'), buf))
+                    
             elif oper == '|':
                 vts = repl.split('|', 3)
                 if len(vts) == 1:
@@ -242,9 +262,7 @@ class Environment(lazydict):
                 elif len(vts) == 3:
                     def reval(buf):
                         retval = vts[1] if buf.lower() == vts[0].lower() else vts[2]
-                        r = _RE_BACKTICK.sub(self._backtick_expand, 
-                                             _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], result, m.group(0)), retval))
-                        return r
+                        return self._recurse(result, retval)
 
             # Handle both :- and :+ and non-value-based | cases
             if use_repl is None:
@@ -258,17 +276,22 @@ class Environment(lazydict):
                     val = primary[k]
 
         if use_repl is not None:
-            k = None        # non self-referential forward reference
-            val = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, use_repl))
+            val = self._recurse(result, use_repl)
         elif result is self:
-            val = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, val))
+            val = self._recurse(result, val, k)
         else:
             # Looks odd, but needed to seed the result to assure we ignore recursion later
             result[k] = val
-            val = result[k] = _RE_BACKTICK.sub(self._backtick_expand, _RE_ENVVAR.sub(recurse, val))
+            val = result[k] = self._recurse(result, val, k)
 
         return reval(val)
     
+    def _recurse(self, result, buf, parent_var = None):
+        "Worker method to isolate recursive env variable expansion, with backtick support"
+        return _RE_BACKTICK.sub(self._backtick_expand,
+                                _RE_ENVVAR.sub(lambda m: 
+                                               self._expand_into(m.group(0)[2:-1], result, m.group(0), parent_var), buf))
+
     def _backtick_expand(self, m):
         """
         Performs rudimentary backtick expansion after all other environment variables have been

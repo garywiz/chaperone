@@ -1,3 +1,12 @@
+## 0.2.26 (2015-07-28)
+
+Enhancements:
+
+- Added the ``:/`` regex substitution expansion option, which provides a more extensive and useful
+  feature set than the bash-compatible options.
+- Updated the documentation to reflect the new expansion option and added a footnote about
+  bash compatibility.
+
 ## 0.2.25 (2015-07-27)
 
 Enhancements:

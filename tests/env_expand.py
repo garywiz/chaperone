@@ -128,9 +128,16 @@ ENV8 = {
     "TRIO3c": "T3c-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(IFNOTXXX)^ correctly|Does not match correctly)",
     "TRIO3d": "T3d-IFONE: $(IFNOTZZZ:|XXX: XXY: not_set|matches ^$(IFNOTXXX)^ correctly|Does not match correctly with $(IFNOTZZZ))",
     "MUSTBE": "$(ONE:?Variable ONE is required)",
+    "SUB1": "$(ONE:/umb/oob/)",
+    "SUB2": "$(ONE:/umb/oob-$(TWO)-/)",
+    "SUB3": r'$(ONE:/umb/oob\/meyer/)',
+    "SUB4": r'$(SUB3:/\//\/(slash)/)',
+    "SUB5": r'$(ONE:/umB/oob\/meyer/i)',
+    "SUB6": r'$(ONE:/umB/oob\/meyer/)',
+    "SUB7": r'$(IFNOTONE:/ONE: (.+)/MODONE: \1/)',
 }
 
-RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
+RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
 
 def printdict(d):
     for k in sorted(d.keys()):
