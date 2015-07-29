@@ -18,7 +18,18 @@ import chaperone.cutil.syslog_info as syslog_info
 _RE_SPEC = re.compile(r'^(?P<fpfx>!?)(?:/(?P<regex>.+)/|\[(?P<prog>.+)\]|(?P<fac>[,*0-9a-zA-Z]+))\.(?P<pfx>!?=?)(?P<pri>[*a-zA-Z]+)$')
 _RE_SPECSEP = re.compile(r' *; *')
 
-_RE_RFC3164 = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?:(?P<host>[^ :\[]+) )?(?P<tag>[^ :\[]+)(?P<rest>[:\[ ].+)$', re.DOTALL)
+# The following is based on RFC3164 with some tweaks to deal with anomalies.
+# One anomaly worth mentioning is that some log sources append newlines (or whitespace) to their messages,
+# or include embedded newlines.  Here is a good JIRA discussion about how Apache dealt with this, including some background:
+#   https://issues.apache.org/jira/browse/LOG4NET-370
+# At present we merely DISCARD whitespace from the end of messages, but don't attempt to break multiple
+# messages into separate lines so that UDP syslog destinations don't have to deal with packet reordering,
+# which is a real pain for some people, with an example here:
+#  https://redmine.pfsense.org/issues/1938
+
+_RE_RFC3164 = re.compile(r'^<(?P<pri>\d+)>(?P<date>\w{3} [ 0-9][0-9] \d\d:\d\d:\d\d) (?:(?P<host>[^ :\[]+) )?(?P<tag>[^ :\[]+)(?P<rest>[:\[ ].+?)\s*$', re.DOTALL)
+
+
 class _syslog_spec_matcher:
     """
     This class supports matching a classic syslog.conf spec:
