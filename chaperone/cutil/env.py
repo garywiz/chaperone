@@ -24,7 +24,6 @@ ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone run
 #      $(VAR:-$(VAL))
 # However, more levels of nesting are not supported and will cause substitutions to be unrecognised.
 
-_RE_ENVVAR = re.compile(r'\$(?:\([^=\(\)]+(?::(?:[^=\(\)]|\([^=\)]+\))+)?\)|{[^={}]+(?::(?:[^={}]|{[^=}]+})+)?})', re.DOTALL)
 _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
@@ -32,6 +31,102 @@ _RE_OPERS = re.compile(r'^([^:]+):([-|?+_/])(.*)$', re.DOTALL)
 _RE_SLASHOP = re.compile(r'^(.+)(?<!\\)/(.*)(?<!\\)/([i]*)$', re.DOTALL)
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
+
+
+class EnvScanner:
+    """
+    A class which performs basic parsing of strings containing environment variables,
+    with support for nested constructs.  No, you can't do this with regular expressions.
+    """
+
+    open_expansion = '({'
+    quotes = "\"`";             # we assume that single quotes may not be paired.  This prevents contractions
+                                # from inhibiting expansions
+    escape = "\\"
+    variable_id = '$'
+    nestlist = ')]}([{'         # arranged so that ending delimiters are first and positions match
+
+    def __init__(self, variable_id = None, open_expansion = None):
+        if variable_id:
+            self.variable_id = variable_id
+        if open_expansion:
+            self.open_expansion = open_expansion
+        self._RE_START = re.compile('(' + re.escape(self.escape) + ')?' + re.escape(self.variable_id) + 
+                                    '(' + ('|'.join([re.escape(d[0]) for d in self.open_expansion])) + ')')
+        
+    def parse(self, buf, func, *args):
+        """
+        Parses buffer and expands variables using func(exp_data, exp_whole, *args)
+        where, given $(xxx):
+           exp_data is the actual contents of the variable, so 'xxx'
+           exp_whole is the entire expression, so '$(xxx)'
+        """
+        
+        # Quickly return if we don't have any expansions
+
+        st = self._RE_START
+        match = st.search(buf)
+        if not match:
+            return buf
+
+        # Now do the hard work
+
+        results = []
+        buflen = len(buf)
+        startpos = 0
+
+        nestlen = len(self.nestlist)
+        halfnest = nestlen // 2 # delims < halfnest are paired closing delimiters
+        lookfor = self.nestlist + self.quotes
+
+        while match:
+
+            pos = match.start()
+            if pos != startpos:
+                results.append(buf[startpos:pos])
+
+            if match.group(1):
+                # just escape the value
+                results.append(self.variable_id)
+                startpos = match.start(2)
+                pos = buflen
+                match = st.search(buf, startpos)
+            else:
+                pos = match.start(2)
+                startpos = pos + 1
+
+                # Init the stack.  We know a push will come first
+                stack = []
+
+                # find the very end of the area, counting nested items
+                while True:
+                    ci = lookfor.find(buf[pos])
+                    #print(pos, buf[pos], ci, stack, results)
+                    if ci >= 0:
+                        s0 = (not stack and -1) or stack[-1]
+                        if s0 == ci:
+                            stack.pop()
+                            # We are totally done if the stack is empty
+                            if not stack:
+                                results.append(func(buf[startpos:pos], buf[match.start():pos+1], *args))
+                                startpos = pos + 1
+                                pos = buflen
+                                match = st.search(buf, startpos)
+                                break
+                        elif ci >= halfnest and s0 < nestlen: # don't match within quotes
+                            # at matching end delimiter, which may be nesting, or not
+                            stack.append(ci-halfnest if ci < nestlen else ci)
+                    pos += 1
+                    if pos >= buflen:
+                        startpos = match.start(0)
+                        match = None
+                        break
+        
+        if pos != startpos:
+            results.append(buf[startpos:pos])
+
+        return ''.join(results)
+
 
 class Environment(lazydict):
 
@@ -49,6 +144,13 @@ class Environment(lazydict):
 
     # A class variable to keep track of backtick expansions so we don't do them more than once
     _cls_btcache = dict()
+
+    # Default scanner
+    _cls_scan = EnvScanner()
+
+    @classmethod
+    def set_parse_parameters(cls, variable_id = None, open_expansion = None):
+        cls._cls_scan = EnvScanner(variable_id, open_expansion)
 
     def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
         """
@@ -159,7 +261,7 @@ class Environment(lazydict):
             return [self.expand(item) for item in instr]
         if not isinstance(instr, str):
             return instr
-        return _RE_ENVVAR.sub(lambda m: self._expand_into(m.group(0)[2:-1], self, m.group(0)), instr)
+        return self._cls_scan.parse(instr, self._expand_into, self)
 
     def expand_attributes(self, obj, *args):
         """
@@ -187,7 +289,7 @@ class Environment(lazydict):
 
         result = Environment(None) 
         for k in sorted(self.keys()): # sorted so outcome is deterministic
-            self._expand_into(k, result)
+            self._expand_into(k, None, result)
 
         # Copy uid after we expand, since any user information is already present in our
         # own environment.
@@ -201,7 +303,7 @@ class Environment(lazydict):
 
         return result
 
-    def _expand_into(self, k, result, default = None, parent = None):
+    def _expand_into(self, k, default, result, parent = None):
         """
         Internal workhorse that expands the variable 'k' INTO the given result dictionary.
         The result dictionary will conatin the expanded values.   The result dictionary is
@@ -261,7 +363,7 @@ class Environment(lazydict):
                     use_repl = vts[0] if k in primary else vts[1]
                 elif len(vts) == 3:
                     def reval(buf):
-                        retval = vts[1] if buf.lower() == vts[0].lower() else vts[2]
+                        retval = vts[1] if fnmatch(buf.lower(), vts[0].lower()) else vts[2]
                         return self._recurse(result, retval)
 
             # Handle both :- and :+ and non-value-based | cases
@@ -289,8 +391,7 @@ class Environment(lazydict):
     def _recurse(self, result, buf, parent_var = None):
         "Worker method to isolate recursive env variable expansion, with backtick support"
         return _RE_BACKTICK.sub(self._backtick_expand,
-                                _RE_ENVVAR.sub(lambda m: 
-                                               self._expand_into(m.group(0)[2:-1], result, m.group(0), parent_var), buf))
+                                self._cls_scan.parse(buf, self._expand_into, result, parent_var))
 
     def _backtick_expand(self, m):
         """
@@ -340,4 +441,3 @@ class Environment(lazydict):
                 del newenv[k]
 
         return newenv
-

@@ -8,5 +8,4 @@ if sys.version_info < (3,):
 
 # Assure that packages in the same directory as ours (tests) can be used without concern for where
 # we are installed
-sys.path[0] = os.path.dirname(sys.path[0])
-
+sys.path[0] = os.path.dirname(os.path.dirname(__file__))

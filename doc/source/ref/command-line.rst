@@ -1,6 +1,8 @@
 .. chaperone documentation n
    command line documentation
 
+.. _ref.chaperone:
+
 Chaperone Command Reference
 ===========================
 
@@ -65,7 +67,7 @@ Chaperone goes through a set of startup phases in order to establish a working e
 
 3.  Once configuration information is present, chaperone proceeds to start it's internal ``syslog`` service,
     creating sockets such as ``/dev/log`` and starts it's internal command processor which accepts
-    commands at ``/dev/chaperone`` or interactive commands (via :ref:`telchap <telchap>`) at
+    commands at ``/dev/chaperone`` or interactive commands (via :ref:`telchap <ref.telchap>`) at
     ``/dev/chaperone.sock``.  Chaperone also sets up utility environment variables such as
     :ref:`_CHAP_INTERACTIVE <env._CHAP_INTERACTIVE>` so that they can be used in service configurations.
 
@@ -89,7 +91,7 @@ they exit.   When it receives a ``SIGTERM`` it will shutdown all processes in an
 
 
 Note that when a command is specified on the chaperone command line, chaperone starts a ``CONSOLE`` service internally.
-This service can be managed just like any other service, and shows up in service listings when using the :ref:`telchap <telchap>`
+This service can be managed just like any other service, and shows up in service listings when using the :ref:`telchap <ref.telchap>`
 command.   If chaperone is started in an interactive environment (has a pseudo-tty as ``stdin``), it uses
 ``SIGHUP`` to terminate the process. Otherwise, it uses ``SIGTERM`` as usual.   This is to accommodate login
 shells such ``bash`` and ``sh``, which expect this behavior.

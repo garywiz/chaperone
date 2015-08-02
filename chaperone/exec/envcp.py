@@ -2,7 +2,7 @@
 Copy text files and expand environment variables as you copy.
 
 Usage:
-    envcp [-v] [--overwrite] [--strip=<suffix>] FILE ...
+    envcp [options] FILE ...
 
 Options:
         --strip suffix      If the destination is a directory, strip "suffix"
@@ -10,6 +10,8 @@ Options:
         --overwrite         Overwrite destination files rather than exiting
                             with an error.
         -v                  Display progress.
+        --xprefix char      The leading string to identify a variable.  Defaults to '$'
+        --xgrouping chars   Grouping types which are recognized, defaults to '({'
 
 Copies a file to a destination file (two arguments), or any number of files to a destination
 directory.  As files are copied, environment variables will be expanded.   If the destination
@@ -39,7 +41,18 @@ def check_canwrite(flist, overok):
 
 def main_entry():
     options = docopt(__doc__, version=VERSION_MESSAGE)
+
     files = options['FILE']
+
+    start = options['--xprefix']
+    braces = options['--xgrouping']
+
+    if braces:
+        if any([b not in '{([' for b in braces]):
+            print("error: --xgrouping can accept one or more of '{{', '[', or '(' only.  Not this: '{0}'.".format(braces))
+            exit(1)
+    
+    Environment.set_parse_parameters(start, braces)
 
     env = Environment()
 

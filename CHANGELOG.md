@@ -1,3 +1,13 @@
+## 0.2.27 (2015-08-01)
+
+Enhancements:
+
+- Added documentation for ``envcp`` in the new utilities section of the documentation.
+- Enhanced environment-variable expansions so they are smart about nesting.
+- Fixed syslog receiver so that trailing newlines are stripped (programs like ``sudo``
+  and ``openvpn`` terminate their log lines this way, even though it is a questionable
+  practice).
+
 ## 0.2.26 (2015-07-28)
 
 Enhancements:

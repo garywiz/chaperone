@@ -70,10 +70,12 @@ ENV4 = {
     "MAYBE8": '$(HOAX:-${MAYBE7:-7here})/foo',
     "MAYBE9": '$(HOME:+blach.${MAYBE10:-10here})/foo',
     "UBERNEST": 'nest:$(HOME:+$(HOAX:-inside${TWO})) and:$(ANOTHER)',
-    "UBERNEST-NOT": 'nest:$(HOME:+$(HOAX:-inside$(TWO))) and:$(ANOTHER)',
+    "UBERNEST-DEEP": 'nest:$(HOME:+$(HOAX:-inside$(TWO))) and:$(ANOTHER)',
 }
 
 RESULT4 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-10gone/foo'), ('MAYBE11', 'to-10gone'), ('MAYBE12', 'circA-10gone'), ('MAYBE13', 'circB-circA-10gone'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE4B', '/foo and bleech'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-10gone/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps'), ('UBERNEST', 'nest:inside/usr/garyw and /usr/garyw/apps and:/usr/garyw/apps/theap'), ('UBERNEST-NOT', 'nest:$(HOAX:-inside/usr/garyw and /usr/garyw/apps) and:/usr/garyw/apps/theap')]"
+
+RESULT4 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-10gone/foo'), ('MAYBE11', 'to-10gone'), ('MAYBE12', 'circA-10gone'), ('MAYBE13', 'circB-circA-10gone'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE4B', '/foo and bleech'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-10gone/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps'), ('UBERNEST', 'nest:inside/usr/garyw and /usr/garyw/apps and:/usr/garyw/apps/theap'), ('UBERNEST-DEEP', 'nest:inside/usr/garyw and /usr/garyw/apps and:/usr/garyw/apps/theap')]"
 
 ENV4a = {
     'PATH': '/bin',
@@ -152,6 +154,8 @@ def canonical(d, nl = False):
     return "[" + (', '.join(result)) + "]";
 
 class TestEnvOrder(unittest.TestCase):
+
+    maxDiff = 5000
 
     def test_expand1(self):
         env = Environment(from_env = ENV1).expanded()
