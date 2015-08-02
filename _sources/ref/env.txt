@@ -109,8 +109,9 @@ Environment variable directives (as well as some others), can contain bash-inspi
   inserts the expansion of ``absent-val``.
 
 ``$(ENVVAR:|check-val|equal|notequal)``
-  Compares the expanded value of ``ENVVAR`` to ``check-val`` using case-insensitive comparison.  If they are
-  equal, then inserts ``equal`` otherwise inserts ``notequal``.
+  Compares the expanded value of ``ENVVAR`` to ``check-val`` using case-insensitive filename glob matching rules.  If they
+  match, then inserts ``equal`` otherwise inserts ``notequal``.  For example, you can use a match expression of ``[ty]*`` to
+  match any value which starts with 't' or 'y'.
 
 ``$(ENVVAR/regex/repl/[i])``
   Expands the named environment variable, then performs a regular expression substitution using ``regex`` with

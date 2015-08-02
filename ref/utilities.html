@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Chaperone Configuration &mdash; chaperone 0.2.0 documentation</title>
+  <title>Additional Utilities &mdash; chaperone 0.2.0 documentation</title>
   
 
   
@@ -34,8 +34,8 @@
   
     <link rel="top" title="chaperone 0.2.0 documentation" href="../index.html"/>
         <link rel="up" title="Chaperone Reference" href="index.html"/>
-        <link rel="next" title="Configuration File Format" href="config-format.html"/>
-        <link rel="prev" title="Chaperone Command Reference" href="command-line.html"/> 
+        <link rel="next" title="Utility: envcp" href="utility-envcp.html"/>
+        <link rel="prev" title="Environment Variables" href="env.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -102,7 +102,7 @@
 <li class="toctree-l3"><a class="reference internal" href="command-line.html#option-reference-information">Option Reference Information</a></li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">Chaperone Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config.html">Chaperone Configuration</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="config-format.html">Configuration File Format</a></li>
 <li class="toctree-l3"><a class="reference internal" href="config-global.html">Configuration: Global Settings</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
@@ -135,7 +135,7 @@
 <li class="toctree-l3"><a class="reference internal" href="env.html#notify-socket">Notify Socket</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html">Additional Utilities</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Additional Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="utility-envcp.html">Utility: <code class="docutils literal"><span class="pre">envcp</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="utility-envcp.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="utility-envcp.html#applications">Applications</a></li>
@@ -172,7 +172,7 @@
       
           <li><a href="index.html">Chaperone Reference</a> &raquo;</li>
       
-    <li>Chaperone Configuration</li>
+    <li>Additional Utilities</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -183,43 +183,16 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="chaperone-configuration">
-<span id="config"></span><h1>Chaperone Configuration<a class="headerlink" href="#chaperone-configuration" title="Permalink to this headline">¶</a></h1>
-<p>Chaperone has a versatile configuration language that can be quick and easy to use, or can comprise many services
-and dependencies.  For example, the following user appllication plus MySQL database server along with syslog
-redirection could be defined simply in just a few lines:</p>
-<div class="highlight-python"><div class="highlight"><pre>mysql.service:  { command: &quot;/etc/init.d/mysql start&quot;,
-                  type: forking }
-myapp.service:  { command: &quot;/opt/apps/bin/my_application&quot;,
-                  restart: true, after: mysql.service }
-syslog.logging: { filter: &quot;*.info&quot;, stdout: true }
-</pre></div>
-</div>
-<p>Configurations can be as sophisticated as desired, including cron-type scheduling, multiple types of jobs, and
-complex job trees.   These sections provide a complete reference to how the chaperone configuration directives.</p>
+  <div class="section" id="additional-utilities">
+<span id="utilities"></span><h1>Additional Utilities<a class="headerlink" href="#additional-utilities" title="Permalink to this headline">¶</a></h1>
+<p>In addition the main Chaperone program (see <a class="reference internal" href="command-line.html#ref-chaperone"><span>Chaperone Command Reference</span></a>), several utilities are provided.  Only the
+<span class="xref std std-ref">ref.telchap</span> utility requires Chaperone itself.  The others can be used independently.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="config-format.html">Configuration File Format</a></li>
-<li class="toctree-l1"><a class="reference internal" href="config-global.html">Configuration: Global Settings</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="config-global.html#settings-quick-reference">Settings Quick Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config-global.html#settings-reference">Settings Reference</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="config-service.html">Configuration: Service Declarations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="config-service.html#service-quick-reference">Service Quick Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config-service.html#service-types">Service Types</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config-service.html#service-config-reference">Service Config Reference</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="config-logging.html">Configuration: Logging Declarations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="config-logging.html#logging-quick-reference">Logging Quick Reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="config-logging.html#syslog-selectors">Syslog Selectors</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="config-logging.html#selector-format">Selector Format</a></li>
-<li class="toctree-l3"><a class="reference internal" href="config-logging.html#facility-selection">Facility Selection</a></li>
-<li class="toctree-l3"><a class="reference internal" href="config-logging.html#priority-selection">Priority Selection</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="config-logging.html#logging-config-reference">Logging Config Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utility-envcp.html">Utility: <code class="docutils literal"><span class="pre">envcp</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utility-envcp.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utility-envcp.html#applications">Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utility-envcp.html#advanced-templates">Advanced Templates</a></li>
 </ul>
 </li>
 </ul>
@@ -232,10 +205,10 @@ complex job trees.   These sections provide a complete reference to how the chap
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="config-format.html" class="btn btn-neutral float-right" title="Configuration File Format" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="utility-envcp.html" class="btn btn-neutral float-right" title="Utility: envcp" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="command-line.html" class="btn btn-neutral" title="Chaperone Command Reference" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="env.html" class="btn btn-neutral" title="Environment Variables" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -195,7 +195,7 @@ Service Config Reference
    be considered satisfied.
 
    Services can be enabled and disabled dynamically while Chaperone is running using the
-   :ref:`telchap command <telchap>`.
+   :ref:`telchap command <ref.telchap>`.
 
    Since you can use environment variable expansions, it can be useful to make service startup conditional
    based upon some environment variable setting, such as::

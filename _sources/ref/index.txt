@@ -23,3 +23,4 @@ Any bugs should be reported as issues at https://github.com/garywiz/chaperone/is
    command-line
    config
    env
+   utilities
