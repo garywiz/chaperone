@@ -1,5 +1,5 @@
 
-.. _chap.docker:
+.. _chap.example-docker:
 
 A Simple Docker Example
 =======================
@@ -109,7 +109,3 @@ If you want, you can also use the complete set of pre-built Chaperone images
 are excellent examples of complete Chaperone-managed development and production environments.
 You can learn more by reading the introduction to these 
 images `on their GitHub page <https://github.com/garywiz/chaperone-docker>`_.
-
-.. toctree::
-   :maxdepth: 2
-   chap-docker-simple.rst

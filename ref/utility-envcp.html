@@ -139,6 +139,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#applications">Applications</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#advanced-templates">Advanced Templates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#backtick-syntax">Backtick Syntax</a></li>
 </ul>
 </li>
 </ul>
@@ -226,11 +227,14 @@ will terminate with an error when any destination file already exists.</td>
 <td>When files are copied, strip off the specified filename suffix to derive
 the filename that should be used in the destination directory.</td>
 </tr>
-<tr class="row-odd"><td>&#8211;xprefix <em>char</em></td>
+<tr class="row-odd"><td>&#8211;shell-enable</td>
+<td>Enables backtick expansion features.</td>
+</tr>
+<tr class="row-even"><td>&#8211;xprefix <em>char</em></td>
 <td>Specify the introductory prefix used for variable expansions.
 Defaults to the dollar-sign character (<cite>$</cite>).</td>
 </tr>
-<tr class="row-even"><td>&#8211;xgrouping <em>charlist</em></td>
+<tr class="row-odd"><td>&#8211;xgrouping <em>charlist</em></td>
 <td>Specify a list of opening brace types.  Defaults to the left curly brace
 and the left parenthesis (<code class="docutils literal"><span class="pre">{(</span></code>).</td>
 </tr>
@@ -304,6 +308,38 @@ FULLNAME=${PWD:-/home}/${BASENAME}
 <div class="highlight-python"><div class="highlight"><pre>$ envcp --xprefix &#39;%%&#39; script.sh.tpl script.sh
 </pre></div>
 </div>
+</div>
+<div class="section" id="backtick-syntax">
+<h2>Backtick Syntax<a class="headerlink" href="#backtick-syntax" title="Permalink to this headline">¶</a></h2>
+<p>Chaperone has built-in support for shell-escapes
+using <a class="reference internal" href="env.html#env-backtick"><span>backtick expansion syntax</span></a>.   While this is normally enabled
+in Chaperone configuration files, it is <em>disabled</em> by default in <code class="docutils literal"><span class="pre">envcp</span></code> to minimize
+the chance of accidental (or malicious) shell injection within template scripts.</p>
+<p>So, for example, if you have a file <code class="docutils literal"><span class="pre">test.txt</span></code> which contains:</p>
+<div class="highlight-python"><div class="highlight"><pre>The date is ... $(`date;echo yes`)
+`ls -l`
+</pre></div>
+</div>
+<p>Then, you will see the following by default using <code class="docutils literal"><span class="pre">envcp</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ envcp - &lt;test.txt
+The date is ... $(`date;echo yes`)
+`ls -l`
+$
+</pre></div>
+</div>
+<p>However, you can enable shell expansion if desired:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ envcp --shell-escapes &lt;test.txt
+Tue Aug  4 01:35:07 UTC 2015 yes
+`ls -l`
+$
+</pre></div>
+</div>
+<p>Note that backticks are only expanded when they occur as part of variable expansion
+syntax, and are never expanded elsewhere.  Since templates are often shell scripts,
+this prevents any confusion between <code class="docutils literal"><span class="pre">envcp</span></code> expansions and syntax which is
+part of the script template itself.</p>
+<p>See <a class="reference internal" href="env.html#env-expansion"><span>Environment Variable Expansion</span></a> for more information on how variables are expanded and
+how backticks work.</p>
 </div>
 </div>
 

@@ -35,6 +35,7 @@ The following options can be specified:
   				will terminate with an error when any destination file already exists.
   --strip *suffix*		When files are copied, strip off the specified filename suffix to derive
   	  			the filename that should be used in the destination directory.
+  --shell-enable		Enables backtick expansion features.
   --xprefix *char*		Specify the introductory prefix used for variable expansions.
   	    			Defaults to the dollar-sign character (`$`).
   --xgrouping *charlist*	Specify a list of opening brace types.  Defaults to the left curly brace
@@ -111,3 +112,40 @@ by ``envcp``.  So, for example, if you have a shell script template like this::
 you can tell ``envcp`` to use ``%%`` as the expansion prefix when you do the copy::
 
   $ envcp --xprefix '%%' script.sh.tpl script.sh
+
+
+Backtick Syntax
+---------------
+
+Chaperone has built-in support for shell-escapes
+using :ref:`backtick expansion syntax <env.backtick>`.   While this is normally enabled
+in Chaperone configuration files, it is *disabled* by default in ``envcp`` to minimize
+the chance of accidental (or malicious) shell injection within template scripts.
+
+So, for example, if you have a file ``test.txt`` which contains::
+
+  The date is ... $(`date;echo yes`)
+  `ls -l`
+
+Then, you will see the following by default using ``envcp``::
+
+  $ envcp - <test.txt
+  The date is ... $(`date;echo yes`)
+  `ls -l`
+  $
+
+However, you can enable shell expansion if desired::
+
+  $ envcp --shell-escapes <test.txt
+  Tue Aug  4 01:35:07 UTC 2015 yes
+  `ls -l`
+  $
+
+Note that backticks are only expanded when they occur as part of variable expansion
+syntax, and are never expanded elsewhere.  Since templates are often shell scripts,
+this prevents any confusion between ``envcp`` expansions and syntax which is
+part of the script template itself.
+
+See :ref:`env.expansion` for more information on how variables are expanded and
+how backticks work.
+
