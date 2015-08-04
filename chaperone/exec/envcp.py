@@ -10,6 +10,7 @@ Options:
         --overwrite         Overwrite destination files rather than exiting
                             with an error.
         -v                  Display progress.
+        --shell-enable      Enable shell escapes using backticks, as in $(`ls`)
         --xprefix char      The leading string to identify a variable.  Defaults to '$'
         --xgrouping chars   Grouping types which are recognized, defaults to '({'
 
@@ -52,6 +53,9 @@ def main_entry():
             print("error: --xgrouping can accept one or more of '{{', '[', or '(' only.  Not this: '{0}'.".format(braces))
             exit(1)
     
+    # Enable or disable, but don't cache them if enabled
+    Environment.set_backtick_expansion(bool(options['--shell-enable']), False)
+
     Environment.set_parse_parameters(start, braces)
 
     env = Environment()

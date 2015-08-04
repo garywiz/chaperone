@@ -1,6 +1,6 @@
-.. _ch.env:
-
 .. include:: /includes/defs.rst
+
+.. _ch.env:
 
 Environment Variables
 =====================
@@ -120,6 +120,10 @@ Environment variable directives (as well as some others), can contain bash-inspi
   in ``regex`` can be referred to in the replacement as ``\n`` where 'n' is zero to refer to the entire 
   matched string, or 1-n to specify the group number.
 
+``$(`shell-command`)``
+  Executes the specified shell command and inserts the resulting output.  Note that the shell command
+  may contain references to other environment variables. 
+  
 The forms above are patterned after ``bash`` and can be useful in cases where defaults are required.  For example,
 if you wanted to specify the user for a service in the event no user was otherwise specified::
 
@@ -151,6 +155,8 @@ the directive (for example, the :ref:`service directory <service.directory>` dir
    assures that such environment variables use late-expansion so that templates such as the above can
    be created and inherited by both logging and service declarations.
 
+.. _env.backtick:
+
 Backtick Expansion
 ******************
 
@@ -165,9 +171,9 @@ to set an environment variable to the default gateway (normally the Docker bridg
       }
    }
 
-Backtick expansions are not intended to be a general-purpose shell escape, but intended for situations (like the
-example) where some system information needs to be collected for configuration purposes.    Specifically,
-backtick expansion have the following characteristics:
+Backtick expansions are not intended to be a general-purpose shell escape, but intended for 
+situations (like the example) where some system information needs to be collected for configuration 
+purposes.  Specifically, backtick expansion have the following characteristics:
 
 * Backticks will be processed *after* all dependent environment variables are expanded.
 * Expansions are done only once, even if they are present in multiple locations.  Thus, the backtick
@@ -188,6 +194,16 @@ However, note that backtick expansions may include references to other environme
 Note in the above that the `TZ` variable will be expanded first (if necessary) before the backtick
 expression.
 
+Chaperone also supports a special syntax when backtick expansion is the only desired outcome
+of a variable insertion.  The following two methods are equivalent::
+
+  env_set: {
+    "HOSTNAME1": "$(`hostname -s`)",
+    "HOSTNAME2": "`hostname -s`",
+  }
+
+This alternate syntax is primarily useful in :ref:`the envcp utiltiy <ref.envcp>` since 
+backticks are not expanded in bare text as they are within Chaperone directives.
 
 Variable Reference
 ------------------

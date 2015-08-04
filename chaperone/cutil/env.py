@@ -27,7 +27,7 @@ ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone run
 _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
-_RE_OPERS = re.compile(r'^([^:]+):([-|?+_/])(.*)$', re.DOTALL)
+_RE_OPERS = re.compile(r'^(?:([^:]+):([-|?+_/])(.*)|`(.+)`)$', re.DOTALL)
 _RE_SLASHOP = re.compile(r'^(.+)(?<!\\)/(.*)(?<!\\)/([i]*)$', re.DOTALL)
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
@@ -144,6 +144,8 @@ class Environment(lazydict):
 
     # A class variable to keep track of backtick expansions so we don't do them more than once
     _cls_btcache = dict()
+    _cls_use_btcache = True     # if shell expansions should be cached once or re-executed
+    _cls_backtick = True        # indicates backticks are enabled
 
     # Default scanner
     _cls_scan = EnvScanner()
@@ -151,6 +153,11 @@ class Environment(lazydict):
     @classmethod
     def set_parse_parameters(cls, variable_id = None, open_expansion = None):
         cls._cls_scan = EnvScanner(variable_id, open_expansion)
+
+    @classmethod
+    def set_backtick_expansion(cls, enabled = True, cache = True):
+        cls._cls_backtick = enabled
+        cls._cls_use_btcache = cache
 
     def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
         """
@@ -335,13 +342,20 @@ class Environment(lazydict):
                     return default
                 val = primary[k]
         else:
-            (k, oper, repl) = match.groups()
+            (k, oper, repl, backtick) = match.groups()
             if parent == k:     # self-referential
                 primary = self._get_shadow_environment(k) or _DICT_CONST
 
-            # Handle ? and | and /
+            # Handle backticks, ? and | and /
 
-            if oper == '?':
+            if backtick:        # full backtick expansion syntax
+                if not self._cls_backtick:
+                    return default
+                use_repl = backtick
+                def reval(buf):
+                    return self._backtick_expand(buf)
+
+            elif oper == '?':
                 if k not in primary:
                     raise ChVariableError(self._recurse(result, repl))
 
@@ -393,14 +407,20 @@ class Environment(lazydict):
         return _RE_BACKTICK.sub(self._backtick_expand,
                                 self._cls_scan.parse(buf, self._expand_into, result, parent_var))
 
-    def _backtick_expand(self, m):
+    def _backtick_expand(self, cmd):
         """
         Performs rudimentary backtick expansion after all other environment variables have been
         expanded.   Because these are cached, the user should not expect results to differ
         for different environment contexts, nor should the environment itself be relied upon.
         """
 
-        cmd = m.group(1)
+        # Accepts either a string or match object
+        if not isinstance(cmd, str):
+            cmd = cmd.group(1)
+
+        if not self._cls_backtick:
+            return "`" + cmd + "`"
+
         key = '{0}:{1}:{2}'.format(self.uid, self.gid, cmd)
 
         result = self._cls_btcache.get(key)
@@ -417,13 +437,16 @@ class Environment(lazydict):
                     os.setuid(pwrec.pw_uid)
 
             try:
-                result = subprocess.check_output(cmd, shell=True, preexec_fn=_proc_setup)
+                result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT,
+                                                 preexec_fn=_proc_setup)
                 result = result.decode()
             except Exception as ex:
                 error(ex, "Backtick expansion returned error: " + str(ex))
                 result = ""
 
-            self._cls_btcache[key] = result = result.replace("\n", " ")
+            result = result.strip().replace("\n", " ")
+            if self._cls_use_btcache:
+                self._cls_btcache[key] = result
 
         return result
 

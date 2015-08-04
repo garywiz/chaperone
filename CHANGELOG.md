@@ -1,3 +1,18 @@
+## 0.2.28 (2015-08-03)
+
+Refinements:
+
+- Create a special-case syntax for shell escapes: ``$(`shell-command`)`` mainly to
+  assure that such syntaxes are propery supported instead of being expanded as a
+  side-effect.  Previously, the syntax above would treat the result of the command
+  as the name of an environment variable, and since it was not found, would insert
+  the results.   Since it was a useful trick, formalizing the use and eliminating
+  edge cases was important.
+- Disabled shell escapes by default in ``envcp`` and added the ``--shell-enable``
+  switch to enable them.
+- Added further documentation about shell escapes to clarify exactly how they
+  work and how they should be used.
+  
 ## 0.2.27 (2015-08-01)
 
 Enhancements:

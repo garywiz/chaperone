@@ -10,9 +10,12 @@ ENV1 = {
     "RECUR1": 'two-$(RECUR3)-$(HOME)',
     "REF-RECUR": "$(ANOTHER) BUT NOT $(RECUR1)",
     "RECUR3": 'three:$(RECUR9)',
+    "BTEST1": '$(`echo "12" "34${HOME}"`)',
+    "BTEST2": '$(`echo "12" "34${HOME}"` x)',
+    "BTEST3": '$(`echo HO`ME)',
 }
 
-RESULT1 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('RECUR1', 'two-three:$(RECUR9)-/usr/garyw'), ('RECUR2', 'two-three:$(RECUR9)-/usr/garyw../usr/garyw/apps'), ('RECUR3', 'three:$(RECUR9)'), ('REF-RECUR', '/usr/garyw/apps/theap BUT NOT two-three:$(RECUR9)-/usr/garyw')]"
+RESULT1 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('BTEST1', '12 34/usr/garyw'), ('BTEST2', '$(12 34/home/garyw x)'), ('BTEST3', '$(HOME)'), ('HOME', '/usr/garyw'), ('RECUR1', 'two-three:$(RECUR9)-/usr/garyw'), ('RECUR2', 'two-three:$(RECUR9)-/usr/garyw../usr/garyw/apps'), ('RECUR3', 'three:$(RECUR9)'), ('REF-RECUR', '/usr/garyw/apps/theap BUT NOT two-three:$(RECUR9)-/usr/garyw')]"
 
 ENV2 = {
     "HOME": '/usr/garyw',
