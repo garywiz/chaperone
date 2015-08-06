@@ -29,6 +29,7 @@ _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 # Parsing for operators within expansions
 _RE_OPERS = re.compile(r'^(?:([^:]+):([-|?+_/])(.*)|`(.+)`)$', re.DOTALL)
 _RE_SLASHOP = re.compile(r'^(.+)(?<!\\)/(.*)(?<!\\)/([i]*)$', re.DOTALL)
+_RE_BAREBAR = re.compile(r'(?<!\\)\|')
 
 _DICT_CONST = dict()            # a dict we must never change, just an optimisation
 
@@ -370,15 +371,15 @@ class Environment(lazydict):
                     return self._recurse(result, re.sub(pat, repl.replace('\/', '/'), buf))
                     
             elif oper == '|':
-                vts = repl.split('|', 3)
+                vts = _RE_BAREBAR.split(repl, 3)
                 if len(vts) == 1:
                     oper = '+'  # identical to '+' operator
                 elif len(vts) == 2:
                     use_repl = vts[0] if k in primary else vts[1]
-                elif len(vts) == 3:
-                    def reval(buf):
-                        retval = vts[1] if fnmatch(buf.lower(), vts[0].lower()) else vts[2]
-                        return self._recurse(result, retval)
+                elif len(vts) >= 3:
+                    def reval(buf, args=vts):
+                        retval = args[1] if fnmatch(buf.replace(r'\|', '|').lower(), args[0].lower()) else args[2]
+                        return self._recurse(result, retval.replace(r'\|', '|'))
 
             # Handle both :- and :+ and non-value-based | cases
             if use_repl is None:

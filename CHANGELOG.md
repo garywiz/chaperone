@@ -1,3 +1,10 @@
+## 0.2.29 (2015-08-05)
+
+Refinement:
+
+- Allow backslash-escaping of VBAR construct contents in environment variable
+  if-then-else construct.
+
 ## 0.2.28 (2015-08-03)
 
 Refinements:
