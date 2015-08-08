@@ -1,3 +1,9 @@
+## 0.2.30 (2015-08-07)
+
+Enhancements:
+
+- Add support for --archive/-a to envcp.
+
 ## 0.2.29 (2015-08-05)
 
 Refinement:

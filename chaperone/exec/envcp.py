@@ -9,7 +9,8 @@ Options:
                             off source files.
         --overwrite         Overwrite destination files rather than exiting
                             with an error.
-        -v                  Display progress.
+        -v --verbose        Display progress.
+        -a --archive        Preserve permissions when copying.
         --shell-enable      Enable shell escapes using backticks, as in $(`ls`)
         --xprefix char      The leading string to identify a variable.  Defaults to '$'
         --xgrouping chars   Grouping types which are recognized, defaults to '({'
@@ -108,6 +109,7 @@ def main_entry():
         if not destfile:
             destfile = os.path.join(destdir, curpair[1])
         try:
+            oldstat = os.stat(curpair[0])
             oldf = open(curpair[0], 'r')
         except Exception as ex:
             print("error: cannot open input file {0}: {1}".format(curpair[0], ex))
@@ -119,10 +121,33 @@ def main_entry():
             exit(1)
 
         newf.write(env.expand(oldf.read()))
-        newf.close()
         oldf.close()
-        
-        if options['-v']:
+        newf.close()
+
+        if options['--archive']:
+            # ATTEMPT to retain permissions
+            try:
+                os.chown(destfile, oldstat.st_uid, oldstat.st_gid);
+            except PermissionError:
+                # Try them separately.  User first, then group.
+                try:
+                    os.chown(destfile, oldstat.st_uid, -1);
+                except PermissionError:
+                    pass
+                try:
+                    os.chown(destfile, -1, oldstat.st_gid);
+                except PermissionError:
+                    pass
+            try:
+                os.chmod(destfile, oldstat.st_mode);
+            except PermissionError:
+                pass
+            try:
+                os.utime(destfile, times=(oldstat.st_atime, oldstat.st_mtime))
+            except PermissionError:
+                pass
+
+        if options['--verbose']:
             print("envcp {0} {1}".format(curpair[0], destfile))
 
         destfile = None
