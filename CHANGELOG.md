@@ -1,3 +1,12 @@
+## 0.2.31 (2015-08-11)
+
+Enhancements:
+
+- Add support for --create-user name:/path so that user identity can be based upon
+  the permissions set for a given path.  This helps workaround the file permissions
+  issues under OSX/VirtualBox where you can't really modify the mounted file
+  permissions and instead "get what you get".
+
 ## 0.2.30 (2015-08-07)
 
 Enhancements:
