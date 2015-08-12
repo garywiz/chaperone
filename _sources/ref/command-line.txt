@@ -285,7 +285,7 @@ Option Reference Information
 
 .. _option.create-user:
 
-.. option:: --create-user name[/uid[:gid]]
+.. option:: --create-user name[/uid[:gid]] or --create-user name:/path/to/file
 
    Often, a generic container can be designed to allow userspace mount points, isolating persistent data
    outside the container so that the container becomes entirely transient.   Because containers have a
@@ -293,7 +293,7 @@ Option Reference Information
    lead to difficulties.
 
    The ``--create-user`` switch allows you to "match" the host user (and optionally group) to the running
-   process tree within the container so that file permissions are consistent.
+   process tree within the container so that file permissions are consistent.  
 
    This switch accepts the following:
 
@@ -303,8 +303,14 @@ Option Reference Information
      a new user ID will be assigned.
    * An optional ``gid`` which can be the name or number of an existing group, or the number
      of a new group to be created specifically for the new user.
+   * An optional format where the name is followed by the path to an *existing* file on the system
+     whose ``uid`` and ``gid`` will be used to create the new user.
 
-   When ``uid`` and ``gid`` are omitted, Chaperone will use the container's installed OS policy
+   The final alternative form is specified by including the path as follows::
+
+     --create-user name:/path/to/file
+
+   When ``uid`` and ``gid`` or the file option are omitted, Chaperone will use the container's installed OS policy
    to determine how to assign user credentials.
 
    This feature can be used to create generic start-up scripts for containers so that they

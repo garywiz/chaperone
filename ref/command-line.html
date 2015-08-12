@@ -483,7 +483,7 @@ use <a class="reference internal" href="#option-create-user"><span>&#8211;create
 
 <span class="target" id="option-create-user"></span><dl class="option">
 <dt id="cmdoption-chaperone--create-user">
-<code class="descname">--create-user</code><code class="descclassname"> name[/uid[:gid]]</code><a class="headerlink" href="#cmdoption-chaperone--create-user" title="Permalink to this definition">¶</a></dt>
+<code class="descname">--create-user</code><code class="descclassname"> name[/uid[:gid]] or --create-user name:/path/to/file</code><a class="headerlink" href="#cmdoption-chaperone--create-user" title="Permalink to this definition">¶</a></dt>
 <dd><p>Often, a generic container can be designed to allow userspace mount points, isolating persistent data
 outside the container so that the container becomes entirely transient.   Because containers have a
 set of isolated user credentials, sharing files and permissions with the host volumes can often
@@ -498,8 +498,14 @@ the container runs.</li>
 a new user ID will be assigned.</li>
 <li>An optional <code class="docutils literal"><span class="pre">gid</span></code> which can be the name or number of an existing group, or the number
 of a new group to be created specifically for the new user.</li>
+<li>An optional format where the name is followed by the path to an <em>existing</em> file on the system
+whose <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code> will be used to create the new user.</li>
 </ul>
-<p>When <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code> are omitted, Chaperone will use the container&#8217;s installed OS policy
+<p>The final alternative form is specified by including the path as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre>--create-user name:/path/to/file
+</pre></div>
+</div>
+<p>When <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code> or the file option are omitted, Chaperone will use the container&#8217;s installed OS policy
 to determine how to assign user credentials.</p>
 <p>This feature can be used to create generic start-up scripts for containers so that they
 share the credentials of whatever user created them.  Here is an example:</p>

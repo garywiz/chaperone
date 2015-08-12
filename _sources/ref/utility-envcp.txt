@@ -30,7 +30,8 @@ The following options can be specified:
   ============================= ================================================================================
   Option
   ============================= ================================================================================
-  -v     			Echo files to ``stdout`` as they are copied.
+  -v / --verbose		Echo file operations to ``stdout`` as files are copied.
+  -a / --archive		Attempt to preserve file permissions, ownership, access and modification times.
   --overwrite			Overwrite destination files.  If not specified, ``envcp``
   				will terminate with an error when any destination file already exists.
   --strip *suffix*		When files are copied, strip off the specified filename suffix to derive
