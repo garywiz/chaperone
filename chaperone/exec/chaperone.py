@@ -69,7 +69,7 @@ on the command line to run as an application.  You need to do one or the other."
 # We require usernames to start with a letter or underscore.  This is consistent with default Linux
 # rules.
 RE_CREATEUSER = (
-   re.compile(r'(?P<user>[a-z_][a-z0-9_-]*)(?:[:/]?(?P<uid>\d+)(?:[:/](?P<gid>[a-z_][a-z0-9_-]*|\d+))?)?$', re.IGNORECASE)
+   re.compile(r'(?P<user>[a-z_][a-z0-9_-]*)(?:[:/](?:(?P<file>/.+)|(?P<uid>\d+)(?:[:/](?P<gid>[a-z_][a-z0-9_-]*|\d+))?))?$', re.IGNORECASE)
 )
 
 def main_entry():
@@ -132,7 +132,7 @@ def main_entry():
         exit(1)
      udata = match.groupdict()
      try:
-        maybe_create_user(udata['user'], udata['uid'], udata['gid'], options['--default-home'])
+        maybe_create_user(udata['user'], udata['uid'], udata['gid'], udata['file'], options['--default-home'])
      except Exception as ex:
         print("--create-user failure: {0}".format(ex))
         exit(1)

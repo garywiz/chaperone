@@ -305,7 +305,7 @@ def get_user_directories_directory():
 
     return _udd
 
-def maybe_create_user(user, uid = None, gid = None, default_home = None):
+def maybe_create_user(user, uid = None, gid = None, using_file = None, default_home = None):
     """
     If the user does not exist, then create one with the given name, and optionally
     the specified uid.  If a gid is specified, create a group with the same name as the 
@@ -313,7 +313,15 @@ def maybe_create_user(user, uid = None, gid = None, default_home = None):
 
     If the user does exist, then confirm that the uid and gid match, if either
     or both are specified.
+
+    If 'using_file' is specified, then uid/gid are ignored and replaced with the uid/gid
+    of the specified file.  The file must exist and be readable.
     """
+
+    if using_file:
+        stat = os.stat(using_file)
+        uid = stat.st_uid
+        gid = stat.st_gid
 
     if uid is not None:
         try:
