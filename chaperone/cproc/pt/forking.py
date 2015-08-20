@@ -8,7 +8,7 @@ class ForkingProcess(SubProcess):
         result = yield from self.timed_wait(self.process_timeout, self._exit_timeout)
         if result is not None and not result.normal_exit:
             if self.ignore_failures:
-                warn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
+                self.logwarn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
             else:
                 raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
         yield from self.wait_for_pidfile()

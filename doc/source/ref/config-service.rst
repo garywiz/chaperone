@@ -71,7 +71,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
                                                      upon startup. ('forking' and 'simple' types only) |ENV|
    :ref:`process_timeout <service.process_timeout>`  Specifies the amount of time Chaperone will wait for a service to start.
                                                      The default varies for each type of service.
-                                                     See :ref:``service types <config.sect.type>`` for more
+                                                     See :ref:`service types <config.sect.type>` for more
                                                      information.
    :ref:`restart <service.restart>`                  If 'true', then chaperone will restart this service if it fails (but
                                                      not if it terminates normally).  Default is 'false'.

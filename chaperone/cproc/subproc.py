@@ -546,7 +546,9 @@ class SubProcess(object):
         # Catches a restart result, reporting it as a warning, and either passing back to _abnormal_exit
         # or accepting glorious success.
         ex = fut.exception()
-        if ex:
+        if not ex:
+            self._starts_allowed = self.service.restart_limit
+        else:
             self.logwarn("{0} restart failed: {1}", self.name, ex)
             asyncio.async(self._abnormal_exit(self._proc and self._proc.returncode))
 
