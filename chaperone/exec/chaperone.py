@@ -67,10 +67,18 @@ MSG_NOTHING_TO_DO = """There are no services configured to run, nor is there a c
 on the command line to run as an application.  You need to do one or the other."""
 
 # We require usernames to start with a letter or underscore.  This is consistent with default Linux
-# rules.
-RE_CREATEUSER = (
-   re.compile(r'(?P<user>[a-z_][a-z0-9_-]*)(?:[:/](?:(?P<file>/.+)|(?P<uid>\d+)(?:[:/](?P<gid>[a-z_][a-z0-9_-]*|\d+))?))?$', re.IGNORECASE)
-)
+# rules.  Yeah I know, regexes can get complicated, but they can also do a lot of work to make the
+# rest of the code simpler.  Note that <file> matches strings like /foo:bar as a path of "/foo" with a
+# groupname of bar, but the colon can be escaped if you actualy have a filename that contains
+# a colon like "/foo\:bar".
+
+RE_CREATEUSER = re.compile(
+   r'''(?P<user>[a-z_][a-z0-9_-]*)                     # start with the username
+       (?:[:/]                                         # and an optional group starting with / or :, and...
+         (?:(?P<file>/(?:\\:|[^:])+)|(?P<uid>\d+))     # containing either a file path or numeric UID ...
+         (?:[:/](?P<gid>[a-z_][a-z0-9_-]*|\d+))?       # followed by an optional GID
+       )?$''',
+   re.IGNORECASE | re.X)
 
 def main_entry():
 
@@ -132,7 +140,9 @@ def main_entry():
         exit(1)
      udata = match.groupdict()
      try:
-        maybe_create_user(udata['user'], udata['uid'], udata['gid'], udata['file'], options['--default-home'])
+        maybe_create_user(udata['user'], udata['uid'], udata['gid'], 
+                          udata['file'] and udata['file'].replace(r'\:', ':'),
+                          options['--default-home'])
      except Exception as ex:
         print("--create-user failure: {0}".format(ex))
         exit(1)
