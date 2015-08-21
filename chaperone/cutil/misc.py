@@ -318,8 +318,6 @@ def maybe_create_user(user, uid = None, gid = None, using_file = None, default_h
     of the specified file.  The file must exist and be readable.
     """
 
-    print(user, uid, gid, using_file, default_home)
-
     if using_file:
         stat = os.stat(using_file)
         if uid is None:
