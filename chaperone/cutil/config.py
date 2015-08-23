@@ -36,6 +36,7 @@ _config_schema = V.Any(
         'interval': str,
         'kill_signal': str,
         'optional': bool,
+        'port': int,
         'pidfile': str,
         'process_timeout': V.Any(float, int),
         'startup_pause': V.Any(float, int),
@@ -46,7 +47,7 @@ _config_schema = V.Any(
         'setpgrp': bool,
         'stderr': V.Any('log', 'inherit'),
         'stdout': V.Any('log', 'inherit'),
-        'type': V.Any('oneshot', 'simple', 'forking', 'notify', 'cron'),
+        'type': V.Any('oneshot', 'simple', 'forking', 'notify', 'cron', 'inetd'),
         'uid': V.Any(str, int),
       },
       V.Match('^settings$'): {
@@ -208,6 +209,7 @@ class ServiceConfig(_BaseConfig):
     kill_signal = None
     optional = False
     pidfile = None              # the pidfile to monitor
+    port = None                 # used for inetd processes
     process_timeout = None      # time to elapse before we decide a process has misbehaved
     startup_pause = 0.5         # time to wait momentarily to see if a service starts (if needed)
     restart = False

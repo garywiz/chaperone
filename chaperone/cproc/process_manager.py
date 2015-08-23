@@ -21,6 +21,21 @@ from chaperone.cutil.logging import warn, info, debug, error, set_log_level
 from chaperone.cutil.misc import lazydict, objectplus
 from chaperone.cutil.syslog import SyslogServer
 
+class CustomEventLoop(asyncio.SelectorEventLoop):
+    def _make_socket_transport(self, sock, protocol, waiter=None, *,
+                               extra=None, server=None):
+        """
+        Supports a special protocol method 'acquire_socket' which acceps only a socket.
+        If it returns True, then the passed socket has been detached and no further
+        action will be taken.  This is to support inetd-style processes.
+        """
+        if hasattr(protocol, 'acquire_socket') and protocol.acquire_socket(sock):
+            return None
+        return super()._make_socket_transport(sock, protocol, waiter, extra=extra, server=server)
+
+asyncio.DefaultEventLoopPolicy._loop_factory = CustomEventLoop
+
+
 class TopLevelProcess(objectplus):
              
     exit_when_no_processes = True

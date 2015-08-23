@@ -4,20 +4,20 @@ from chaperone.cutil.config import ServiceDict
 
 OT1 = {
     'one.service': { },
-    'two.service': { 'service_group': 'foobar', 'after': 'default' },
-    'three.service': { 'service_group': 'system', 'before': 'four.service' },
-    'four.service': { 'service_group': 'system', 'before': 'default' },
+    'two.service': { 'service_groups': 'foobar', 'after': 'default' },
+    'three.service': { 'service_groups': 'system', 'before': 'four.service' },
+    'four.service': { 'service_groups': 'system', 'before': 'default' },
     'five.service': { },
     'six.service': { 'after': 'seven.service' },
     'seven.service': { },
-    'eight.service': { 'service_group': 'system', 'before': 'default' },
+    'eight.service': { 'service_groups': 'system', 'before': 'default' },
 }
 
 OT2 = {
     'one.service': { },
-    'two.service': { 'service_group': 'foobar', 'after': 'default' },
-    'three.service': { 'service_group': 'system', 'before': 'two.service' },
-    'four.service': { 'service_group': 'system', 'before': 'three.service' },
+    'two.service': { 'service_groups': 'foobar', 'after': 'default' },
+    'three.service': { 'service_groups': 'system', 'before': 'two.service' },
+    'four.service': { 'service_groups': 'system', 'before': 'three.service' },
     'five.service': { },
     'six.service': { },
     'seven.service': { }
@@ -26,8 +26,8 @@ OT2 = {
 OT3 = {
     'one.service': { },
     'two.service': { 'before': 'default' },
-    'three.service': { 'service_group': 'system', 'before': 'four.service' },
-    'four.service': { 'service_group': 'system', 'before': 'default' },
+    'three.service': { 'service_groups': 'system', 'before': 'four.service' },
+    'four.service': { 'service_groups': 'system', 'before': 'default' },
     'five.service': { 'before': 'two.service' },
     'six.service': { 'after': 'seven.service' },
     'seven.service': { }

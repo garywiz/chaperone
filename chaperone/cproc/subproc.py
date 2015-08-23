@@ -363,7 +363,7 @@ class SubProcess(object):
                     return
 
             try:
-                yield from self._start_service()
+                yield from self.start_subprocess()
             except Exception as ex:
                 if service.ignore_failures:
                     self.loginfo("service {0} ignoring failures. Exception: {1}", service.name, ex)
@@ -382,7 +382,7 @@ class SubProcess(object):
             self.logdebug("{0} notified waiters upon completion", service.name)
 
     @asyncio.coroutine
-    def _start_service(self):
+    def start_subprocess(self):
         service = self.service
 
         self.logdebug("{0} attempting start '{1}'... ".format(service.name, " ".join(service.exec_args)))
