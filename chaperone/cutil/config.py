@@ -36,7 +36,7 @@ _config_schema = V.Any(
         'interval': str,
         'kill_signal': str,
         'optional': bool,
-        'port': int,
+        'port': V.Any(str, int),
         'pidfile': str,
         'process_timeout': V.Any(float, int),
         'startup_pause': V.Any(float, int),
@@ -108,7 +108,7 @@ class _BaseConfig(object):
 
     _repr_pat = None
     _expand_these = {}
-    _assure_bool = {}
+    _typecheck = {}
     _settings_defaults = {}
     
     @classmethod
@@ -121,7 +121,7 @@ class _BaseConfig(object):
                    env=config.get_environment(),
                    settings=config.get_settings())
 
-    def _do_assure_bool(self, attr):
+    def _typecheck_assure_bool(self, attr):
         "Assures that the specified attribute is a legal boolean."
         val = getattr(self, attr)
         if val is None or isinstance(val, bool):
@@ -131,6 +131,16 @@ class _BaseConfig(object):
         if not match:
             raise ChParameterError("invalid boolean parameter for '{0}': '{1}'".format(attr, val))
         setattr(self, attr, bool(match.group('true')))
+
+    def _typecheck_assure_int(self, attr):
+        "Assures that the specified attribute is a legal integer."
+        val = getattr(self, attr)
+        if val is None or isinstance(val, int):
+            return
+        try:
+            setattr(self, attr, int(val))
+        except ValueError:
+            raise ChParameterError("invalid integer parameter for '{0}': '{1}'".format(attr, val))
 
     def __init__(self, initdict, name = "MAIN", env = None, settings = None):
         self.name = name
@@ -171,8 +181,8 @@ class _BaseConfig(object):
         if self._expand_these:
             env.expand_attributes(self, *self._expand_these)
 
-        for attr in self._assure_bool:
-            self._do_assure_bool(attr)
+        for attr,func in self._typecheck.items():
+            getattr(self, '_typecheck_'+func)(attr)
 
         self.post_init()
 
@@ -229,7 +239,8 @@ class ServiceConfig(_BaseConfig):
     prerequisites = None        # a list of service names which are prerequisites to this one
 
     _repr_pat = "Service:{0.name}(service_groups={0.service_groups}, after={0.after}, before={0.before})"
-    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args', 'pidfile', 'enabled'}
+    _expand_these = {'command', 'stdout', 'stderr', 'interval', 'directory', 'exec_args', 'pidfile', 'enabled', 'port'}
+    _typecheck = {'enabled': 'assure_bool', 'port': 'assure_int'}
     _assure_bool = {'enabled'}
     _settings_defaults = {'debug', 'idle_delay', 'process_timeout', 'startup_pause', 'ignore_failures'}
 
@@ -288,7 +299,7 @@ class LogConfig(_BaseConfig):
     syslog_host = None          # remote IP of syslog handler
 
     _expand_these = {'selector', 'file', 'enabled', 'logrec_hostname', 'syslog_host'}
-    _assure_bool = {'enabled'}
+    _typecheck = {'enabled': 'assure_bool'}
     _settings_defaults = {'logrec_hostname'}
 
     @property

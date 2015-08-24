@@ -1,3 +1,16 @@
+## 0.2.37 (2015-08-24)
+
+Enhancements:
+
+- Add support for **inetd**-compatible dynamic TCP socket connections.  See the description of the [port configuration parameter](http://garywiz.github.io/chaperone/ref/config-service.html#service-port) for a complete description of this feature.
+- Added [_CHAP_SERVICE_SERIAL](http://garywiz.github.io/chaperone/ref/env.html#env-chap-service-serial) and [_CHAP_SERVICE_TIME](http://garywiz.github.io/chaperone/ref/env.html#env-chap-service-time) environment variables to provide useful information to 'cron' and 'inetd' services which may execute multiple times.
+- Added the ability to add a `gid` number to the path-based format of the [--create-user](http://garywiz.github.io/chaperone/ref/command-line.html#option-create-user) command-line switch.
+
+Bug Fixes:
+
+- Fixed `telchap stop` so that it no longer would cause service restarts to occur.
+- Improved the service restart logic to handle a wider variety of service failure situations.
+
 ## 0.2.31 (2015-08-11)
 
 Enhancements:

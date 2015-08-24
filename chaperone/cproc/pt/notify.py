@@ -79,8 +79,8 @@ class NotifyProcess(SubProcess):
         raise ChProcessError(message)
 
     @asyncio.coroutine
-    def reset(self, restart = False, dependents = False, enable = False):
-        yield from super().reset(restart, dependents, enable)
+    def reset(self, dependents = False, enable = False):
+        yield from super().reset(dependents, enable)
         self._close_notifier()
 
     @asyncio.coroutine
