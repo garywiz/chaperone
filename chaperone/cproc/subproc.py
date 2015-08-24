@@ -226,8 +226,6 @@ class SubProcess(object):
         if self._cond_starting:
             return "starting"
 
-        print(self.name, self._started, proc and proc.returncode)
-
         if proc:
             rc = proc.returncode
             if rc is None:

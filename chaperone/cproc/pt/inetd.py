@@ -9,11 +9,25 @@ from chaperone.cutil.servers import Server, ServerProtocol
 
 class InetdServiceProtocol(ServerProtocol):
 
+    _fd = None
+
     def acquire_socket(self, sock):
+        # Prepare the socket so it's inheritable
         sock.setblocking(True)
-        asyncio.async(self.start_socket_process(sock.detach()))
+        self._fd = sock.detach()
+        sock.close()
+
+        future = asyncio.async(self.start_socket_process(self._fd))
+        future.add_done_callback(self._done)
+
         self.process.counter += 1
+
         return True
+
+    def _done(self, f):
+        # Close the socket regardless
+        if self._fd is not None:
+            os.close(self._fd)
 
     @asyncio.coroutine
     def start_socket_process(self, fd):
@@ -51,8 +65,7 @@ class InetdServiceProtocol(ServerProtocol):
         process.add_process(proc)
         yield from proc.wait()
         process.remove_process(proc)
-        
-        os.close(fd)
+
 
 class InetdService(Server):
     
@@ -106,8 +119,9 @@ class InetdProcess(SubProcess):
 
     @asyncio.coroutine
     def reset(self, dependents = False, enable = False):
-        self.server.close()
-        self.server = None
+        if self.server:
+            self.server.close()
+            self.server = None
         plist = copy(self._proclist)
         if plist:
             self.logwarn("{0} terminating {1} processes on port {2} that are still running".format(self.name, len(plist), self.port))

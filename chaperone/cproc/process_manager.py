@@ -30,6 +30,8 @@ class CustomEventLoop(asyncio.SelectorEventLoop):
         action will be taken.  This is to support inetd-style processes.
         """
         if hasattr(protocol, 'acquire_socket') and protocol.acquire_socket(sock):
+            if waiter:
+                waiter.set_result(None)
             return None
         return super()._make_socket_transport(sock, protocol, waiter, extra=extra, server=server)
 
