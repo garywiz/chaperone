@@ -30,20 +30,23 @@ one of the internal variables::
 
 .. table:: Environment Variable Quick Reference
 
-   ================================================  =====================================================================
-   environment variable                              meaning
-   ================================================  =====================================================================
-   :ref:`_CHAP_CONFIG_DIR <env._CHAP_CONFIG_DIR>`    Will be set to the full path to the directory containing the
-			  			     configuration file or directory.
-   :ref:`_CHAP_INTERACTIVE <env._CHAP_INTERACTIVE>`  Will be set to "1" if chaperone is running with a controlling tty.
-   :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>`          Recognized during start-up and contains any default command-line
-   		       				     options.
-   :ref:`_CHAP_SERVICE <env._CHAP_SERVICE>`          Contains the name of the current service.
-   :ref:`_CHAP_TASK_MODE <env._CHAP_TASK_MODE>`      Will be set to "`" if chaperone was invoked with the
-   			 			     :ref:`--task <option.task>` option.
-   :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`          Set to the per-service systemd-compatible notify socket for
-		       				     service started with :ref:`type=notify <service.type>`.
-   ================================================  =====================================================================
+   ======================================================  =====================================================================
+   environment variable                              	   meaning
+   ======================================================  =====================================================================
+   :ref:`_CHAP_CONFIG_DIR <env._CHAP_CONFIG_DIR>`    	   Will be set to the full path to the directory containing the
+			  			     	   configuration file or directory.
+   :ref:`_CHAP_INTERACTIVE <env._CHAP_INTERACTIVE>`  	   Will be set to "1" if chaperone is running with a controlling tty.
+   :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>`          	   Recognized during start-up and contains any default command-line
+   		       				     	   options.
+   :ref:`_CHAP_SERVICE <env._CHAP_SERVICE>`          	   Contains the name of the current service.
+   :ref:`_CHAP_SERVICE_SERIAL <env._CHAP_SERVICE_SERIAL>`  Contains a monotonically-increasing serial number which starts at
+			    				   1 and increases each time a service command is invoked.
+   :ref:`_CHAP_SERVICE_TIME <env._CHAP_SERVICE_TIME>`	   Contains the Unix timestamp of the start-time of the service.
+   :ref:`_CHAP_TASK_MODE <env._CHAP_TASK_MODE>`      	   Will be set to "`" if chaperone was invoked with the
+   			 			     	   :ref:`--task <option.task>` option.
+   :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`          	   Set to the per-service systemd-compatible notify socket for
+		       				     	   service started with :ref:`type=notify <service.type>`.
+   ======================================================  =====================================================================
 
 
 Managing Environment Variables
@@ -113,7 +116,7 @@ Environment variable directives (as well as some others), can contain bash-inspi
   match, then inserts ``equal`` otherwise inserts ``notequal``.  For example, you can use a match expression of ``[ty]*`` to
   match any value which starts with 't' or 'y'.
 
-``$(ENVVAR/regex/repl/[i])``
+``$(ENVVAR:/regex/repl/[i])``
   Expands the named environment variable, then performs a regular expression substitution using ``regex`` with
   the replacement string ``repl``.   If either contains slashes, they must be escaped using a backslash.
   The optional flags can be set to ``i`` if case-insensitive matching is required.  Parenthesized groups
@@ -297,6 +300,23 @@ Variable Reference
      $ docker run -i chapdev/chaperone-baseimage --task /bin/echo '$(_CHAP_SERVICE)'
      CONSOLE
      $
+
+.. _env._CHAP_SERVICE_TIME:
+
+.. envvar:: _CHAP_SERVICE_TIME
+
+   Every time a service command is executed, this variable will contain the 
+   Unix time (integral number of days since January 01, 1970) of command invocation.
+
+.. _env._CHAP_SERVICE_SERIAL:
+
+.. envvar:: _CHAP_SERVICE_SERIAL
+
+   Every time a service command is executed, this variable will contain an integral
+   value which starts at 1 and will be incremented for each invocation of the command.
+
+   This value can be especially useful for 'inetd' or 'cron' services which may run
+   multiple times and need a unique identifier for each invocation. 
 
 .. _env._CHAP_TASK_MODE:
 

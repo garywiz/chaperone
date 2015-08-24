@@ -219,7 +219,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td><a class="reference internal" href="#service-type"><span>type</span></a></td>
-<td>Defines the service type: &#8216;oneshot&#8217;, &#8216;simple&#8217;, forking&#8217;, &#8216;notify&#8217;,
+<td>Defines the service type: &#8216;oneshot&#8217;, &#8216;simple&#8217;, forking&#8217;, &#8216;notify&#8217;, &#8216;inetd&#8217;,
 or &#8216;cron&#8217;.  Default is &#8216;simple&#8217;.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#service-command"><span>command</span></a></td>
@@ -238,84 +238,88 @@ to the container&#8217;s stderr file handle.   Default is &#8216;log&#8217;. <co
 <td>Either &#8216;log&#8217; to write stdout to the syslog, or &#8216;inherit&#8217; to write stdout
 to the container&#8217;s stdout file handle.   Default is &#8216;log&#8217;. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-after"><span>after</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-port"><span>port</span></a></td>
+<td>For service type &#8216;inetd&#8217;, specifies the dynamic port number for
+connections.  There is no default. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#service-after"><span>after</span></a></td>
 <td>A comma-separated list of services or service groups which must start
 before this service is allowed ot start (dependencies).</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-before"><span>before</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-before"><span>before</span></a></td>
 <td>A comma-separated list of services or service groups which cannot be
 started until this service starts successfully (dependents).</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-directory"><span>directory</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-directory"><span>directory</span></a></td>
 <td>The directory where the command will be executed.  Otherwise, the account
 home directory will be used. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-env-inherit"><span>env_inherit</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-env-inherit"><span>env_inherit</span></a></td>
 <td>An array of patterns which can match one or more
 environment variables.  Environment variables which
 do not match any pattern will be excluded.  Default is <code class="docutils literal"><span class="pre">['*']</span></code>.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-env-set"><span>env_set</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-env-set"><span>env_set</span></a></td>
 <td>Additional environment variables to be set.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-env-unset"><span>env_unset</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-env-unset"><span>env_unset</span></a></td>
 <td>Environment variables to be removed.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-exit-kills"><span>exit_kills</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-exit-kills"><span>exit_kills</span></a></td>
 <td>If &#8216;true&#8217; the entire system should be shut down when this service stops.
 Default is &#8216;false&#8217;.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-ignore-failures"><span>ignore_failures</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-ignore-failures"><span>ignore_failures</span></a></td>
 <td>If &#8216;true&#8217;, failures of this service will be ignored but logged.
 Dependent services are still allowed to start.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-interval"><span>interval</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-interval"><span>interval</span></a></td>
 <td>For <cite>type=cron</cite> services, specifies the crontab-compatible interval
 in standard <code class="docutils literal"><span class="pre">M</span> <span class="pre">H</span> <span class="pre">DOM</span> <span class="pre">MON</span> <span class="pre">DOW</span></code> format. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-kill-signal"><span>kill_signal</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-kill-signal"><span>kill_signal</span></a></td>
 <td>The signal used to kill this process.  Default is <code class="docutils literal"><span class="pre">SIGTERM</span></code>.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-optional"><span>optional</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-optional"><span>optional</span></a></td>
 <td>If &#8216;true&#8217;, then if the command file is not present on the system,
 the service will act as if it were not enabled.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-pidfile"><span>pidfile</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-pidfile"><span>pidfile</span></a></td>
 <td>The full path to the file which will contain the process &#8216;pid&#8217;
 upon startup. (&#8216;forking&#8217; and &#8216;simple&#8217; types only) <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-process-timeout"><span>process_timeout</span></a></td>
 <td>Specifies the amount of time Chaperone will wait for a service to start.
 The default varies for each type of service.
-See :ref:<code class="docutils literal"><span class="pre">service</span> <span class="pre">types</span> <span class="pre">&lt;config.sect.type&gt;</span></code> for more
+See <span class="xref std std-ref">service types</span> for more
 information.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-restart"><span>restart</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-restart"><span>restart</span></a></td>
 <td>If &#8216;true&#8217;, then chaperone will restart this service if it fails (but
 not if it terminates normally).  Default is &#8216;false&#8217;.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-restart-delay"><span>restart_delay</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-restart-delay"><span>restart_delay</span></a></td>
 <td>The number of seconds to pause between restarts.  Default is 3 seconds.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-restart-limit"><span>restart_limit</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-restart-limit"><span>restart_limit</span></a></td>
 <td>The maximum number of restart attempts.  Default is 5.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-service-groups"><span>service_groups</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-service-groups"><span>service_groups</span></a></td>
 <td>A comma-separated list of service groups this service belongs to.  All
 uppercase services are reserved by the system.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-setpgrp"><span>setpgrp</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-setpgrp"><span>setpgrp</span></a></td>
 <td>If &#8216;true&#8217;, then the service will be isolated in its own process
 group upon startup.  This is the default.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-startup-pause"><span>startup_pause</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-startup-pause"><span>startup_pause</span></a></td>
 <td>The amount of time Chaperone will wait to see if a service fails
 immediately upon startup.  Defaults is 0.5 seconds.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#service-uid"><span>uid</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#service-uid"><span>uid</span></a></td>
 <td>The uid (name or number) of the user for this service. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#service-gid"><span>gid</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#service-gid"><span>gid</span></a></td>
 <td>The gid (name or number) of the group for this service. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
 </tbody>
@@ -412,7 +416,24 @@ process timeout.</td>
 <td>Service sends a
 failure notification.</td>
 </tr>
-<tr class="row-even"><td>cron</td>
+<tr class="row-even"><td>inetd</td>
+<td>The &#8220;inetd&#8221; type listens for TCP connections on the port
+specified by the
+<a class="reference internal" href="#service-port"><span>port</span></a> parameter.  When a connection
+is received, chaperone will start a service connecting
+<cite>stdin</cite>, <cite>stdout</cite> and <cite>stderr</cite> of the inbound socket
+to the specified command.</td>
+<td>Service executable
+is missing or invalid,
+or TCP port is invalid
+or already in use.</td>
+<td>Never.  Services
+which fail are logged
+but new connections
+will still be
+accepted.</td>
+</tr>
+<tr class="row-odd"><td>cron</td>
 <td>The cron type schedules a script or program for periodic
 execution.  The service is considered started once
 successfully scheduled.  Both scheduling parameters
@@ -442,7 +463,7 @@ complete.   See <a class="reference internal" href="#service-service-groups"><sp
 <h2>Service Config Reference<a class="headerlink" href="#service-config-reference" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="service-type"></span><dl class="describe">
 <dt>
-<code class="descname">type: ( simple | forking | oneshot | notify | cron )</code></dt>
+<code class="descname">type: ( simple | forking | oneshot | notify | inetd | cron )</code></dt>
 <dd><p>The <code class="docutils literal"><span class="pre">type</span></code> option defines how the service will be treated, when it is considered active, and what happens
 when the service terminates either normally, or abnormally.  See the <a class="reference internal" href="#service-sect-type"><span>separate section on service types</span></a> for
 a full description of what chaperone service types are and how they behave.</p>
@@ -534,6 +555,41 @@ directly to the container&#8217;s stderr.   While it may be tempting to use &#82
 service instead, then tailor <a class="reference internal" href="config-logging.html#logging"><span>logging</span></a> entries accordingly if console output desired.
 This will provide much more flexibility.</p>
 <p>Messages from the process <cite>stderr</cite> will be logged as syslog facility and severity of <cite>daemon.warn</cite>.<a class="footnote-reference" href="#f3" id="id4">[3]</a></p>
+</dd></dl>
+
+<span class="target" id="service-port"></span><dl class="describe">
+<dt>
+<code class="descname">port: tcp-port-number</code></dt>
+<dd><p>Specifies the TCP port number associated with an &#8216;inetd&#8217; service, and must be specified when the
+type is &#8216;inetd&#8217;.   When this service is started, Chaperone will bind to the specified TCP port and
+listen for incoming connections.  When a connection is received, Chaperone will start the service
+specified by the given <a class="reference internal" href="#service-command"><span>command</span></a> parameter.</p>
+<p>The service will be started with <cite>stdin</cite>, <cite>stdout</cite>, and <cite>stderr</cite> connected to the started process.
+For example, the following script would initiate a simple &#8220;echo&#8221; service which would terminate
+when a blank line is sent:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/python3</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+   <span class="n">result</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s">&quot;echo:&quot;</span><span class="p">)</span>
+   <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span> <span class="ow">or</span> <span class="n">result</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;&quot;</span><span class="p">:</span>
+      <span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+   <span class="k">print</span><span class="p">(</span><span class="s">&quot;echoed -&gt;&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+   <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note the <code class="docutils literal"><span class="pre">sys.stdout.flush()</span></code> command.  Generally, such a command (or equivalent) will be necessary
+to assure that the program flushes it&#8217;s output buffer.</p>
+<p>Commands can be simple informational services, or long-running servers.  If Chaperone receives multiple
+socket connections, it will start up as many processes as are needed to satisfy each request.  In other words,
+a single command invocation is responsible for a single client connection.</p>
+<p>If the script needs to do logging, it will need to do so via <code class="docutils literal"><span class="pre">/dev/log</span></code>, or an equivalent syslog facility
+within the language, since <cite>stderr</cite> also is connected to the remote socket.</p>
+<p>There are many use-cases for creating simple port-triggerable services, especially in environments
+like Docker where containers contain only one or two processes, but auxilliary features may be
+desired without committing a long-running daemon to the task.</p>
+<p>For example, here is a blog post which
+describes <a class="reference external" href="http://www.softwareprojects.com/resources/programming/t-monitoring-services-with-xinetd-2082.html">Service Monitoring with xinetd</a>.
+The same type of scripts work identically with Chaperone.</p>
 </dd></dl>
 
 <span class="target" id="service-after"></span><dl class="describe">

@@ -36,7 +36,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
    ================================================  =============================================================================
    service variable                                  meaning
    ================================================  =============================================================================
-   :ref:`type <service.type>`                        Defines the service type: 'oneshot', 'simple', forking', 'notify',
+   :ref:`type <service.type>`                        Defines the service type: 'oneshot', 'simple', forking', 'notify', 'inetd',
                                                      or 'cron'.  Default is 'simple'.
    :ref:`command <service.command>`                  Specifies the command to execute.  The command is not processed by a shell,
                                                      but environment variable expansion is supported. |ENV|
@@ -46,7 +46,8 @@ can be tailored separately for the needs of each service.  Entries below marked 
                                                      to the container's stderr file handle.   Default is 'log'. |ENV|
    :ref:`stdout <service.stdout>`                    Either 'log' to write stdout to the syslog, or 'inherit' to write stdout
                                                      to the container's stdout file handle.   Default is 'log'. |ENV|
-
+   :ref:`port <service.port>`			     For service type 'inetd', specifies the dynamic port number for 
+   	      					     connections.  There is no default. |ENV|
    :ref:`after <service.after>`                      A comma-separated list of services or service groups which must start
                                                      before this service is allowed ot start (dependencies).
    :ref:`before <service.before>`                    A comma-separated list of services or service groups which cannot be
@@ -71,7 +72,7 @@ can be tailored separately for the needs of each service.  Entries below marked 
                                                      upon startup. ('forking' and 'simple' types only) |ENV|
    :ref:`process_timeout <service.process_timeout>`  Specifies the amount of time Chaperone will wait for a service to start.
                                                      The default varies for each type of service.
-                                                     See :ref:``service types <config.sect.type>`` for more
+                                                     See :ref:`service types <config.sect.type>` for more
                                                      information.
    :ref:`restart <service.restart>`                  If 'true', then chaperone will restart this service if it fails (but
                                                      not if it terminates normally).  Default is 'false'.
@@ -135,6 +136,12 @@ an isolated situation affecting only the service itself.
                      consider the service started only when notified
                      appropriately. *Note*: The default process timeout
                      for a notify service is 30 seconds.
+   inetd             The "inetd" type listens for TCP connections on the port    Service executable        Never.  Services
+   		     specified by the 	      	      		                 is missing or invalid,    which fail are logged
+		     :ref:`port <service.port>` parameter.  When a connection	 or TCP port is invalid	   but new connections
+		     is received, chaperone will start a service connecting	 or already in use.	   will still be
+		     `stdin`, `stdout` and `stderr` of the inbound socket				   accepted.
+		     to the specified command.
    cron              The cron type schedules a script or program for periodic    Service executable        Never.  Failures of
                      execution.  The service is considered started once          is missing or invalid     isolated executions
                      successfully scheduled.  Both scheduling parameters         but not optional.         do not constitute
@@ -157,7 +164,7 @@ Service Config Reference
 
 .. _service.type:
 
-.. describe:: type: ( simple | forking | oneshot | notify | cron )
+.. describe:: type: ( simple | forking | oneshot | notify | inetd | cron )
 
    The ``type`` option defines how the service will be treated, when it is considered active, and what happens
    when the service terminates either normally, or abnormally.  See the :ref:`separate section on service types <service.sect.type>` for
@@ -257,6 +264,46 @@ Patterns are standard filename 'glob' patterns.
    This will provide much more flexibility.
 
    Messages from the process `stderr` will be logged as syslog facility and severity of `daemon.warn`. [#f3]_
+
+.. _service.port:
+
+.. describe:: port: tcp-port-number
+
+   Specifies the TCP port number associated with an 'inetd' service, and must be specified when the
+   type is 'inetd'.   When this service is started, Chaperone will bind to the specified TCP port and
+   listen for incoming connections.  When a connection is received, Chaperone will start the service
+   specified by the given :ref:`command <service.command>` parameter.
+
+   The service will be started with `stdin`, `stdout`, and `stderr` connected to the started process.
+   For example, the following script would initiate a simple "echo" service which would terminate
+   when a blank line is sent::
+
+     #!/usr/bin/python3
+     import sys
+     while True:
+        result = input("echo:")
+	if not result or result.strip() == "":
+	   exit(0)
+	print("echoed ->", result)
+	sys.stdout.flush()
+
+   Note the ``sys.stdout.flush()`` command.  Generally, such a command (or equivalent) will be necessary
+   to assure that the program flushes it's output buffer.
+
+   Commands can be simple informational services, or long-running servers.  If Chaperone receives multiple
+   socket connections, it will start up as many processes as are needed to satisfy each request.  In other words,
+   a single command invocation is responsible for a single client connection.
+
+   If the script needs to do logging, it will need to do so via ``/dev/log``, or an equivalent syslog facility
+   within the language, since `stderr` also is connected to the remote socket.
+
+   There are many use-cases for creating simple port-triggerable services, especially in environments
+   like Docker where containers contain only one or two processes, but auxilliary features may be
+   desired without committing a long-running daemon to the task.
+
+   For example, here is a blog post which
+   describes `Service Monitoring with xinetd <http://www.softwareprojects.com/resources/programming/t-monitoring-services-with-xinetd-2082.html>`_.
+   The same type of scripts work identically with Chaperone.
 
 .. _service.after:
 

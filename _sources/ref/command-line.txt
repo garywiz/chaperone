@@ -285,7 +285,7 @@ Option Reference Information
 
 .. _option.create-user:
 
-.. option:: --create-user name[/uid[:gid]] or --create-user name:/path/to/file
+.. option:: --create-user name[/uid[:gid]] or --create-user name:/path/to/file[:gid]
 
    Often, a generic container can be designed to allow userspace mount points, isolating persistent data
    outside the container so that the container becomes entirely transient.   Because containers have a
