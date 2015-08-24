@@ -9,7 +9,7 @@ from time import time, sleep
 
 import chaperone.cutil.syslog_info as syslog_info
 
-from chaperone.cutil.env import Environment
+from chaperone.cutil.env import Environment, ENV_SERIAL, ENV_SERVTIME
 from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cutil.proc import ProcStatus
 from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name, executable_path
@@ -55,15 +55,16 @@ class SubProcess(object):
     _cond_exception = None      # exception which was raised during startup (for other waiters)
 
     _started = False            # true if a start has occurred, either successful or not
-    _starts_allowed = 0         # number of starts permitted before we give up
+    _restarts_allowed = 0       # number of starts permitted before we give up (if None then restarts allowed according to service def)
     _prereq_cache = None
-    _xenv = None                # expanded environment
+    _procenv = None             # process environment ready to be expanded
 
     _pending = None             # pending futures
     _note = None
 
     # Class variables
     _cls_ptdict = lazydict()    # dictionary of process types
+    _cls_serial = 0             # serial number for process creation
 
     def __new__(cls, service, family=None):
         """
@@ -96,11 +97,12 @@ class SubProcess(object):
             self.process_timeout = service.process_timeout
 
         # Allow no auto-starts
-        self._starts_allowed = 0
+        self._restarts_allowed = 0
 
-        if service.environment:
-            # The environment has already been modified to reflect our chosen service uid/gid
-            self._xenv = service.environment.expanded()
+        if not service.environment:
+            self._procenv = Environment()
+        else:
+            self._procenv = service.environment
 
             uid = service.environment.uid
             gid = service.environment.gid
@@ -115,7 +117,7 @@ class SubProcess(object):
         # services
 
         try:
-            service.exec_args[0] = executable_path(service.exec_args[0], self._xenv)
+            service.exec_args[0] = executable_path(service.exec_args[0], service.environment.expanded())
         except FileNotFoundError:
             if service.optional:
                 service.enabled = False
@@ -218,19 +220,21 @@ class SubProcess(object):
         proc = self._proc
 
         rs = ""
-        if serv.restart and self._starts_allowed > 0:
-            rs = "+r#" + str(self._starts_allowed)
+        if serv.restart and self._restarts_allowed is not None and self._restarts_allowed > 0:
+            rs = "+r#" + str(self._restarts_allowed)
 
         if self._cond_starting:
             return "starting"
+
+        print(self.name, self._started, proc and proc.returncode)
 
         if proc:
             rc = proc.returncode
             if rc is None:
                 return "running"
-            elif rc.normal_exit:
+            elif rc.normal_exit and self._started:
                 return "started"
-            else:
+            elif rc:
                 return rc.briefly + rs
                     
         if not serv.enabled:
@@ -272,7 +276,7 @@ class SubProcess(object):
     @property
     def failed(self):
         "True if this process has failed, either during startup or later."
-        return self._started and self._proc and self._proc.returncode is not None and not self._proc.returncode.normal_exit
+        return self._proc and (self._proc.returncode is not None and not self._proc.returncode.normal_exit)
 
     @property
     def ready(self):
@@ -381,6 +385,13 @@ class SubProcess(object):
             self._cond_starting = None
             self.logdebug("{0} notified waiters upon completion", service.name)
 
+    def get_expanded_environment(self):
+        SubProcess._cls_serial += 1
+        penv = self._procenv
+        penv[ENV_SERIAL] = str(SubProcess._cls_serial)
+        penv[ENV_SERVTIME] = str(int(time()))
+        return penv.expanded()
+
     @asyncio.coroutine
     def start_subprocess(self):
         service = self.service
@@ -396,7 +407,7 @@ class SubProcess(object):
         if service.directory:
             kwargs['cwd'] = service.directory
 
-        env = self._xenv or Environment(None)
+        env = self.get_expanded_environment()
 
         yield from self.process_prepare_co(env)
 
@@ -410,7 +421,6 @@ class SubProcess(object):
                 self.logdebug("{0} environment:", service.name)
                 for k,v in env.items():
                     self.logdebug(" {0} = '{1}'".format(k,v))
-
 
         create = asyncio.create_subprocess_exec(*service.exec_args, preexec_fn=self._setup_subprocess,
                                                 env=env, **kwargs)
@@ -432,7 +442,7 @@ class SubProcess(object):
 
         yield from self.process_started_co()
 
-        self._starts_allowed = self.service.restart_limit
+        self._restarts_allowed = None # allow restarts if we fail
 
         self.logdebug("{0} successfully started", service.name)
 
@@ -522,18 +532,22 @@ class SubProcess(object):
         if not service.enabled:
             return
 
-        if service.restart and self._starts_allowed > 0:
-            controller = self.family.controller
-            if controller.system_alive:
-                if service.restart_delay:
-                    self.loginfo("{0} pausing between restart retries", service.name)
-                    yield from asyncio.sleep(service.restart_delay)
-            if controller.system_alive:
-                yield from self.reset(True)
-                #yield from self.start()
-                f = asyncio.async(self.start()) # queue it since we will just return here
-                f.add_done_callback(self._restart_callback)
-            return
+        if self._started and service.restart:
+            if self._restarts_allowed is None:
+                self._restarts_allowed = service.restart_limit
+            if self._restarts_allowed > 0:
+                self._restarts_allowed -= 1
+                controller = self.family.controller
+                if controller.system_alive:
+                    if service.restart_delay:
+                        self.loginfo("{0} pausing between restart retries", service.name)
+                        yield from asyncio.sleep(service.restart_delay)
+                if controller.system_alive:
+                    yield from self.reset()
+                    #yield from self.start()
+                    f = asyncio.async(self.start()) # queue it since we will just return here
+                    f.add_done_callback(self._restart_callback)
+                return
 
         if service.ignore_failures:
             self.logdebug("{0} abnormal process exit ignored due to ignore_failures=true", service.name)
@@ -547,7 +561,7 @@ class SubProcess(object):
         # or accepting glorious success.
         ex = fut.exception()
         if not ex:
-            self._starts_allowed = self.service.restart_limit
+            self._restarts_allowed = None
         else:
             self.logwarn("{0} restart failed: {1}", self.name, ex)
             asyncio.async(self._abnormal_exit(self._proc and self._proc.returncode))
@@ -560,7 +574,7 @@ class SubProcess(object):
         future.add_done_callback(lambda f: self._pending.discard(future))
 
     @asyncio.coroutine
-    def reset(self, restart = False, dependents = False, enable = False):
+    def reset(self, dependents = False, enable = False):
         self.logdebug("{0} received reset", self.name)
 
         if self._exit_event:
@@ -571,11 +585,6 @@ class SubProcess(object):
                 yield from self.wait()
             self.pid = None
             self._proc = None
-
-        if restart:
-            self._starts_allowed -= 1
-        else:
-            self._starts_allowed = self.service.restart_limit + 1
 
         self._started = False
         
@@ -595,11 +604,11 @@ class SubProcess(object):
         if dependents:
             for p in self.prerequisites:
                 if not p.ready and (enable or p.enabled):
-                    yield from p.reset(restart, dependents, enable)
+                    yield from p.reset(dependents, enable)
                 
     @asyncio.coroutine
     def stop(self):
-        self._starts_allowed = 0
+        self._restarts_allowed = 0
         yield from self.reset()
         
     @asyncio.coroutine

@@ -37,7 +37,7 @@ class ProcStatus(int):
 
     @property
     def normal_exit(self):
-        return self.exit_status == 0 and not (self.signaled or self.stopped) and not self._other_error
+        return self.exit_status == 0 and not self._other_error
 
     @property
     def exit_message(self):

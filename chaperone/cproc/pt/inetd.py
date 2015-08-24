@@ -30,7 +30,7 @@ class InetdServiceProtocol(ServerProtocol):
         if service.directory:
             kwargs['cwd'] = service.directory
 
-        env = service.environment.get_public_environment()
+        env = process.get_expanded_environment().get_public_environment()
 
         if service.debug:
             if not env:

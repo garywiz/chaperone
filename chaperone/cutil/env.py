@@ -13,6 +13,8 @@ from chaperone.cutil.errors import ChVariableError, ChParameterError
 ENV_CONFIG_DIR       = '_CHAP_CONFIG_DIR'          # directory which CONTAINS the config file *or* directory
 ENV_INTERACTIVE      = '_CHAP_INTERACTIVE'         # if this session is interactive (has a ptty attached)
 ENV_SERVICE          = '_CHAP_SERVICE'             # name of the current service
+ENV_SERIAL           = '_CHAP_SERVICE_SERIAL'      # Contains a monotonic unique serial number for each started service, starting with 1
+ENV_SERVTIME         = '_CHAP_SERVICE_TIME'        # Timestamp when service started running
 ENV_TASK_MODE        = '_CHAP_TASK_MODE'           # if we are running in --task mode
 
 ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone runs to set default options
@@ -456,12 +458,4 @@ class Environment(lazydict):
         Public variables are those which are exported to the application and do NOT start with an
         underscore.  All underscore names will be kept private.
         """
-        newenv = self.expanded().copy()
-    
-        # collect private or blanks, then delete them
-        delkeys = [k for k in newenv.keys() if k.startswith('_') or newenv[k] in (None, '')]
-        if delkeys:
-            for k in delkeys:
-                del newenv[k]
-
-        return newenv
+        return {k:v for k,v in self.expanded().items() if not (k.startswith('_') or v in (None, ''))}
