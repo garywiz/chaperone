@@ -40,7 +40,7 @@ command-line switch                	       		       function
                                    	       		       if present.
 :ref:`--user=username <option.user>`			       Run all processes as ``user`` (uid number or name).  The user must exist.
                                    	       		       By default, all processes run as ``root``.
-:ref:`--create-user=newuser[/uid/gid] <option.create-user>`    Create a new user upon start-up with optional ``uid`` and ``gid``.  Then
+:ref:`--create-user=newuser[:uid:gid] <option.create-user>`    Create a new user upon start-up with optional ``uid`` and ``gid``.  Then
                                    	       		       run as if ``--user=<user>`` was specified.
 :ref:`--default-home=directory <option.default-home>`          If :ref:`--create-user <option.create-user>` specifies a user whose
 			       				       home directory does not exist, then create the new user account with this
@@ -285,7 +285,7 @@ Option Reference Information
 
 .. _option.create-user:
 
-.. option:: --create-user name[/uid[:gid]] or --create-user name:/path/to/file[:gid]
+.. option:: --create-user name[:uid[:gid]] or --create-user name:/path/to/file[:uid[:gid]]
 
    Often, a generic container can be designed to allow userspace mount points, isolating persistent data
    outside the container so that the container becomes entirely transient.   Because containers have a
@@ -321,7 +321,7 @@ Option Reference Information
      myuid=`id -u`
      mygid=`id -g`
      # Run the daemon
-     docker run -d -v /home:/home my-app-image --create-user $USER/$myuid:$mygid
+     docker run -d -v /home:/home my-app-image --create-user $USER:$myuid:$mygid
 
    Once started, the image can now be stopped and restarted while retaining
    the credential relationship with the host.

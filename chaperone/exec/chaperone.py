@@ -73,11 +73,11 @@ on the command line to run as an application.  You need to do one or the other."
 # a colon like "/foo\:bar".
 
 RE_CREATEUSER = re.compile(
-   r'''(?P<user>[a-z_][a-z0-9_-]*)                     # start with the username
-       (?:[:/]                                         # and an optional group starting with / or :, and...
-         (?:(?P<file>/(?:\\:|[^:])+)|(?P<uid>\d+))     # containing either a file path or numeric UID ...
-         (?:[:/](?P<gid>[a-z_][a-z0-9_-]*|\d+))?       # followed by an optional GID
-       )?$''',
+   r'''(?P<user>[a-z_][a-z0-9_-]*)           # ALWAYS start with the username
+       (?::(?P<file>/(?:\\:|[^:])+))?        # File is next if it's :/path
+       (?::(?P<uid>\d*))?                    # Either /uid or :uid introduces a uid (number may be missing)
+       (?::(?P<gid>[a-z_][a-z0-9_-]*|\d+)?)? # followed by an optional GID
+       $''',
    re.IGNORECASE | re.X)
 
 def main_entry():
@@ -140,7 +140,7 @@ def main_entry():
         exit(1)
      udata = match.groupdict()
      try:
-        maybe_create_user(udata['user'], udata['uid'], udata['gid'], 
+        maybe_create_user(udata['user'], udata['uid'] or None, udata['gid'] or None, 
                           udata['file'] and udata['file'].replace(r'\:', ':'),
                           options['--default-home'])
      except Exception as ex:
