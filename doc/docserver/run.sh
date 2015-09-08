@@ -28,4 +28,4 @@ mygid=`id -g`
 # are correct.
 
 docker run $options -v /home:/home -p 8088:8080 chapdev/chaperone-lamp:latest \
-   --create $USER/$myuid --config $APPS/chaperone.d $* $shellopt
+   --create $USER:$myuid --config $APPS/chaperone.d $* $shellopt

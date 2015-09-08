@@ -29,7 +29,7 @@ ENV_CHAP_OPTIONS     = '_CHAP_OPTIONS'             # Preset before chaperone run
 _RE_BACKTICK = re.compile(r'`([^`]+)`', re.DOTALL)
 
 # Parsing for operators within expansions
-_RE_OPERS = re.compile(r'^(?:([^:]+):([-|?+_/])(.*)|`(.+)`)$', re.DOTALL)
+_RE_OPERS = re.compile(r'^(?:([^:]+):([-|?+_/])(.*)|(`.+`))$', re.DOTALL)
 _RE_SLASHOP = re.compile(r'^(.+)(?<!\\)/(.*)(?<!\\)/([i]*)$', re.DOTALL)
 _RE_BAREBAR = re.compile(r'(?<!\\)\|')
 
@@ -299,7 +299,7 @@ class Environment(lazydict):
 
         result = Environment(None) 
         for k in sorted(self.keys()): # sorted so outcome is deterministic
-            self._expand_into(k, None, result)
+            self._expand_into(k, None, result, k)
 
         # Copy uid after we expand, since any user information is already present in our
         # own environment.
@@ -313,97 +313,96 @@ class Environment(lazydict):
 
         return result
 
-    def _expand_into(self, k, default, result, parent = None):
+    def _expand_into(self, k, wholematch, result, parent = None):
         """
         Internal workhorse that expands the variable 'k' INTO the given result dictionary.
         The result dictionary will conatin the expanded values.   The result dictionary is
         also a cache for nested and recursive environment expansion.
 
-        'default' indicates the replacement if no variable is found.
+        'wholematch' is None unless called from in an re.sub() (or similar context).
+                 If set, it indicates the complete expansion expression, including adornments.
+                 It is used as the default expansion when a variable is not defined.
         'parent' is the name of the variable which was being expanded in the last
                  recursion, to catch the special case of self-referential variables.
         """
 
         match = _RE_OPERS.match(k)
-        use_repl = None
-        val = None
 
-        reval = lambda buf: buf
+        if match:
+            (k, oper, repl, backtick) = match.groups()
 
-        # We are the primary source of values unless we discover a self-referential
-        # variable later.
-        primary = self    
+
+        # Phase 1: Base variable value.  Start by determining the value of variable
+        #          'k' within the current context.  
+
+        # 1A: We have a backtick shortcut, such as $(`date`)
+        if match and backtick:
+            return self._recurse(result, backtick, parent)
+
+        # 1B: We have an embedded self reference such as "PATH": "/bin:$(PATH)".  We use
+        #     the last defined value in a prior environment as the value.
+        elif parent == k and wholematch is not None:
+            val = (self._get_shadow_environment(k) or _DICT_CONST).get(k) or ''
+
+        # 1C: We have already calculated a result and will use that instead, but only
+        #     in a nested expansion.  We re-evaluate top-levels all the time.
+        elif wholematch is not None and k in result:
+            val = result[k]
+
+        # 1D: We have a variable which is not part of our environment at all, and
+        #     either treat it as empty, or as the wholematch value for further
+        #     processing
+        elif k not in self:
+            val = "" if match else wholematch
+        
+        # 1E: Finally, we will store this value and expand further.
+        else:
+            result[k] = self[k] # assure that recursion attempts stop with this value
+            val = result[k] = self._recurse(result, self[k], k)
+            
+        # We now have, in 'val', the fully expanded contents of the variable 'k'
 
         if not match:
-            if parent == k:     # self-referential
-                primary = self._get_shadow_environment(k)
-                val = (primary and primary.get(k, '')) or '' # special case where we return nothing
-            else:
-                if k in result:
-                    return result[k]
-                if k not in primary:
-                    return default
-                val = primary[k]
-        else:
-            (k, oper, repl, backtick) = match.groups()
-            if parent == k:     # self-referential
-                primary = self._get_shadow_environment(k) or _DICT_CONST
+            return val
 
-            # Handle backticks, ? and | and /
 
-            if backtick:        # full backtick expansion syntax
-                if not self._cls_backtick:
-                    return default
-                use_repl = backtick
-                def reval(buf):
-                    return self._backtick_expand(buf)
+        # Phase 2: Process any operators to return a possibily modified
+        #          value as the result of the complete expression.
 
-            elif oper == '?':
-                if k not in primary:
-                    raise ChVariableError(self._recurse(result, repl))
+        if oper == '?':
+            if not val:
+                raise ChVariableError(self._recurse(result, repl))
 
-            elif oper == '/':
-                smatch = _RE_SLASHOP.match(repl)
-                if not smatch:
-                    raise ChParameterError("invalid regex replacement syntax in '{0}'".format(match.group(0)))
+        elif oper == '/':
+            smatch = _RE_SLASHOP.match(repl)
+            if not smatch:
+                raise ChParameterError("invalid regex replacement syntax in '{0}'".format(match.group(0)))
 
-                def reval(buf, 
-                          pat=(smatch.group(3) and "(?" + smatch.group(3) + ")") + smatch.group(1),
-                          repl=smatch.group(2)):
-                    return self._recurse(result, re.sub(pat, repl.replace('\/', '/'), buf))
-                    
-            elif oper == '|':
-                vts = _RE_BAREBAR.split(repl, 3)
-                if len(vts) == 1:
-                    oper = '+'  # identical to '+' operator
-                elif len(vts) == 2:
-                    use_repl = vts[0] if k in primary else vts[1]
-                elif len(vts) >= 3:
-                    def reval(buf, args=vts):
-                        retval = args[1] if fnmatch(buf.replace(r'\|', '|').lower(), args[0].lower()) else args[2]
-                        return self._recurse(result, retval.replace(r'\|', '|'))
+            val = self._recurse(result, re.sub((smatch.group(3) and "(?" + smatch.group(3) + ")") + smatch.group(1),
+                                               smatch.group(2).replace('\/', '/'),
+                                               val))
 
-            # Handle both :- and :+ and non-value-based | cases
-            if use_repl is None:
-                if ((oper == '-' or oper == '_') and k not in primary) or (oper == '+' and k in primary):
-                    use_repl = repl
-                elif k not in primary or oper == '_':
-                    return reval('')
-                elif k in result and parent != k:
-                    return reval(result[k]) # non self-referential reference to result-in-progress
-                else:
-                    val = primary[k]
+        elif oper == '|':
+            vts = _RE_BAREBAR.split(repl, 3)
+            if len(vts) == 1: # same as +
+                val = '' if not val else self._recurse(result, vts[0])
+            elif len(vts) == 2:
+                val = self._recurse(result, vts[0] if val else vts[1])
+            elif len(vts) >= 3:
+                editval = vts[1] if fnmatch(val.replace(r'\|', '|').lower(), vts[0].lower()) else vts[2]
+                val = self._recurse(result, editval.replace(r'\|', '|'))
 
-        if use_repl is not None:
-            val = self._recurse(result, use_repl)
-        elif result is self:
-            val = self._recurse(result, val, k)
-        else:
-            # Looks odd, but needed to seed the result to assure we ignore recursion later
-            result[k] = val
-            val = result[k] = self._recurse(result, val, k)
+        elif oper == "+":
+            val = '' if not val else self._recurse(result, repl)
 
-        return reval(val)
+        elif oper == "_":       # strict opposite of +
+            val = '' if val else self._recurse(result, repl)
+
+        elif oper == "-":       # bash :-
+            if not val:
+                val = self._recurse(result, repl)
+
+        return val
     
     def _recurse(self, result, buf, parent_var = None):
         "Worker method to isolate recursive env variable expansion, with backtick support"

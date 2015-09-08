@@ -27,7 +27,9 @@ ENV2 = {
     "RECUR3": 'three:$(RECUR2)',
 }
 
-RESULT2 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('RECUR1', 'two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw'), ('RECUR2', 'two-$(RECUR3)-$(HOME)../usr/garyw/apps'), ('RECUR3', 'three:two-$(RECUR3)-$(HOME)../usr/garyw/apps'), ('REF-RECUR', '/usr/garyw/apps/theap BUT NOT two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw')]"
+#?RESULT2 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('RECUR1', 'two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw'), ('RECUR2', 'two-$(RECUR3)-$(HOME)../usr/garyw/apps'), ('RECUR3', 'three:two-$(RECUR3)-$(HOME)../usr/garyw/apps'), ('REF-RECUR', '/usr/garyw/apps/theap BUT NOT two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw')]"
+
+RESULT2 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('HOME', '/usr/garyw'), ('RECUR1', 'two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw'), ('RECUR2', 'two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw../usr/garyw/apps'), ('RECUR3', 'three:two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw../usr/garyw/apps'), ('REF-RECUR', '/usr/garyw/apps/theap BUT NOT two-three:two-$(RECUR3)-$(HOME)../usr/garyw/apps-/usr/garyw')]"
 
 ENV3 = {
     "HOME": '/usr/garyw',
@@ -51,7 +53,9 @@ ENV3 = {
     "EXPNL": "$(HOME:+$(HASNL)\nAnd more to go)",
 }
 
-RESULT3 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('EXPNL', 'Line One\\nLine Two\\nAnd more to go'), ('HASNL', 'Line One\\nLine Two'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-$(HOAX:-$(MAYBE11:-11here))/foo/foo'), ('MAYBE11', 'to-$(HOAX:-$(MAYBE11:-11here))/foo'), ('MAYBE12', 'circA-circB-circA-$(MAYBE13:-10gone)'), ('MAYBE13', 'circB-circA-$(MAYBE13:-10gone)'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-$(HOAX:-$(MAYBE11:-11here))/foo/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps')]"
+RESULT3 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('EXPNL', 'Line One\\nLine Two\\nAnd more to go'), ('HASNL', 'Line One\\nLine Two'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-$(HOAX:-$(MAYBE11:-11here))/foo/foo'), ('MAYBE11', 'to-to-$(HOAX:-$(MAYBE11:-11here))/foo/foo'), ('MAYBE12', 'circA-circB-circA-$(MAYBE13:-10gone)'), ('MAYBE13', 'circB-circA-circB-circA-$(MAYBE13:-10gone)'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', 'blach.8here/foo/foo'), ('MAYBE9', 'blach.to-$(HOAX:-$(MAYBE11:-11here))/foo/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps')]"
+
+#RESULT3 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'), ('EXPNL', 'Line One\\nLine Two\\nAnd more to go'), ('HASNL', 'Line One\\nLine Two'), ('HOME', '/usr/garyw'), ('MAYBE1', '$(HOAX)/foo'), ('MAYBE10', 'to-$(HOAX:-$(MAYBE11:-11here))/foo/foo'), ('MAYBE11', 'to-$(HOAX:-$(MAYBE11:-11here))/foo'), ('MAYBE12', 'circA-circB-circA-$(MAYBE13:-10gone)'), ('MAYBE13', 'circB-circA-$(MAYBE13:-10gone)'), ('MAYBE2', 'blach/footwo'), ('MAYBE3', '/foo'), ('MAYBE4', '/usr/garyw/foo'), ('MAYBE5', 'blach/foo'), ('MAYBE6', 'blach/footwo/foo'), ('MAYBE7', 'blach.8here/foo'), ('MAYBE8', '$(HOME:+blach.${MAYBE8:+8here})/foo/foo'), ('MAYBE9', 'blach.to-$(HOAX:-$(MAYBE11:-11here))/foo/foo/foo'), ('TWO', '/usr/garyw and /usr/garyw/apps')]"
 
 ENV4 = {
     "HOME": '/usr/garyw',
@@ -144,9 +148,16 @@ ENV8 = {
 
 RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
 
-def printdict(d):
+RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
+
+def printdict(d, legend = "Dict:", compare = None):
+    if compare and isinstance(compare, str):
+        compare = dict(eval(compare))
+    print(legend)
     for k in sorted(d.keys()):
         print("{0} = {1}".format(k,d[k]))
+        if compare and k in compare and d[k] != compare[k]:
+            print("  >> {0}".format(compare[k]))
 
 def canonical(d, nl = False):
     if not nl:
@@ -162,19 +173,21 @@ class TestEnvOrder(unittest.TestCase):
 
     def test_expand1(self):
         env = Environment(from_env = ENV1).expanded()
+        #printdict(env)
         envstr = canonical(env)
         #print('RESULT1 = "' + envstr + '"')
         self.assertEqual(envstr, RESULT1)
 
     def test_expand2(self):
         env = Environment(from_env = ENV2).expanded()
+        #printdict(env)
         envstr = canonical(env)
         #print('RESULT2 = "' + envstr + '"')
         self.assertEqual(envstr, RESULT2)
 
     def test_expand3(self):
         env = Environment(from_env = ENV3).expanded()
-        #printdict(env)
+        #printdict(env, compare = RESULT3)
         envstr = canonical(env)
         #print('RESULT3 = "' + canonical(env, True) + '"')
         self.assertEqual(envstr, RESULT3)
@@ -218,7 +231,7 @@ class TestEnvOrder(unittest.TestCase):
     def test_expand8(self):
         "Test conditional expansion"
         env = Environment(from_env = ENV8).expanded()
-        #printdict(env)
+        #printdict(env, compare = RESULT8)
         envstr = canonical(env)
         #print('RESULT8 = "' + envstr + '"')
         self.assertEqual(envstr, RESULT8)

@@ -1,3 +1,18 @@
+## 0.2.40 (2015-09-08)
+
+Enhancements:
+
+- Both `uid` and `gid` can be specified using the path-format of the [--create-user](http://garywiz.github.io/chaperone/ref/command-line.html#option-create-user) command-line switch.
+
+Refinements:
+
+- The `${ENV:-foo}` expansion format now behaves like `bash` where 'foo' is the result if the variable `ENV` is undefined or null (blank).  Previously, it required that the variable be undefined.  This behavior is now consistent throughout all expansion operators.
+- Improved the environment expansion code to handle outlying cases, as well as be signfiicantly more readable.  Used coverage analysis to improve unit test coverage for complex expansions involving recursion.
+
+Bug fixes:
+
+- Newer versions of Python's `asyncio` (present in some distros) could hang when starting an **inetd**-style socket process.
+
 ## 0.2.37 (2015-08-24)
 
 Enhancements:
@@ -28,7 +43,7 @@ Enhancements:
 
 ## 0.2.29 (2015-08-05)
 
-Refinement:
+Refinements:
 
 - Allow backslash-escaping of VBAR construct contents in environment variable
   if-then-else construct.
