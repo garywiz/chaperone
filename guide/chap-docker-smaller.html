@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Using Chaperone &mdash; chaperone 0.2.0 documentation</title>
+  <title>Creating Small Docker Images &mdash; chaperone 0.2.0 documentation</title>
   
 
   
@@ -33,8 +33,9 @@
 
   
     <link rel="top" title="chaperone 0.2.0 documentation" href="../index.html"/>
-        <link rel="next" title="Using Chaperone with Docker" href="chap-docker.html"/>
-        <link rel="prev" title="Introduction to Chaperone" href="chap-intro.html"/> 
+        <link rel="up" title="Using Chaperone with Docker" href="chap-docker.html"/>
+        <link rel="next" title="Other Uses for Chaperone" href="chap-other.html"/>
+        <link rel="prev" title="A Simple Docker Example" href="chap-docker-simple.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -78,8 +79,8 @@
 <li class="toctree-l2"><a class="reference internal" href="chap-intro.html#overview">Overview</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Using Chaperone</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a><ul>
+<li class="toctree-l1 current"><a class="reference internal" href="chap-using.html">Using Chaperone</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="chap-docker-simple.html">A Simple Docker Example</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#creating-a-dockerfile">Creating a Dockerfile</a></li>
 <li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#adding-chaperone-s-configuration-file">Adding Chaperone&#8217;s Configuration File</a></li>
@@ -89,11 +90,11 @@
 <li class="toctree-l4"><a class="reference internal" href="chap-docker-simple.html#what-s-next">What&#8217;s Next?</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="chap-docker-smaller.html">Creating Small Docker Images</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="chap-docker-smaller.html#eliminating-ubuntu-debian-recommended-packages">Eliminating Ubuntu/Debian Recommended Packages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="chap-docker-smaller.html#a-small-ubuntu-base-image-with-chaperone">A Small Ubuntu Base Image with Chaperone</a></li>
-<li class="toctree-l4"><a class="reference internal" href="chap-docker-smaller.html#a-53mb-alpine-image-with-chaperone">A 53MB Alpine Image with Chaperone</a></li>
-<li class="toctree-l4"><a class="reference internal" href="chap-docker-smaller.html#pre-built-images">Pre-Built Images</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Creating Small Docker Images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#eliminating-ubuntu-debian-recommended-packages">Eliminating Ubuntu/Debian Recommended Packages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#a-small-ubuntu-base-image-with-chaperone">A Small Ubuntu Base Image with Chaperone</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#a-53mb-alpine-image-with-chaperone">A 53MB Alpine Image with Chaperone</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-images">Pre-Built Images</a></li>
 </ul>
 </li>
 </ul>
@@ -177,7 +178,11 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../index.html">Docs</a> &raquo;</li>
       
-    <li>Using Chaperone</li>
+          <li><a href="chap-using.html">Using Chaperone</a> &raquo;</li>
+      
+          <li><a href="chap-docker.html">Using Chaperone with Docker</a> &raquo;</li>
+      
+    <li>Creating Small Docker Images</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -188,19 +193,105 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="using-chaperone">
-<span id="chap-using"></span><h1>Using Chaperone<a class="headerlink" href="#using-chaperone" title="Permalink to this headline">¶</a></h1>
-<p>Chaperone is a simple, but full-featured process manager.  It is designed to be as flexible
-as possible.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="chap-docker.html">Using Chaperone with Docker</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="chap-docker-simple.html">A Simple Docker Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chap-docker-smaller.html">Creating Small Docker Images</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="chap-other.html">Other Uses for Chaperone</a></li>
-</ul>
+  <div class="section" id="creating-small-docker-images">
+<span id="chap-small-docker"></span><h1>Creating Small Docker Images<a class="headerlink" href="#creating-small-docker-images" title="Permalink to this headline">¶</a></h1>
+<p>The default official Docker images are not always very compact.  For example, the official Ubuntu image
+is about 180MB, and the official Java image is a whopping 810MB!</p>
+<p>This is made worse by some distributions (like Ubuntu and Debian) which have defaults which don&#8217;t cater
+to small image sizes and prefer to assure that things you <em>might</em> need are installed.   So, for example,
+installing Python&#8217;s package manager <code class="docutils literal"><span class="pre">pip</span></code> will cause about 200MB of extra packages to be installed just
+&#8220;in case&#8221; some package requires the full compiler toolchain (which most Python packages, including Chaperone, do not).</p>
+<p>Chaperone, including all its dependences, need take up no more than 35-40MB maximum, including Python3.</p>
+<p>So, here is a quick guide to creating small Chaperone packages with a minimum of effort.</p>
+<div class="section" id="eliminating-ubuntu-debian-recommended-packages">
+<h2>Eliminating Ubuntu/Debian Recommended Packages<a class="headerlink" href="#eliminating-ubuntu-debian-recommended-packages" title="Permalink to this headline">¶</a></h2>
+<p>The simplest thing you can do when installing packages under Ubuntu or Debian is use the <code class="docutils literal"><span class="pre">--no-install-recommends</span></code> switch
+when you run <code class="docutils literal"><span class="pre">apt-get</span></code>.  For example, the <a class="reference internal" href="chap-docker-simple.html#chap-example-docker"><span>Simple Docker Example</span></a> section recommends you install Chaperone, Apache and SSH like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>RUN apt-get update &amp;&amp; \
+    apt-get install -y openssh-server apache2 python3-pip &amp;&amp; \
+    pip3 install chaperone
+RUN mkdir -p /var/lock/apache2 /var/run/apache2 /var/run/sshd /etc/chaperone.d
+</pre></div>
+</div>
+<p>If you do, you end up with a docker image which is 451MB:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker images
+REPOSITORY           TAG        IMAGE ID        CREATED          VIRTUAL SIZE
+sample-simple        latest     328d42703323    34 minutes ago   451.8 MB
+$
+</pre></div>
+</div>
+<p>However, if you change the install commands to:</p>
+<div class="highlight-python"><div class="highlight"><pre>RUN apt-get update &amp;&amp; \
+    apt-get install -y --no-install-recommends openssh-server apache2 python3-pip &amp;&amp; \
+    pip3 install chaperone
+</pre></div>
+</div>
+<p>The functionally equivalent image is only 242MB:</p>
+<div class="highlight-python"><div class="highlight"><pre>sample-simple        latest     8839acc1e4ef    24 minutes ago   242 MB
+</pre></div>
+</div>
+</div>
+<div class="section" id="a-small-ubuntu-base-image-with-chaperone">
+<h2>A Small Ubuntu Base Image with Chaperone<a class="headerlink" href="#a-small-ubuntu-base-image-with-chaperone" title="Permalink to this headline">¶</a></h2>
+<p>The sample image above contains both SSH as well as Apache.  However, let&#8217;s assume that you want
+to create the simplest Chaperone base image possible.   Here is the <code class="docutils literal"><span class="pre">Dockerfile</span></code> to start with:</p>
+<div class="highlight-python"><div class="highlight"><pre>FROM ubuntu:14.04
+RUN apt-get update &amp;&amp; \
+    apt-get install -y --no-install-recommends python3-pip &amp;&amp; \
+    pip3 install chaperone
+RUN mkdir -p /etc/chaperone.d
+COPY chaperone.conf /etc/chaperone.d/chaperone.conf
+ENTRYPOINT [&quot;/usr/local/bin/chaperone&quot;]
+</pre></div>
+</div>
+<p>The following <code class="docutils literal"><span class="pre">chaperone.conf</span></code> can serve as your starting point:</p>
+<div class="highlight-python"><div class="highlight"><pre>your.service: {
+  command: &quot;logger -p warn &#39;Replace this with your service&#39;&quot;,
+}
+
+console.logging: {
+  selector: &#39;*.warn&#39;,
+  stdout: true,
+}
+</pre></div>
+</div>
+<p>If you build the above image, it will be just 226MB, only 38MB larger than the Ubuntu image:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker images
+REPOSITORY           TAG        IMAGE ID        CREATED            VIRTUAL SIZE
+base-ubuntu          latest     182521cfa43e    About an hour ago  226 MB
+</pre></div>
+</div>
+</div>
+<div class="section" id="a-53mb-alpine-image-with-chaperone">
+<h2>A 53MB Alpine Image with Chaperone<a class="headerlink" href="#a-53mb-alpine-image-with-chaperone" title="Permalink to this headline">¶</a></h2>
+<p>If you really care about keeping your images as minimal as possible, consider using
+<a class="reference external" href="http://www.alpinelinux.org/">Alpine Linux</a> as your base image.   Alpine is a simple,
+stripped down distribution that is ideal for creating lean, mean containers.</p>
+<p>Here&#8217;s a <code class="docutils literal"><span class="pre">Dockerfile</span></code> that will create small Alpine Linux image, complete with both
+Chaperone as well as Python3:</p>
+<div class="highlight-python"><div class="highlight"><pre>FROM alpine:3.2
+RUN apk add --update python3 &amp;&amp; pip3 install chaperone
+RUN mkdir -p /etc/chaperone.d
+COPY chaperone.conf /etc/chaperone.d/chaperone.conf
+ENTRYPOINT [&quot;/usr/bin/chaperone&quot;]
+</pre></div>
+</div>
+<p>The resulting image is less than 53MB:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ docker images
+REPOSITORY           TAG        IMAGE ID        CREATED            VIRTUAL SIZE
+base-alpine          latest     1c9d85d9bb67    About an hour ago  52.59 MB
+</pre></div>
+</div>
+</div>
+<div class="section" id="pre-built-images">
+<h2>Pre-Built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this headline">¶</a></h2>
+<p>When building our official Chaperone base images (<a class="reference external" href="https://hub.docker.com/u/chapdev/dashboard/">located here on Docker Hub</a>),
+we used the techniques above to create versatile images with reasonably sophisticated start-ups.  They may be
+overkill for most applications, but they may also serve as good configuration examples.</p>
+<p>Notably, the <a class="reference external" href="https://hub.docker.com/r/chapdev/chaperone-alpinejava/">chaperone-alpinejava</a> image is a good
+example of what&#8217;s possible.   It contains a complete Oracle 8 production environment, Python 3, Chaperone, and
+it&#8217;s a remarkably small 216MB!</p>
+<p>Hopefully the above information is a useful way to get started at streamlining images.</p>
 </div>
 </div>
 
@@ -210,10 +301,10 @@ as possible.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="chap-docker.html" class="btn btn-neutral float-right" title="Using Chaperone with Docker" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="chap-other.html" class="btn btn-neutral float-right" title="Other Uses for Chaperone" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="chap-intro.html" class="btn btn-neutral" title="Introduction to Chaperone" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="chap-docker-simple.html" class="btn btn-neutral" title="A Simple Docker Example" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
