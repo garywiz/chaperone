@@ -20,3 +20,4 @@ and well-contained.
    :maxdepth: 2
 
    chap-docker-simple.rst
+   chap-docker-smaller.rst

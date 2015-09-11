@@ -301,7 +301,8 @@ Logging Config Reference
    as root, so service configurations can specify alternate users even if they are run under a
    different user account.
 
-   For example, if Chaperone were run from docker using the :ref:`chaperone-baseimage` image like this::
+   For example, if Chaperone were run from 
+   docker using the `chaperone-baseimage <https://hub.docker.com/r/chapdev/chaperone-baseimage/>`_ image like this::
 
      docker run -d chapdev/chaperone-baseimage \
                  --user wwwuser --config /home/wwwuser/chaperone.conf
