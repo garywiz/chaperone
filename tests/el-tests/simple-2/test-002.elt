@@ -1,0 +1,10 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Simple services - all processes disabled - no exit detection
+
+>(sleep 5; echo "K""ILL ME NOW")&
+>RUNIMAGE
+<test1-exit1.service not enabled
+<KILL ME NOW
+>^C
+<No processes remain when attempting to kill system
+<Final termination phase

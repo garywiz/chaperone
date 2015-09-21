@@ -1,0 +1,99 @@
+#!/bin/bash
+# Assumes the current directory contains executable files and runs them all.
+
+# the cd trick assures this works even if the current directory is not current.
+
+function relpath() { python -c "import os,sys;print(os.path.relpath(*(sys.argv[1:])))" "$@"; }
+
+function extract_title() {
+    script=$1
+    title=`sed -n 's/^#TITLE: *//p' $script`
+    [ "$title" == "" ] && title=$script
+    echo $title
+}
+
+export CHTEST_CONTAINER_NAME=CHAP-TEST-CONTAINER-$$
+
+function kill_test_container() {
+    if docker inspect $CHTEST_CONTAINER_NAME >/dev/null 2>&1; then
+      echo Container still running: Forcing removal
+      docker kill $CHTEST_CONTAINER_NAME >/dev/null
+      docker rm -v $CHTEST_CONTAINER_NAME >/dev/null
+    fi
+}
+
+shellmode=0
+if [ "$1" == '--shell' ]; then
+  shellmode=1
+  shift
+fi
+
+export TESTDIR=$(readlink -f $1)
+export TESTHOME=$PWD
+export CHTEST_HOME=$TESTDIR/_temp-$$_
+
+if [ "$CHTEST_LOGDIR" == "" ]; then
+  export CHTEST_LOGDIR=$TESTHOME/test_logs
+fi
+
+if [ "$2" == "" ]; then
+  IMAGE_NAME=chapdev/chaperone-lamp
+else
+  IMAGE_NAME=$2
+fi
+
+export CHTEST_IMAGE=$IMAGE_NAME
+
+if [ ! -d $TESTDIR ]; then
+   exit
+fi
+
+if [ -e $CHTEST_HOME ]; then
+   echo "Can't continue... $CHTEST_HOME already exists."
+   exit 1
+fi
+
+if [ "`which expect-lite`" == "" ]; then
+   echo "expect-lite must be installed for tests to run"
+   exit 1
+fi
+
+mkdir -p $CHTEST_LOGDIR
+
+if [ $shellmode == 1 ]; then
+  mkdir $CHTEST_HOME
+  expect-lite-image-run --disable-services /bin/bash
+  rm -rf $CHTEST_HOME
+  exit
+fi
+
+(
+  exitcode=0
+  for sf in $( find $TESTDIR -type f -executable \! -name '*~' ); do
+    if [ "$CHTEST_ONLY_ENDSWITH" != "" -a "${sf%*/$CHTEST_ONLY_ENDSWITH}" == "$sf" ]; then
+	continue
+    fi
+    mkdir $CHTEST_HOME; cd $CHTEST_HOME
+    logfile=$CHTEST_LOGDIR/$(basename $TESTDIR)_${sf/*\//}.log
+    rm -f $logfile.err
+    title=$(extract_title $sf)
+    echo "RUNNING TEST: $title"
+    echo "" >>$logfile.err
+    echo "##" >>$logfile.err
+    echo "## RUNNING TEST: $title" >>$logfile.err
+    echo "##               $sf" >>$logfile.err
+    echo "##" >>$logfile.err
+    if ! $sf >>$logfile.err 2>&1; then
+      echo "TEST FAILED: $sf (see $(relpath $logfile.err $TESTHOME))"
+      exitcode=2
+    else
+      mv $logfile.err $logfile
+    fi
+    kill_test_container
+    cd $TESTDIR; [ ! -f keep.tempdir ] && rm -rf $CHTEST_HOME
+  done
+  if [ $exitcode != 0 ]; then
+      echo "Some tests failed in: $TESTDIR"
+  fi
+  exit $exitcode
+)

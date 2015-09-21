@@ -1,0 +1,13 @@
+#!/bin/bash
+
+function RUNTASK() { 
+    expect-lite-image-run --task $*
+}
+
+function RUNIMAGE() { 
+    export CHTEST_DOCKER_OPTS=$*
+    expect-lite-image-run
+}
+
+export -f RUNTASK RUNIMAGE
+bash -i

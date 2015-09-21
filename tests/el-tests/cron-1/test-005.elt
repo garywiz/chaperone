@@ -1,0 +1,17 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Complex Apache and background restart - process termination with PIDFILE
+
+@40
+>(sleep 25; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_APACHE5=true
+<test5-apache.service successfully started
+<ROTATE SERIAL NUMBER: 1
+<apache is running
+<services reset
+<apache is NOT running
+<Starting web server apache2
+<ROTATE SERIAL NUMBER: 2
+<apache is running
+<KILL ME NOW
+>^C
+<Final termination phase

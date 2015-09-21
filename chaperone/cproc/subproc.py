@@ -42,6 +42,7 @@ class SubProcess(object):
                                 # the service entry
     syslog_facility = None      # specifies any additional syslog facility to use when using
                                 # logerror, logdebug, logwarn, etc...
+    start_attempted = False     # used to determine if a service is truly dormant
 
     _proc = None
     _pid = None                 # the pid, often associated with _proc, but not necessarily in the
@@ -253,6 +254,17 @@ class SubProcess(object):
         self.service.enabled = bool(val)
 
     @property
+    def scheduled(self):
+        """
+        True if this is a process which WILL fire up a process in the future.
+        A "scheduled" process does not include one which will be started manually,
+        nor does it include proceses which will be started due to dependencies.
+        Processes like "cron" and "inetd" return True if they are active and 
+        may start processes in the future.
+        """
+        return False
+
+    @property
     def kill_signal(self):
         ksig = self.service.kill_signal
         if ksig is not None:
@@ -270,6 +282,15 @@ class SubProcess(object):
         True if this process has started normally. It may have forked, or executed, or is scheduled.
         """
         return self._started
+ 
+    @property
+    def stoppable(self):
+        """
+        True if this process can be stopped.  By default, returns True if the service is started,
+        but some job types such as cron and inetd may be stoppable even when processes themselves
+        are not running.
+        """
+        return self.started
 
     @property
     def failed(self):
@@ -344,6 +365,8 @@ class SubProcess(object):
         self._cond_exception = None
 
         # Now we can procede
+
+        self.start_attempted = True
 
         try:
 
@@ -707,15 +730,25 @@ class SubProcessFamily(lazydict):
     def system_alive(self):
         return self.controller.system_alive
 
+    def get_scheduled_services(self):
+        return [s for s in self.values() if s.scheduled]
+
     @asyncio.coroutine
     def run(self, servicelist = None):
         """
         Runs the family, starting up services in dependency order.  If any problems
-        occur, an exception is raised.
+        occur, an exception is raised.  Returns True if any attempts were made to
+        start services, otherwize False if the configuration contained no services
+        that were enabled and ready to run.
         """
         # Note that all tasks are started simultaneously, but they resolve their
         # interdependencies themselves.
-        yield from asyncio.gather(*[s.start() for s in servicelist or self.values()])
+        if not servicelist:
+            servicelist = self.values()
+        yield from asyncio.gather(*[s.start() for s in servicelist])
+
+        # Indicate if any attempts were made
+        return any(s.start_attempted for s in servicelist)
 
     def _lookup_services(self, names):
         result = set()
@@ -772,12 +805,12 @@ class SubProcessFamily(lazydict):
     @asyncio.coroutine
     def stop(self, service_names, force = False, wait = False, disable = False):
         slist = self._lookup_services(service_names)
-        started = [s for s in slist if s.started]
+        started = [s for s in slist if s.stoppable]
 
         if not force:
             if len(started) != len(slist):
                 raise Exception("can't stop services which aren't started: " + 
-                                ", ".join([s.shortname for s in slist if not s.started]))
+                                ", ".join([s.shortname for s in slist if not s.stoppable]))
 
         if not wait:
             asyncio.async(self._queued_stop(slist, service_names, disable))

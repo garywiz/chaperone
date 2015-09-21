@@ -1,0 +1,17 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Complex Apache and background restart - timing tests for process termination
+
+>(sleep 25; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_APACHE4=true
+<test4-apache.service successfully started
+<ROTATE SERIAL NUMBER: 1
+<apache is running
+<services reset
+<apache is NOT running
+<Starting web server apache2
+<ROTATE SERIAL NUMBER: 2
+<apache is running
+@30
+<KILL ME NOW
+>^C
+<Final termination phase

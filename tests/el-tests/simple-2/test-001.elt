@@ -1,0 +1,12 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Simple services - exit immediately - no exit detection
+
+>(sleep 5; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_EXIT1=true
+<test1-exit1.service successfully started
+<test1-exit1.service exit status
+<KILL ME NOW
+>^C
+<No processes remain when attempting to kill system
+<Final termination phase
+

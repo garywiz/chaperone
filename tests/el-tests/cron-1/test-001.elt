@@ -1,0 +1,10 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Cron services - Simple echo
+
+>(sleep 15; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_CRON1=true
+@30
+<system will remain active
+<KILL ME NOW
+>^C
+<Final termination phase

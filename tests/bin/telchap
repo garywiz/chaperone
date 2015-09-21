@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+
+import sys
+import os
+
+# Assure we use the local package for testing and development
+sys.path[0] = os.path.dirname(os.path.dirname(sys.path[0]))
+
+from chaperone.exec.telchap import main_entry
+main_entry()

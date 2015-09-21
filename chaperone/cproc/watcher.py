@@ -79,6 +79,10 @@ class InitChildWatcher(BaseChildWatcher):
         except KeyError:
             return False
 
+    def check_processes(self):
+        # Checks to see if any processes terminated, and triggers _no_processes if need be.
+        self._do_waitpid_all()
+
     def _do_waitpid_all(self):
         # Because of signal coalescing, we must keep calling waitpid() as
         # long as we're able to reap a child.
@@ -89,6 +93,7 @@ class InitChildWatcher(BaseChildWatcher):
             except ChildProcessError:
                 # No more child processes exist.
                 if self._had_children and self._no_processes:
+                    debug("no child processes present")
                     self._no_processes()
                 return
             else:

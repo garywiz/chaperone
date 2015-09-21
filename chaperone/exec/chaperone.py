@@ -220,6 +220,6 @@ def main_entry():
                                              stderr='inherit', stdout='inherit')
          extra_services = [cmdsvc]
 
-      yield from tlp.run_services(extra_services, extra_only = options['--disable-services'])
+      yield from tlp.run_services(extra_services, disable_others = options['--disable-services'])
 
    tlp.run_event_loop(startup_done())

@@ -1,0 +1,7 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Simple services - all processes disabled
+
+>RUNIMAGE
+<test1-exit1.service not enabled
+<No service startups attempted
+<Final termination phase

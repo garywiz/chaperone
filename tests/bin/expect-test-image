@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export EL_SHELL="expect-lite-image-run"
+exec expect-lite $1

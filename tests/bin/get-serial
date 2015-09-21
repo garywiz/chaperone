@@ -1,0 +1,13 @@
+#!/bin/bash
+
+serfile=$CHTEST_HOME/serial.dat
+if [ ! -f $serfile ]; then
+  current=0
+else
+  current=$(cat $serfile)
+fi
+
+let current=current+1
+
+echo $current >$serfile
+echo $current

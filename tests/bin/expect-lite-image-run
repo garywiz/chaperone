@@ -1,0 +1,23 @@
+#!/bin/bash
+
+options=""
+if [ "$CHTEST_CONTAINER_NAME" != "" ]; then
+  options="--name $CHTEST_CONTAINER_NAME"
+fi
+
+if [[ " $CHTEST_DOCKER_OPTS " != *\ -d* ]]; then
+  options="$options -i -t --rm"
+fi
+
+exec docker run $options \
+    -v /home:/home \
+    -e TESTHOME=$TESTHOME \
+    -e TESTDIR=$TESTDIR \
+    -e CHTEST_HOME=$CHTEST_HOME \
+    $CHTEST_DOCKER_OPTS \
+    --entrypoint $TESTHOME/bin/chaperone \
+    $CHTEST_IMAGE \
+    --create $USER:$TESTHOME \
+    --default-home $CHTEST_HOME \
+    --config $CHTEST_HOME/../chaperone.conf \
+    $*

@@ -1,0 +1,9 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Simple services - exit immediately
+
+>RUNIMAGE -e ENABLE_EXIT1=true
+<test1-exit1.service successfully started
+<test1-exit1.service exit status
+<no child processes present
+<Final termination phase
+

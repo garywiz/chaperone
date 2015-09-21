@@ -52,6 +52,7 @@ _config_schema = V.Any(
       },
       V.Match('^settings$'): {
         'debug': bool,
+        'detect_exit': bool,
         'env_inherit': [ str ],
         'env_set': { str: str },
         'env_unset': [ str ],

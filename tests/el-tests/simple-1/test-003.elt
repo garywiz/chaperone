@@ -1,0 +1,12 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Simple services - no kill for untracked processes (using apache)
+
+>(sleep 8; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_APACHE3=true
+<test3-apache.service successfully started
+<test3-apache.service exit status
+<test3-apache.service received reset
+</usr/sbin/apache2 -k start
+<KILL ME NOW
+>^C
+<Final termination phase

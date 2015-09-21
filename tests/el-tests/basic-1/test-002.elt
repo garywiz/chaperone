@@ -1,0 +1,5 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Test simplest possible task
+
+>RUNTASK proctool testing-123
+<proctool says: testing-123

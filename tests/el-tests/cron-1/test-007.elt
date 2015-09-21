@@ -1,0 +1,12 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Cron job killing apache keeps container running (cron scheduled)
+
+@30
+>(sleep 20; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_APACHE7=true
+<test7-apache.service successfully started
+<Caught subprocess termination from unknown pid
+<system will remain active since there are scheduled services
+<KILL ME NOW
+>^C
+<Final termination phase

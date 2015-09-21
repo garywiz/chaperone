@@ -1,0 +1,8 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Cron job disables self plus kills Apache, container should die
+
+@30
+>RUNIMAGE -e ENABLE_APACHE8=true
+<test8-apache.service successfully started
+<Caught subprocess termination from unknown pid
+<Final termination phase

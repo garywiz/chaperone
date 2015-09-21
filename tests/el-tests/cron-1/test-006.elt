@@ -1,0 +1,7 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Oneshot job kills Apache - be sure Chaperone terminates
+
+>RUNIMAGE -e ENABLE_APACHE6=true
+<test6-apache.service successfully started
+<Caught subprocess termination from unknown pid
+<Final termination phase

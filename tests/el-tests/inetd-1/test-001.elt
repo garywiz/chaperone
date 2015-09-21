@@ -1,0 +1,31 @@
+#!/usr/bin/env expect-test-command
+#TITLE: inetd - simple exit service, keeps running
+
+# Start the image and capture the container ID and port
+# (Note: the initial "echo" below is needed to take care of a timing issue with 'docker run')
+
+>echo running...; echo CID:`RUNIMAGE -d -P -e ENABLE_INETD1=true`
++$cid=CID:([0-9a-f]{32,})
+>docker port $cid
++$ourport=8080/tcp -> 0.0.0.0:([0-9]+)
+
+# Fire up an inetd connection inside the container and verify it works
+
+>sleep 3  # allow time for container setup
+>nc localhost $ourport
+<hello from port 8080
+
+# Kill and inspect logs
+
+>sleep 3
+>docker stop $cid
+>docker logs $cid
+<inetd1.service listening on port 8080
+<received connection on port 8080
+<system will remain active since there are scheduled services: inetd1.service
+<Request made to kill
+<Final termination phase
+
+# Clean up
+
+>docker rm -v $cid

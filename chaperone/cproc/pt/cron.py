@@ -39,6 +39,10 @@ class CronProcess(SubProcess):
             return 'waiting'
         return None
 
+    @property
+    def scheduled(self):
+        return self._cron and self._cron.handle
+        
     @asyncio.coroutine
     def start(self):
         """
@@ -46,6 +50,8 @@ class CronProcess(SubProcess):
         """
         if not self.enabled or self._cron.handle:
             return
+
+        self.start_attempted = True
 
         # Start up cron
         try:
@@ -67,6 +73,10 @@ class CronProcess(SubProcess):
                 except Exception as ex:
                     self.logerror(ex, "cron service {0} failed to start: {1}", self.name, ex)
                     yield from self.reset();
+
+    @property
+    def stoppable(self):
+        return self.scheduled
 
     @asyncio.coroutine
     def stop(self):

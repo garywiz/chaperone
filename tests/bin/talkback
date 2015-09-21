@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+# Simple echo script to test inetd
+
+import sys
+
+for line in sys.stdin:
+  if "EXIT" in line:
+    exit(0)
+  print("Echoing: ", line)
+  sys.stdout.flush()

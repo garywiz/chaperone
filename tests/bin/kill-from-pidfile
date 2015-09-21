@@ -1,0 +1,7 @@
+#!/bin/bash
+
+pidfile=$1
+
+if [ -f $pidfile ]; then
+  sudo kill `cat $1`
+fi

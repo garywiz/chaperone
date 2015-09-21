@@ -40,8 +40,8 @@ asyncio.DefaultEventLoopPolicy._loop_factory = CustomEventLoop
 
 class TopLevelProcess(objectplus):
              
-    exit_when_no_processes = True
     send_sighup = False
+    detect_exit = True
 
     _shutdown_timeout = None
     _ignore_signals = False
@@ -64,12 +64,15 @@ class TopLevelProcess(objectplus):
         self._pending = set()
 
         # wait at least 0.5 seconds, zero is totally pointless
-        self._shutdown_timeout = config.get_settings().get('shutdown_timeout', 8) or 0.5
+        settings = config.get_settings()
+        self._shutdown_timeout = settings.get('shutdown_timeout', 8) or 0.5
+
+        self.detect_exit = settings.get('detect_exit', True)
 
         policy = asyncio.get_event_loop_policy()
         w = self._watcher = InitChildWatcher()
         policy.set_child_watcher(w)
-        w.add_no_processes_handler(self._no_processes)
+        w.add_no_processes_handler(self._queue_no_processes)
         self.loop.add_signal_handler(signal.SIGTERM, self.kill_system)
         self.loop.add_signal_handler(signal.SIGINT, self._got_sigint)
 
@@ -132,15 +135,33 @@ class TopLevelProcess(objectplus):
             self._syslog.reset_minimum_priority(levid)
         info("Forcing all log output to '{0}' or greater", level)
 
+    def _queue_no_processes(self):
+        # Any output from dead processes won't get queued into the logs if we
+        # don't return to the event loop.
+        self.loop.call_later(0.05, self._no_processes)
+
     def _no_processes(self, ignore_service_state = False):
-        if self._services_started:
-            self._all_killed = True
-        if (ignore_service_state or self._services_started) and (self._killing_system or self.exit_when_no_processes):
-            debug("Final termination phase.")
-            self._services_started = False
-            if self._kill_future and not self._kill_future.cancelled():
-                self._kill_future.cancel()
-            self.loop.call_later(0.1, self._final_stop)
+        if not (ignore_service_state or self._services_started):
+            return    # do not react during system initialization
+
+        self._all_killed = True
+
+        if not self._killing_system:
+            if not self.detect_exit:
+                return
+            if self._family:
+                ss = self._family.get_scheduled_services()
+                if ss:
+                    warn("system will remain active since there are scheduled services: " + ", ".join(s.name for s in ss))
+                    return
+
+        # Passed all checks, now kill system
+
+        debug("Final termination phase.")
+        self._services_started = False
+        if self._kill_future and not self._kill_future.cancelled():
+            self._kill_future.cancel()
+        self.loop.call_later(0.1, self._final_stop)
 
     def _final_stop(self):
         if self._syslog:
@@ -274,7 +295,7 @@ class TopLevelProcess(objectplus):
         self.loop.close()
 
     @asyncio.coroutine
-    def run_services(self, extra_services, extra_only = False):
+    def run_services(self, extra_services, disable_others = False):
         "Run all services."
 
         # First, determine our overall configuration for the services environment.
@@ -283,15 +304,24 @@ class TopLevelProcess(objectplus):
 
         if extra_services:
             services = services.deepcopy()
-            if extra_only:
-                services.clear()
+            if disable_others:
+                for s in services.values():
+                    s.enabled = False
             for s in extra_services:
                 services.add(s)
 
         family = self._family = SubProcessFamily(self, services)
+        tried_any = False
         try:
-            yield from family.run()
+            tried_any = yield from family.run()
         except asyncio.CancelledError:
             pass
         finally:
             self._services_started = True
+
+        if self.detect_exit:
+            if not tried_any:
+                warn("No service startups attempted (all disabled?) - exiting due to 'detect_exit=true'")
+                self.kill_system()
+            else:
+                self._watcher.check_processes()

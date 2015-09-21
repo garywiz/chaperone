@@ -81,6 +81,7 @@ class InetdService(Server):
 class InetdProcess(SubProcess):
 
     syslog_facility = LOG_DAEMON
+    server = None
     counter = 0
 
     def __init__(self, service, family=None):
@@ -95,6 +96,10 @@ class InetdProcess(SubProcess):
 
     def remove_process(self, proc):
         self._proclist.discard(proc)
+
+    @property
+    def scheduled(self):
+        return self.server is not None
 
     @property
     def note(self):

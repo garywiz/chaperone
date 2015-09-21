@@ -1,0 +1,13 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Simple services - track processes using pidfile (using apache) - no exit detection
+
+>(sleep 8; echo "K""ILL ME NOW")&
+>RUNIMAGE -e ENABLE_APACHE4=true
+<test4-apache.service changing PID to
+<test4-apache.service successfully started
+<test4-apache.service exit status
+<test4-apache.service received reset
+<: apache not running
+<KILL ME NOW
+>^C
+<Final termination phase

@@ -1,0 +1,8 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Forking service - spawn daemon - error on spawn
+
+>RUNIMAGE -e ENABLE_EXIT1B=true
+<echo daemon running
+<test1-exit1b.service received exception during attempted start
+<system startup cancelled
+<Final termination phase

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+ps -C $1 >/dev/null && exit 0
+exit 1

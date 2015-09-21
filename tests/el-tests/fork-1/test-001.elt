@@ -1,0 +1,8 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Forking service - spawn daemon normally
+
+>RUNIMAGE -e ENABLE_EXIT1=true
+<test1-exit1.service successfully started
+<: daemon exiting
+<Final termination phase
+
