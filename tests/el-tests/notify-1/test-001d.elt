@@ -1,0 +1,7 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Notify service - spawn daemon - error from notifying process
+
+>RUNIMAGE -e ENABLE_EXIT1D=true
+<: daemon running
+<test1-exit1d.service failed with reported error <ProcStatus exit_status=55>
+<Final termination phase

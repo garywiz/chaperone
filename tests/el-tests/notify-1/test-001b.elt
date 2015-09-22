@@ -1,0 +1,7 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Notify service - spawn daemon - error during grace period
+
+>RUNIMAGE -e ENABLE_EXIT1B=true
+<echo daemon running
+<test1-exit1b.service failed on start-up with result
+<Final termination phase

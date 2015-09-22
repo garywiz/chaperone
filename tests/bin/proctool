@@ -22,7 +22,7 @@ if options['MESSAGE']:
 
 if options['--notify']:
    cmd = options['--notify']
-   os.system('systemd-notify ' + cmd)
+   os.system('sdnotify ' + cmd)
 
 if options['--dump']:
     print("UID:{0} GID:{1} PID:{2} Environment:".format(os.getuid(), os.getgid(), os.getpid()))

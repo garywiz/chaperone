@@ -1,0 +1,7 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Notify service - spawn daemon - error while waiting for notify
+
+>RUNIMAGE -e ENABLE_EXIT1C=true
+<echo daemon running
+<'test1-exit1c.service' did not receive ready notification
+<Final termination phase

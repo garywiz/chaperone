@@ -1,0 +1,8 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Notify service - spawn daemon - normal ready notification
+
+>RUNIMAGE -e ENABLE_EXIT1E=true
+<: daemon running
+<test1-exit1e.service changing PID to
+<test1-exit1e.service got explicit return code
+<Final termination phase

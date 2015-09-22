@@ -662,6 +662,26 @@ class SubProcess(object):
         self._pid = None
         
     @asyncio.coroutine
+    def do_startup_pause(self):
+        """
+        Wait a short time just to see if the process errors out immediately.  This avoids a retry loop
+        and catches any immediate failures now.  Can be used by process implementations if needed.
+        """
+
+        if not self.startup_pause:
+            return
+
+        try:
+            result = yield from self.timed_wait(self.startup_pause)
+        except asyncio.TimeoutError:
+            result = None
+        if result is not None and not result.normal_exit:
+            if self.ignore_failures:
+                warn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
+            else:
+                raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
+
+    @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
         """
         Timed wait waits for process completion.  If process completion occurs normally, the
