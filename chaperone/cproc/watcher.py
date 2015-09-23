@@ -8,6 +8,7 @@ from asyncio.unix_events import BaseChildWatcher
 from chaperone.cutil.logging import warn, info, debug
 from chaperone.cutil.proc import ProcStatus
 from chaperone.cutil.misc import get_signal_name
+from chaperone.cutil.events import EventSource
 
 class InitChildWatcher(BaseChildWatcher):
     """An init-responsible child watcher.
@@ -15,8 +16,9 @@ class InitChildWatcher(BaseChildWatcher):
     Plugs into the asyncio child watcher framework to allow harvesting of both known and unknown
     child processes.
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
+        self.events = EventSource(**kwargs)
         self._callbacks = {}
         self._lock = threading.Lock()
         self._zombies = {}
@@ -53,12 +55,6 @@ class InitChildWatcher(BaseChildWatcher):
     def number_of_waiters(self):
         return len(self._callbacks)
 
-    def add_no_processes_handler(self, callback, *args):
-        self._no_processes = partial(callback, *args)
-
-    def remove_no_processes_handler(self):
-        self._no_processes = None
-
     def add_child_handler(self, pid, callback, *args):
         assert self._forks, "Must use the context manager"
         with self._lock:
@@ -80,7 +76,7 @@ class InitChildWatcher(BaseChildWatcher):
             return False
 
     def check_processes(self):
-        # Checks to see if any processes terminated, and triggers _no_processes if need be.
+        # Checks to see if any processes terminated, and triggers onNoProcesses
         self._do_waitpid_all()
 
     def _do_waitpid_all(self):
@@ -92,9 +88,9 @@ class InitChildWatcher(BaseChildWatcher):
                 debug("REAP pid={0},status={1}".format(pid,status))
             except ChildProcessError:
                 # No more child processes exist.
-                if self._had_children and self._no_processes:
+                if self._had_children:
                     debug("no child processes present")
-                    self._no_processes()
+                    self.events.onNoProcesses()
                 return
             else:
                 self._had_children = True

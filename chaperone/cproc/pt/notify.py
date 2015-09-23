@@ -24,8 +24,8 @@ class NotifyProcess(SubProcess):
     @asyncio.coroutine
     def process_prepare_co(self, environ):
         if not self._listener:
-            self._listener = NotifyListener('/chaperone/' + self.service.name,
-                                            self._notify_received)
+            self._listener = NotifyListener('@/chaperone/' + self.service.name,
+                                            onNotify = self._notify_received)
             yield from self._listener.run()
 
         environ['NOTIFY_SOCKET'] = self._listener.socket_name
@@ -96,7 +96,7 @@ class NotifyProcess(SubProcess):
             self._close_listener()
             yield from self._abnormal_exit(result)
             
-    def _notify_received(self, var, value):
+    def _notify_received(self, which, var, value):
         callfunc = getattr(self, "notify_" + var.upper(), None)
         #print("NOTIFY RECEIVED", var, value)
         if callfunc:

@@ -70,9 +70,8 @@ class TopLevelProcess(objectplus):
         self.detect_exit = settings.get('detect_exit', True)
 
         policy = asyncio.get_event_loop_policy()
-        w = self._watcher = InitChildWatcher()
+        w = self._watcher = InitChildWatcher(onNoProcesses = self._queue_no_processes)
         policy.set_child_watcher(w)
-        w.add_no_processes_handler(self._queue_no_processes)
         self.loop.add_signal_handler(signal.SIGTERM, self.kill_system)
         self.loop.add_signal_handler(signal.SIGINT, self._got_sigint)
 
@@ -241,20 +240,42 @@ class TopLevelProcess(objectplus):
        self._pending.add(future)
        return future
 
-    def _syslog_started(self, f):
-        self._syslog.capture_python_logging()
-        info("Switching all chaperone logging to /dev/log")
-
     def _system_coro_check(self, f):
         if f.exception():
             error("system startup cancelled due to error: {0}".format(f.exception()))
             self.kill_system()
 
     def _system_started(self, startup, future=None):
+        if future and not future.cancelled() and future.exception():
+            self._system_coro_check(future)
+            return
         info(self.version + ", ready.")
         if startup:
             future = self.activate(startup)
             future.add_done_callback(self._system_coro_check)
+
+    @asyncio.coroutine
+    def _start_system_services(self):
+
+        self._syslog = SyslogServer()
+        self._syslog.configure(self._config, self._minimum_syslog_level)
+
+        try:
+            yield from self._syslog.run()
+        except PermissionError as ex:
+            self._syslog = None
+            warn("syslog service cannot be started: {0}", ex)
+        else:
+            self._syslog.capture_python_logging()
+            info("Switching all chaperone logging to /dev/log")
+
+        self._command = CommandServer(self)
+
+        try:
+            yield from self._command.run()
+        except PermissionError as ex:
+            self._command = None
+            warn("command service cannot be started: {0}", ex)
 
     def run_event_loop(self, startup_coro = None):
         """
@@ -263,33 +284,8 @@ class TopLevelProcess(objectplus):
         to tailor the environment and start up other services as needed.
         """
 
-        futures = list()
-
-        self._syslog = SyslogServer()
-        self._syslog.configure(self._config, self._minimum_syslog_level)
-
-        try:
-            syf = self._syslog.run()
-            syf.add_done_callback(self._syslog_started)
-            futures.append(syf)
-        except PermissionError as ex:
-            self._syslog = None
-            warn("syslog service cannot be started: {0}", ex)
-
-        self._command = CommandServer(self)
-
-        try:
-            cmdf = self._command.run()
-            futures.append(cmdf)
-        except PermissionError as ex:
-            self._command = None
-            warn("command service cannot be started: {0}", ex)
-
-        if futures:
-            f = asyncio.gather(*futures)
-            f.add_done_callback(lambda f: self._system_started(startup_coro, f))
-        else:
-            self._system_started(startup_coro)
+        initfuture = asyncio.async(self._start_system_services())
+        initfuture.add_done_callback(lambda f: self._system_started(startup_coro, f))
 
         self.loop.run_forever()
         self.loop.close()

@@ -7,4 +7,4 @@ fi
 
 export PATH=$PWD/bin:$PATH
 
-test-driver --shell $1
+test-driver --shell el-tests/$1

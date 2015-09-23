@@ -196,7 +196,7 @@ class SyslogServerProtocol(ServerProtocol):
 
         for m in messages:
             if m:
-                self.parent.parse_to_output(m)
+                self.owner.parse_to_output(m)
         sys.stdout.flush()
 
 class SyslogServer(Server):
@@ -207,7 +207,9 @@ class SyslogServer(Server):
 
     _capture_handler = None     # our capture handler to redirect python logs
 
-    def __init__(self, logsock = "/dev/log", datagram = True):
+    def __init__(self, logsock = "/dev/log", datagram = True, **kwargs):
+        super().__init__(**kwargs)
+
         self._datagram = datagram
         self._log_socket = logsock
 
@@ -219,14 +221,15 @@ class SyslogServer(Server):
     def _create_server(self):
         if not self._datagram:
             return self.loop.create_unix_server(
-                SyslogServerProtocol.buildProtocl(parent = self), path=self._log_socket)
+                SyslogServerProtocol.buildProtocol(self), path=self._log_socket)
 
         # Assure we will be able to bind later
         remove_for_recreate(self._log_socket)
 
         return self.loop.create_datagram_endpoint(
-            SyslogServerProtocol.buildProtocol(parent = self), family=socket.AF_UNIX)
+            SyslogServerProtocol.buildProtocol(self), family=socket.AF_UNIX)
 
+    @asyncio.coroutine
     def server_running(self):
         # Bind the socket if it's a datagram
         if self._datagram:

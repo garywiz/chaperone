@@ -336,11 +336,11 @@ Notify Socket
 .. envvar:: NOTIFY_SOCKET
 
    Chaperone attempts to emulate ``systemd`` behavior by providing a
-   :ref:`"forking" service type <service.sect.type>`.   Processes created by this type
+   :ref:`"notify" service type <service.sect.type>`.   Processes created by this type
    will have the additional variable ``NOTIFY_SOCKET`` set in their environment,
    which is the path to a UNIX domain socket created privately within the
    container.  The service should use this environment variable to trigger
-   notifications compatible with
+   notifications compatible with ``systemd``.
 
 .. rubric:: Notes
 

@@ -40,7 +40,7 @@ class _BaseCommand(object):
         #return str(result)
         self.interactive = protocol.interactive
         try:
-            result = yield from self.do_exec(opts, protocol.parent.controller)
+            result = yield from self.do_exec(opts, protocol.owner.controller)
             return str(result)
         except Exception as ex:
             return "Command error: " + str(ex)
@@ -208,16 +208,17 @@ class _InteractiveServer(Server):
 
     def _create_server(self):
         maybe_remove(CHAP_SOCK)
-        return asyncio.get_event_loop().create_unix_server(CommandProtocol.buildProtocol(parent=self,interactive=True), 
+        return asyncio.get_event_loop().create_unix_server(CommandProtocol.buildProtocol(self, interactive=True), 
                                                            path=CHAP_SOCK)
 
-    def _run_done(self, f):
-        super()._run_done(f)
+    @asyncio.coroutine
+    def server_running(self):
         os.chmod(CHAP_SOCK, 0o777)
 
     def close(self):
         super().close()
         maybe_remove(CHAP_SOCK)
+
 
 class CommandServer(Server):
 
@@ -225,19 +226,21 @@ class CommandServer(Server):
     _fifoname = None
     _iserve = None
 
-    def __init__(self, controller, filename = CHAP_FIFO):
+    def __init__(self, controller, filename = CHAP_FIFO, **kwargs):
         """
         Creates a new command FIFO and socket.  The controller is the object to which commands and interactions
         will occur, usually a chaperone.cproc.process_manager.TopLevelProcess.
         """
+        super().__init__(**kwargs)
+
         self.controller = controller
         self._fifoname = filename
 
-    def _run_done(self, f):
-        super()._run_done(f)
+    @asyncio.coroutine
+    def server_running(self):
         self._iserve = _InteractiveServer()
         self._iserve.controller = self.controller # share this with our domain socket
-        asyncio.async(self._iserve.run())
+        yield from self._iserve.run()
 
     def _open(self):
         name = self._fifoname
@@ -254,7 +257,7 @@ class CommandServer(Server):
         return open(os.open(name, os.O_RDWR|os.O_NONBLOCK))
             
     def _create_server(self):
-        return asyncio.get_event_loop().connect_read_pipe(CommandProtocol.buildProtocol(parent=self), self._open())
+        return asyncio.get_event_loop().connect_read_pipe(CommandProtocol.buildProtocol(self), self._open())
 
     def close(self):
         super().close()

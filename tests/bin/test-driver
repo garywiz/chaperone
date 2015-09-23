@@ -1,8 +1,6 @@
 #!/bin/bash
 # Assumes the current directory contains executable files and runs them all.
 
-# the cd trick assures this works even if the current directory is not current.
-
 function relpath() { python -c "import os,sys;print(os.path.relpath(*(sys.argv[1:])))" "$@"; }
 
 function extract_title() {

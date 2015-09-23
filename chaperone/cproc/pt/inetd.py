@@ -70,11 +70,11 @@ class InetdServiceProtocol(ServerProtocol):
 class InetdService(Server):
     
     def __init__(self, process):
+        super().__init__()
         self.process = process
 
     def _create_server(self):
-        return asyncio.get_event_loop().create_server(InetdServiceProtocol.buildProtocol(parent=self,
-                                                                                         process=self.process),
+        return asyncio.get_event_loop().create_server(InetdServiceProtocol.buildProtocol(self, process=self.process),
                                                       '0.0.0.0',
                                                       self.process.port)
 
