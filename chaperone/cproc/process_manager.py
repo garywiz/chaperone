@@ -17,6 +17,7 @@ from chaperone.cproc.watcher import InitChildWatcher
 from chaperone.cproc.subproc import SubProcess, SubProcessFamily
 from chaperone.cutil.config import ServiceConfig
 from chaperone.cutil.env import Environment
+from chaperone.cutil.notify import NotifySink
 from chaperone.cutil.logging import warn, info, debug, error, set_log_level
 from chaperone.cutil.misc import lazydict, objectplus
 from chaperone.cutil.syslog import SyslogServer
@@ -62,6 +63,8 @@ class TopLevelProcess(objectplus):
         self._config = config
         self._start_time = time()
         self._pending = set()
+
+        self.notify = NotifySink() # whether or not we actually have a notify socket
 
         # wait at least 0.5 seconds, zero is totally pointless
         settings = config.get_settings()
@@ -157,6 +160,7 @@ class TopLevelProcess(objectplus):
         # Passed all checks, now kill system
 
         debug("Final termination phase.")
+
         self._services_started = False
         if self._kill_future and not self._kill_future.cancelled():
             self._kill_future.cancel()
@@ -171,9 +175,23 @@ class TopLevelProcess(objectplus):
 
     def _got_sigint(self):
         print("\nCtrl-C ... killing chaperone.")
+        self.notify.error(4)
         self.kill_system(True)
         
+    def signal_ready(self):
+        """
+        Tells any notify listener that the system is ready.  Does nothing if the system
+        is dying due to errors, or if a kill is in progress.
+        """
+        if not self._services_started or self._killing_system:
+            return
+        self.notify.ready()
+
     def kill_system(self, force = False):
+        """
+        Systematically shuts down the system.  With the 'force' argument set to true,
+        does so even if a kill is already in progress.
+        """
         if force:
             self._services_started = True
         elif self._killing_system:
@@ -185,6 +203,8 @@ class TopLevelProcess(objectplus):
 
     @asyncio.coroutine
     def _kill_system_co(self):
+
+        self.notify.stopping()
 
         # Cancel any pending activated tasks
 
@@ -256,6 +276,8 @@ class TopLevelProcess(objectplus):
 
     @asyncio.coroutine
     def _start_system_services(self):
+
+        yield from self.notify.connect()
 
         self._syslog = SyslogServer()
         self._syslog.configure(self._config, self._minimum_syslog_level)

@@ -222,4 +222,6 @@ def main_entry():
 
       yield from tlp.run_services(extra_services, disable_others = options['--disable-services'])
 
+      tlp.signal_ready()
+
    tlp.run_event_loop(startup_done())

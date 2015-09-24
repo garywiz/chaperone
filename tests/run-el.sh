@@ -19,6 +19,8 @@ if [ "$1" != "" ]; then
   export CHTEST_ONLY_ENDSWITH=$1
 fi
 
+#export CHTEST_DOCKER_CMD="$PWD/bin/sdnotify-exec docker run %{SOCKET_ARGS}"
+
 test-driver el-tests/basic-1
 test-driver el-tests/simple-1
 test-driver el-tests/simple-2

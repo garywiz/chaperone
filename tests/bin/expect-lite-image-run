@@ -9,7 +9,11 @@ if [[ " $CHTEST_DOCKER_OPTS " != *\ -d* ]]; then
   options="$options -i -t --rm"
 fi
 
-exec docker run $options \
+if [ "$CHTEST_DOCKER_CMD" == "" ]; then
+  CHTEST_DOCKER_CMD="docker run"
+fi
+
+exec $CHTEST_DOCKER_CMD $options \
     -v /home:/home \
     -e TESTHOME=$TESTHOME \
     -e TESTDIR=$TESTDIR \

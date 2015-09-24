@@ -78,7 +78,7 @@ def main_entry():
         if len(vvs) != 2:
             print("error: not a valid format for VARIABLE=VALUE, '{0}'".format(vv))
             exit(1)
-        mlist.append("{0}={1}".format(vvs[0], vvs[1]))
+        mlist.append("{0}={1}".format(vvs[0].upper(), vvs[1]))
 
     for msg in mlist:
         try:

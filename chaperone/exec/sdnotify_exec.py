@@ -8,13 +8,18 @@ Usage:
 Options:
     --noproxy             Ignores NOTIFY_SOCKET if inherited in the environment
                           and does not proxy messages.  Useful with --wait.
-    --wait                Waits until COMMAND signals either READY=1 or ERRNO=n, 
-                          which will be returned as the exit code.
-    --timeout secs        If waiting for process completion specifies the timeout 
-                          before the lack of response triggers and error exit.
+    --ready-wait          If COMMAND exits normally, wait until either READY=1 or ERRNO=n, 
+                          are sent to the notify socket, then return the exit
+                          value from the command.
+    --daemon              Run as a daemon which will keep the proxy running until
+                          ERRNO=n or STOPPING=1 are detected.
+    --timeout secs        Specifies the timeout  before the lack of response triggers
+                          an error exit.  COMMAND may continue to run.
+                          (no effect without --daemon or --wait)
     --socket name         Name of socket file created.  By default, a unique
                           socket name will be chosen automatically.
     --template value      Sets %{SOCKET_ARGS} template to 'value'.
+    --verbose             Provide information about activity
 
 Environment variables (one of which is SOCKET_ARGS) can be used anywhere in the
 command by using the syntax %{VAR}.   The default SOCKET_ARGS template is designed 
@@ -72,16 +77,36 @@ class SDNotifyExec:
     sockname = None
     listener = None
     parent = None
+    timeout = None
+    wait_mode = None
+    verbose = False
 
     parent_client = None
     proxy_enabled = True
+
+    INFO_MESSAGE = {
+        'READY': "READY={1}{2}",
+        'MAINPID': "Process PID (={1}) notification{2}",
+        'ERRNO': "Process ERROR (={1}) notification{2}",
+        'STATUS': "Status message = '{1}'{2}",
+        'default': "{0}={1}{2}",
+    }
 
     def __init__(self, options):
         self.sockname = options['--socket']
         if not self.sockname:
             self.sockname = "/tmp/sdnotify-proxy-{0}.sock".format(os.getpid())
 
-        self.proxy_enabled = not options['--noproxy']
+        self.proxy_enabled = parent_socket and not options['--noproxy']
+        if options['--daemon']:
+            self.wait_mode = 'daemon'
+        elif options['--ready-wait']:
+            self.wait_mode = 'ready'
+
+        if options['--timeout'] and self.wait_mode:
+            self.timeout = float(options['--timeout'])
+
+        self.verbose = options['--verbose']
 
         # Modify original environment
 
@@ -115,20 +140,26 @@ class SDNotifyExec:
         except ImportError:
             pass
 
+    def info(self, msg):
+        if self.verbose:
+            print("info: " + msg)
+
     def _got_sig(self):
         self.kill_program()
 
-    def kill_program(self):
+    def kill_program(self, exitcode = None):
+        if exitcode is not None:
+            self.exitcode = exitcode
+        loop.call_soon(self._really_kill)
+
+    def _really_kill(self):
         self.listener.close()
         loop.stop()
 
     def _parent_closed(self, which, ex):
         if which == self.parent_client:
-            print("Parent closed due to " + str(ex))
             self.proxy_enabled = False
             self.parent_client = None
-        elif which == self.listener:
-            print("Listener closed due to " + str(ex))
 
     @asyncio.coroutine
     def _do_proxy_send(self, name, value):
@@ -139,35 +170,75 @@ class SDNotifyExec:
             self.parent_client = NotifyClient(parent_socket, onClose = self._parent_closed)
             yield from self.parent_client.run()
 
-        print("_do_proxy_send", name, value)
         yield from self.parent_client.send("{0}={1}".format(name, value))
 
     def send_to_proxy(self, name, value):
         asyncio.async(self._do_proxy_send(name, value))
 
     def notify_received(self, which, name, value):
-        print("got notify", os.getpid(), name, value, which)
         self.send_to_proxy(name, value)
+
+        sent_info = False
+
+        if self.wait_mode:
+            if name == "READY" and value == "1":
+                if self.wait_mode == 'ready':
+                    sent_info = True
+                    self.info("ready notification received (will exit)")
+                    self.kill_program(0)
+            elif name == "ERRNO":
+                sent_info = True
+                self.info("error notification ({0}) received from {1} (will exit)".format(value, self.proc_args[0]))
+                self.kill_program(int(value))
+            elif name == "STOPPING" and value == "1":
+                sent_info = True
+                self.info("STOP notification received from {0} (will exit)".format(self.proc_args[0]))
+                self.kill_program()
+
+        if not sent_info:
+            self.info(self.INFO_MESSAGE.get(name, self.INFO_MESSAGE['default']).
+                      format(name, value, ' (ignored but passed on)' if self.proxy_enabled else ' (ignored)'))
+                                                                                  
+    @asyncio.coroutine
+    def _notify_timeout(self):
+        self.info("waiting {0} seconds for notification".format(self.timeout))
+        yield from asyncio.sleep(self.timeout)
+        print("ERROR: Timeout exceeded while waiting for notification from '{0}'".format(self.proc_args[0]))
+        self.kill_program(1)
 
     @asyncio.coroutine
     def _run_process(self):
-        create = asyncio.create_subprocess_exec(*self.proc_args)
+
+        self.info('running: {0}'.format(self.proc_args[0]))
+
+        create = asyncio.create_subprocess_exec(*self.proc_args, start_new_session=(self.wait_mode == 'daemon'))
         proc = yield from create
+
+        if self.timeout:
+            asyncio.async(self._notify_timeout())
+
         self.exitcode = yield from proc.wait()
 
     @asyncio.coroutine
     def run(self):
+
         try:
             yield from self.listener.run()
         except ValueError as ex:
             print("Error while trying to create socket: " + str(ex))
+            self.kill_program()
         else:
             try:
                 yield from self._run_process()
             except Exception as ex:
                 print("Error running command: " + str(ex))
-            
-        loop.call_soon(self.kill_program)
+                self.kill_program()
+
+        # Command has executed, now determine our exit and proxy disposition
+
+        if not self.wait_mode:
+            self.info("program {0} exit({1}), terminating since --wait not specified".format(self.proc_args[0], self.exitcode))
+            self.kill_program()
 
 def main_entry():
     options = docopt(__doc__, options_first=True, version=VERSION_MESSAGE)

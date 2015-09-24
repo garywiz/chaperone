@@ -5,6 +5,7 @@ import re
 
 from chaperone.cutil.servers import Server, ServerProtocol
 from chaperone.cutil.misc import maybe_remove
+from chaperone.cutil.logging import debug
 
 _RE_NOTIFY = re.compile(r'^([A-Za-z]+)=(.+)$')
 
@@ -69,7 +70,7 @@ class NotifyListener(Server):
 
     def close(self):
         super().close()
-        if not self._socket_name.startswith('@'):
+        if not (self.is_client or self._socket_name.startswith('@')):
             maybe_remove(self._socket_name)
 
 
@@ -80,3 +81,101 @@ class NotifyClient(NotifyListener):
     @property
     def is_client(self):
         return True
+
+# A sink to specific notify messages.  Can operate with or without a client,
+# and has multiple levels of support.
+
+class NotifySink:
+
+    NSLEV = 0       # level 0: nothing
+    NSLEV = 1       # level 1: only READY notifications
+    NSLEV = 2       # level 2: READY and STATUS
+    NSLEV = 3       # level 3: adds ERRNO, STARTING and STOPPING messages
+
+    _LEVS = [
+        set(),
+        {'READY'},
+        {'READY', 'STATUS'},
+        {'READY', 'STATUS', 'ERRNO', 'STOPPING'},
+    ]
+
+    _client = None
+    _lev = None
+    _sent = None
+
+    def __init__(self):
+        self.level = 99
+        self._sent = set()
+
+    @property
+    def level(self):
+        try:
+            return self._LEVS.index(self._lev)
+        except ValueError:
+            return None
+
+    @level.setter
+    def level(self, val):
+        if val > len(self._LEVS):
+            val = len(self._LEVS) - 1
+        self._lev = self._LEVS[val].copy()
+
+    def enable(self, ntype):
+        self._lev.add(ntype.upper())
+
+    def disable(self, ntype):
+        self._lev.discard(ntype.upper())
+
+    def error(self, val):
+        self.send("ERRNO", val)
+
+    def stopping(self):
+        if self.sent("READY") and not self.sent("STOPPING"):
+            self.send("STOPPING", 1)
+
+    def ready(self):
+        if not self.sent("READY"):
+            self.send("READY", 1)
+
+    def status(self, statmsg):
+        self.send("STATUS", statmsg)
+
+    def mainpid(self):
+        self.send("MAINPID", os.getpid())
+
+    def sent(self, name):
+        return name in self._sent
+
+    def send(self, name, val):
+        if name not in self._lev:
+            return
+        self._sent.add(name)
+        if self._client:
+            debug("queueing '{0}={1}' to notify socket '{2}'".format(name, val, self._client.socket_name))
+            asyncio.async(self._do_send("{0}={1}".format(name, val)))
+
+    @asyncio.coroutine
+    def _do_send(self, msg):
+        if self._client:
+            yield from self._client.send(msg)
+
+    @asyncio.coroutine
+    def connect(self, socket = None):
+        self.close()
+
+        if socket is None:
+            if "NOTIFY_SOCKET" not in os.environ:
+                return
+            socket = os.environ["NOTIFY_SOCKET"]
+        
+        self._client = NotifyClient(socket, 
+                                    onClose = lambda which,exc: self.close(),
+                                    onError = lambda which,exc: debug("{0} error, notifications disabled".format(socket)))
+
+        yield from self._client.run()
+        
+    def close(self):
+        if not self._client:
+            return
+        self._client.close()
+        self._client = None
