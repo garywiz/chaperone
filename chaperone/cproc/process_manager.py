@@ -52,6 +52,7 @@ class TopLevelProcess(objectplus):
     _command = None
     _minimum_syslog_level = None
     _start_time = None
+    _status_interval = None
     _family = None
     _exitcode = None
 
@@ -60,6 +61,9 @@ class TopLevelProcess(objectplus):
     _kill_future = None
     _config = None
     _pending = None
+
+    _notify_enabled = False
+    notify = None
 
     def __init__(self, config):
         self._config = config
@@ -79,6 +83,8 @@ class TopLevelProcess(objectplus):
         policy.set_child_watcher(w)
         self.loop.add_signal_handler(signal.SIGTERM, self.kill_system)
         self.loop.add_signal_handler(signal.SIGINT, self._got_sigint)
+
+        self._status_interval = settings.get('status_interval', 30)
 
     @property
     def debug(self):
@@ -177,6 +183,8 @@ class TopLevelProcess(objectplus):
             self._syslog.close()
         if self._command:
             self._command.close()
+
+        self._cancel_pending()
         self.loop.stop()
 
     def _got_sigint(self):
@@ -191,6 +199,18 @@ class TopLevelProcess(objectplus):
         if not self._services_started or self._killing_system:
             return
         self.notify.ready()
+
+        # This is the time to set up the status monitor
+
+        if self._status_interval and self._family and self._notify_enabled:
+            self.activate(self._report_status())
+
+    @asyncio.coroutine
+    def _report_status(self):
+        while self._status_interval:
+            if self._family:
+                self.notify.status(self._family.get_status())
+                yield from asyncio.sleep(self._status_interval)
 
     def kill_system(self, errno = None, force = False):
         """
@@ -210,16 +230,19 @@ class TopLevelProcess(objectplus):
         self._killing_system = True
         self._kill_future = asyncio.async(self._kill_system_co())
 
+    def _cancel_pending(self):
+        "Cancel any pending activated tasks"
+
+        for p in list(self._pending):
+            if not p.cancelled():
+                p.cancel()
+
     @asyncio.coroutine
     def _kill_system_co(self):
 
         self.notify.stopping()
 
-        # Cancel any pending activated tasks
-
-        for p in list(self._pending):
-            if not p.cancelled():
-                p.cancel()
+        self._cancel_pending()
 
         # Tell the family it's been nice.  It's unlikely we won't have a process family, but
         # it's optional, so we should handle the situation.
@@ -230,7 +253,8 @@ class TopLevelProcess(objectplus):
             for f in self._family.values():
                 yield from f.final_stop()
             # let normal shutdown happen
-            if self._watcher.number_of_waiters > 0:
+            if self._watcher.number_of_waiters > 0 and self._shutdown_timeout:
+                debug("still have {0} waiting, sleeping for shutdown_timeout={1}".format(self._watcher.number_of_waiters, self._shutdown_timeout))
                 yield from asyncio.sleep(self._shutdown_timeout)
                 wait_done = True
 
@@ -286,7 +310,7 @@ class TopLevelProcess(objectplus):
     @asyncio.coroutine
     def _start_system_services(self):
 
-        yield from self.notify.connect()
+        self._notify_enabled = yield from self.notify.connect()
 
         self._syslog = SyslogServer()
         self._syslog.configure(self._config, self._minimum_syslog_level)

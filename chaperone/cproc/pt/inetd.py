@@ -70,6 +70,9 @@ class InetdServiceProtocol(ServerProtocol):
         yield from proc.wait()
         process.remove_process(proc)
 
+        if not proc.returncode.normal_exit:
+            self.logerror("{2} exit status for pid={0} is '{1}'".format(proc.pid, proc.returncode, service.name))
+
 
 class InetdService(Server):
     

@@ -45,6 +45,8 @@ class SubProcess(object):
                                 # logerror, logdebug, logwarn, etc...
     start_attempted = False     # used to determine if a service is truly dormant
 
+    error_count = 0             # counts errors for informational purposes
+
     _proc = None
     _pid = None                 # the pid, often associated with _proc, but not necessarily in the
                                 # case of notify processes
@@ -201,6 +203,7 @@ class SubProcess(object):
         info(*args, facility=self.syslog_facility, **kwargs)
 
     def logerror(self, *args, **kwargs):
+        self.error_count += 1
         error(*args, facility=self.syslog_facility, **kwargs)
 
     def logwarn(self, *args, **kwargs):
@@ -229,7 +232,7 @@ class SubProcess(object):
             return "starting"
 
         if proc:
-            rc = proc.returncode
+            rc = self._returncode if self._returncode is not None else proc.returncode
             if rc is None:
                 return "running"
             elif rc.normal_exit and self._started:
@@ -296,7 +299,8 @@ class SubProcess(object):
     @property
     def failed(self):
         "True if this process has failed, either during startup or later."
-        return self._proc and (self._proc.returncode is not None and not self._proc.returncode.normal_exit)
+        return ((self._returncode is not None and not self._returncode.normal_exit) or 
+                self._proc and (self._proc.returncode is not None and not self._proc.returncode.normal_exit))
 
     @property
     def ready(self):
@@ -658,7 +662,10 @@ class SubProcess(object):
 
         if otherpid:
             self.logdebug("using {0} to terminate {1}", get_signal_name(self.kill_signal), self.name)
-            os.kill(otherpid, self.kill_signal)
+            try:
+                os.kill(otherpid, self.kill_signal)
+            except Exception as ex:
+                warn("{0} could not be killed using PID={1}: ".format(ex, otherpid))
 
         self._pid = None
         
@@ -730,6 +737,8 @@ class SubProcessFamily(lazydict):
     controller = None           # top level system controller
     services_config = None
 
+    _start_time = None
+
     def __init__(self, controller, services_config):
         """
         Given a pre-analyzed list of processes, complete with prerequisites, build a process
@@ -755,6 +764,37 @@ class SubProcessFamily(lazydict):
     def get_scheduled_services(self):
         return [s for s in self.values() if s.scheduled]
 
+    def get_status(self):
+        if not self._start_time:
+            return "Not yet started"
+
+        secs = time() - self._start_time
+
+        total = len(self.values())
+        scheduled = started = failed = errors = 0
+
+        for s in self.values():
+            if s.scheduled:
+                scheduled += 1
+            if s.started:
+                started += 1
+            if s.failed:
+                failed += 1
+            errors += s.error_count
+
+        m,s = divmod(int(secs), 60)
+        h,m = divmod(m, 60)
+
+        msg = "Uptime {0:02}:{1:02}:{2:02}; {3} service{4} started".format(h, m, s, started or "No", started != 1 and 's' or '')
+        if scheduled:
+            msg += "; {0} scheduled".format(scheduled)
+        if failed:
+            msg += "; {0} failed".format(failed)
+        if errors:
+            msg += "; {0} total errors".format(errors)
+
+        return msg
+
     @asyncio.coroutine
     def run(self, servicelist = None):
         """
@@ -768,6 +808,8 @@ class SubProcessFamily(lazydict):
         if not servicelist:
             servicelist = self.values()
         yield from asyncio.gather(*[s.start() for s in servicelist])
+
+        self._start_time = time()
 
         # Indicate if any attempts were made
         return any(s.start_attempted for s in servicelist)

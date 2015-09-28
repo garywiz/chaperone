@@ -6,5 +6,6 @@ if [ "$1" == "" ]; then
 fi
 
 export PATH=$PWD/bin:$PATH
+export CHTEST_DOCKER_CMD="sdnotify-exec --noproxy --verbose --wait-stop docker run %{SOCKET_ARGS}"
 
 test-driver --shell el-tests/$1

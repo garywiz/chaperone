@@ -166,7 +166,7 @@ class NotifySink:
 
         if socket is None:
             if "NOTIFY_SOCKET" not in os.environ:
-                return
+                return False
             socket = os.environ["NOTIFY_SOCKET"]
         
         self._client = NotifyClient(socket, 
@@ -174,6 +174,8 @@ class NotifySink:
                                     onError = lambda which,exc: debug("{0} error, notifications disabled".format(socket)))
 
         yield from self._client.run()
+
+        return True
         
     def close(self):
         if not self._client:
