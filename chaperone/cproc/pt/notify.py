@@ -81,7 +81,7 @@ class NotifyProcess(SubProcess):
                         if self.ignore_failures:
                             warn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, rc))
                         else:
-                            raise ChProcessError("{0} failed with reported error {1}".format(self.name, rc))
+                            raise ChProcessError("{0} failed with reported error {1}".format(self.name, rc), resultcode = rc)
 
     @asyncio.coroutine
     def _monitor_service(self):

@@ -3,6 +3,7 @@ import asyncio
 import shlex
 import importlib
 import signal
+import errno
 from functools import partial
 
 from time import time, sleep
@@ -13,7 +14,7 @@ from chaperone.cutil.env import Environment, ENV_SERIAL, ENV_SERVTIME
 from chaperone.cutil.logging import warn, info, debug, error
 from chaperone.cutil.proc import ProcStatus
 from chaperone.cutil.misc import lazydict, lookup_user, get_signal_name, executable_path
-from chaperone.cutil.errors import ChNotFoundError, ChProcessError
+from chaperone.cutil.errors import ChNotFoundError, ChProcessError, ChParameterError
 from chaperone.cutil.format import TableFormatter
 
 @asyncio.coroutine
@@ -112,7 +113,7 @@ class SubProcess(object):
                 self._pwrec = lookup_user(uid, gid)
 
         if not service.exec_args:
-            raise Exception("No command or arguments provided for service")
+            raise ChParameterError("No command or arguments provided for service")
 
         # We translate the executable into a valid path now so we can handle optional
         # services
@@ -177,9 +178,9 @@ class SubProcess(object):
             self.logdebug("{0} changing PID to {1} (from {2})", self.name, newpid, self._pid)
             try:
                 pgid = os.getpgid(newpid)
-            except ProcessLookupError:
+            except ProcessLookupError as ex:
                 raise ChProcessError("{0} attempted to attach the process with PID={1} but there is no such process".
-                                     format(self.name, newpid))
+                                     format(self.name, newpid), errno = ex.errno)
             self._attach_pid(newpid)
         self._pid = newpid
 
@@ -503,12 +504,12 @@ class SubProcess(object):
                 continue
             except Exception as ex:
                 raise ChProcessErrorr("{0} found pid file '{1}' but contents did not contain an integer".format(
-                                      self.name, self.pidfile))
+                                      self.name, self.pidfile), errno = errno.EINVAL)
             self.pid = newpid
             return
 
         raise ChProcessError("{0} did not find pid file '{1}' before {2}sec process_timeout expired".format(
-                             self.name, self.pidfile, self.process_timeout))
+                             self.name, self.pidfile, self.process_timeout), errno = error.ENOENT)
         
     @asyncio.coroutine
     def _wait_kill_on_exit(self):
@@ -679,7 +680,8 @@ class SubProcess(object):
             if self.ignore_failures:
                 warn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
             else:
-                raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
+                raise ChProcessError("{0} failed on start-up with result '{1}'".format(self.name, result),
+                                     resultcode = result)
 
     @asyncio.coroutine
     def timed_wait(self, timeout, func = None):
@@ -777,7 +779,7 @@ class SubProcessFamily(lazydict):
             if not serv:
                 serv = self.get(name + ".service")
             if not serv:
-                raise Exception("no such service: " + name)
+                raise ChParameterError("no such service: " + name)
             result.add(serv)
         return result
 

@@ -1,5 +1,6 @@
 import asyncio
 from chaperone.cproc.subproc import SubProcess
+from chaperone.cutil.errors import ChProcessError
 
 class ForkingProcess(SubProcess):
 
@@ -10,7 +11,7 @@ class ForkingProcess(SubProcess):
             if self.ignore_failures:
                 self.logwarn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
             else:
-                raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
+                raise ChProcessError("{0} failed on start-up with result '{1}'".format(self.name, result), resultcode = result)
         yield from self.wait_for_pidfile()
         
     def _exit_timeout(self):

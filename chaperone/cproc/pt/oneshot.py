@@ -1,5 +1,6 @@
 import asyncio
 from chaperone.cproc.subproc import SubProcess
+from chaperone.cutil.errors import ChProcessError
 
 class OneshotProcess(SubProcess):
 
@@ -12,7 +13,7 @@ class OneshotProcess(SubProcess):
             if self.ignore_failures:
                 warn("{0} (ignored) failure on start-up with result '{1}'".format(self.name, result))
             else:
-                raise Exception("{0} failed on start-up with result '{1}'".format(self.name, result))
+                raise ChProcessError("{0} failed on start-up with result '{1}'".format(self.name, result), resultcode = result)
         
     def _exit_timeout(self):
         service = self.service

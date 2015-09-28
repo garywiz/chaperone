@@ -1,17 +1,37 @@
+import errno
+
 class ChError(Exception):
-    pass
+
+    # Named the same as OSError so that exception code can detect the presence
+    # of an errno for reporting purposes
+    errno = None
+
+    def __init__(self, message = None, errno = None):
+        super().__init__(message)
+        if errno is not None:
+            self.errno = errno
 
 class ChParameterError(ChError):
-    pass
+    errno = errno.EINVAL
 
 class ChNotFoundError(ChError):
-    pass
+    errno = errno.ENOENT
 
 class ChSystemError(ChError):
     pass
 
 class ChProcessError(ChError):
-    pass
+
+    def __init__(Self, message = None, errno = None, resultcode = None):
+        if resultcode is not None and errno is None:
+            errno = resultcode.errno
+        super().__init__(message, errno)
 
 class ChVariableError(ChError):
     pass
+
+def get_errno_from_exception(ex):
+    try:
+        return ex.errno
+    except AttributeError:
+        return None

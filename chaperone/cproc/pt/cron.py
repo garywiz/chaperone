@@ -24,7 +24,7 @@ class CronProcess(SubProcess):
     def __init__(self, service, family=None):
         super().__init__(service, family)
         if not self.interval:
-            raise Exception("interval= property missing, required for cron service '{0}'".format(self.name))
+            raise ChParameterError("interval= property missing, required for cron service '{0}'".format(self.name))
 
         # Support specials with or without the @
         real_interval = _CRON_SPECIALS.get(self.interval) or _CRON_SPECIALS.get('@'+self.interval) or self.interval

@@ -21,6 +21,7 @@ from chaperone.cutil.notify import NotifySink
 from chaperone.cutil.logging import warn, info, debug, error, set_log_level
 from chaperone.cutil.misc import lazydict, objectplus
 from chaperone.cutil.syslog import SyslogServer
+from chaperone.cutil.errors import get_errno_from_exception
 
 class CustomEventLoop(asyncio.SelectorEventLoop):
     def _make_socket_transport(self, sock, protocol, waiter=None, *,
@@ -52,6 +53,7 @@ class TopLevelProcess(objectplus):
     _minimum_syslog_level = None
     _start_time = None
     _family = None
+    _exitcode = None
 
     _all_killed = False
     _killing_system = False
@@ -179,8 +181,7 @@ class TopLevelProcess(objectplus):
 
     def _got_sigint(self):
         print("\nCtrl-C ... killing chaperone.")
-        self.notify.error(4)
-        self.kill_system(True)
+        self.kill_system(4, True)
         
     def signal_ready(self):
         """
@@ -191,7 +192,7 @@ class TopLevelProcess(objectplus):
             return
         self.notify.ready()
 
-    def kill_system(self, force = False):
+    def kill_system(self, errno = None, force = False):
         """
         Systematically shuts down the system.  With the 'force' argument set to true,
         does so even if a kill is already in progress.
@@ -200,6 +201,10 @@ class TopLevelProcess(objectplus):
             self._services_started = True
         elif self._killing_system:
             return
+
+        if self._exitcode is None and errno is not None:
+            self._exitcode = 1   # default exit for an error
+            self.notify.error(errno)
 
         warn("Request made to kill system." + ((force and " (forced)") or ""))
         self._killing_system = True
@@ -267,7 +272,7 @@ class TopLevelProcess(objectplus):
     def _system_coro_check(self, f):
         if f.exception():
             error("system startup cancelled due to error: {0}".format(f.exception()))
-            self.kill_system()
+            self.kill_system(get_errno_from_exception(f.exception()))
 
     def _system_started(self, startup, future=None):
         if future and not future.cancelled() and future.exception():
@@ -303,7 +308,7 @@ class TopLevelProcess(objectplus):
             self._command = None
             warn("command service cannot be started: {0}", ex)
 
-    def run_event_loop(self, startup_coro = None):
+    def run_event_loop(self, startup_coro = None, exit_when_done = True):
         """
         Sets up the event loop and runs it, setting up basic services such as syslog
         as well as the command services sockets.   Then, calls the startup coroutine (if any)
@@ -315,6 +320,9 @@ class TopLevelProcess(objectplus):
 
         self.loop.run_forever()
         self.loop.close()
+
+        if exit_when_done:
+            exit(self._exitcode or 0)
 
     @asyncio.coroutine
     def run_services(self, extra_services, disable_others = False):
@@ -334,6 +342,8 @@ class TopLevelProcess(objectplus):
 
         family = self._family = SubProcessFamily(self, services)
         tried_any = False
+        errno = None
+
         try:
             tried_any = yield from family.run()
         except asyncio.CancelledError:
