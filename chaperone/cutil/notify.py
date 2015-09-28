@@ -127,10 +127,11 @@ class NotifySink:
         self._lev.discard(ntype.upper())
 
     def error(self, val):
-        self.send("ERRNO", val)
+        if not self.sent("ERRNO"):
+            self.send("ERRNO", int(val))
 
     def stopping(self):
-        if self.sent("READY") and not self.sent("STOPPING"):
+        if not self.sent("STOPPING"):
             self.send("STOPPING", 1)
 
     def ready(self):

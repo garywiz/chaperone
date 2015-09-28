@@ -3,5 +3,7 @@
 
 >RUNIMAGE -e ENABLE_APACHE6=true
 <test6-apache.service successfully started
+<info: READY=1
 <Caught subprocess termination from unknown pid
+<queueing 'STOPPING=1'
 <Final termination phase

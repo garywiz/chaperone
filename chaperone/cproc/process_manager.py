@@ -159,14 +159,18 @@ class TopLevelProcess(objectplus):
 
         # Passed all checks, now kill system
 
+        self.notify.stopping()
+
         debug("Final termination phase.")
 
         self._services_started = False
         if self._kill_future and not self._kill_future.cancelled():
             self._kill_future.cancel()
-        self.loop.call_later(0.1, self._final_stop)
+        asyncio.async(self._final_system_stop())
 
-    def _final_stop(self):
+    @asyncio.coroutine
+    def _final_system_stop(self):
+        yield from asyncio.sleep(0.1)
         if self._syslog:
             self._syslog.close()
         if self._command:

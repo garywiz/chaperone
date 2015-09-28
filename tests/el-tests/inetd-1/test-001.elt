@@ -4,14 +4,13 @@
 # Start the image and capture the container ID and port
 # (Note: the initial "echo" below is needed to take care of a timing issue with 'docker run')
 
->echo running...; echo CID:`RUNIMAGE -d -P -e ENABLE_INETD1=true`
+>echo running...; echo CID:`RUNIMAGE_READY -d -P -e ENABLE_INETD1=true`
 +$cid=CID:([0-9a-f]{32,})
 >docker port $cid
 +$ourport=8080/tcp -> 0.0.0.0:([0-9]+)
 
-# Fire up an inetd connection inside the container and verify it works
+# Fire up an inetd connection inside the container and verify it works (ready assured)
 
->sleep 3  # allow time for container setup
 >nc localhost $ourport
 <hello from port 8080
 

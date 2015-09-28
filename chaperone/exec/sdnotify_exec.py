@@ -7,15 +7,17 @@ Usage:
 
 Options:
     --noproxy             Ignores NOTIFY_SOCKET if inherited in the environment
-                          and does not proxy messages.  Useful with --wait.
-    --ready-wait          If COMMAND exits normally, wait until either READY=1 or ERRNO=n, 
+                          and does not proxy messages.  Useful with --wait-xxx options..
+    --wait-ready          If COMMAND exits normally, wait until either READY=1 or ERRNO=n, 
                           are sent to the notify socket, then return the exit
                           value from the command.
-    --daemon              Run as a daemon which will keep the proxy running until
-                          ERRNO=n or STOPPING=1 are detected.
+    --wait-stop           Will continue running even if COMMAND exits, continuing 
+                          proxy services until ERRNO=n or STOPPING=1 are detected.
+                          MAINPID notifications will be blocked, since the proxy
+                          will continue to be the main program.  Overrides --wait-ready.
     --timeout secs        Specifies the timeout  before the lack of response triggers
                           an error exit.  COMMAND may continue to run.
-                          (no effect without --daemon or --wait)
+                          (no effect without --wait-ready or --wait-stop)
     --socket name         Name of socket file created.  By default, a unique
                           socket name will be chosen automatically.
     --template value      Sets %{SOCKET_ARGS} template to 'value'.
@@ -98,9 +100,9 @@ class SDNotifyExec:
             self.sockname = "/tmp/sdnotify-proxy-{0}.sock".format(os.getpid())
 
         self.proxy_enabled = parent_socket and not options['--noproxy']
-        if options['--daemon']:
-            self.wait_mode = 'daemon'
-        elif options['--ready-wait']:
+        if options['--wait-stop']:
+            self.wait_mode = 'stop'
+        elif options['--wait-ready']:
             self.wait_mode = 'ready'
 
         if options['--timeout'] and self.wait_mode:
@@ -188,7 +190,7 @@ class SDNotifyExec:
                     self.kill_program(0)
             elif name == "ERRNO":
                 sent_info = True
-                self.info("error notification ({0}) received from {1} (will exit)".format(value, self.proc_args[0]))
+                self.info("error notification ({0}) received from {1}".format(value, self.proc_args[0]))
                 self.kill_program(int(value))
             elif name == "STOPPING" and value == "1":
                 sent_info = True
@@ -211,13 +213,15 @@ class SDNotifyExec:
 
         self.info('running: {0}'.format(self.proc_args[0]))
 
-        create = asyncio.create_subprocess_exec(*self.proc_args, start_new_session=(self.wait_mode == 'daemon'))
+        create = asyncio.create_subprocess_exec(*self.proc_args, start_new_session=bool(self.wait_mode))
         proc = yield from create
 
         if self.timeout:
             asyncio.async(self._notify_timeout())
 
-        self.exitcode = yield from proc.wait()
+        exitcode = yield from proc.wait()
+        if not self.exitcode:   # may have arrived from ERRNO
+            self.exitcode = exitcode
 
     @asyncio.coroutine
     def run(self):

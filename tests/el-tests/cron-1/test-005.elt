@@ -5,6 +5,7 @@
 >(sleep 25; echo "K""ILL ME NOW")&
 >RUNIMAGE -e ENABLE_APACHE5=true
 <test5-apache.service successfully started
+<info: READY=1
 <ROTATE SERIAL NUMBER: 1
 <apache is running
 <services reset
@@ -14,4 +15,5 @@
 <apache is running
 <KILL ME NOW
 >^C
+<<info: error notification (4)
 <Final termination phase

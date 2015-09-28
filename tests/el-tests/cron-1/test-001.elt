@@ -4,6 +4,7 @@
 >(sleep 15; echo "K""ILL ME NOW")&
 >RUNIMAGE -e ENABLE_CRON1=true
 @30
+<info: READY=1
 <system will remain active
 <KILL ME NOW
 >^C

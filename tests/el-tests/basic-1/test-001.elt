@@ -2,3 +2,5 @@
 #TITLE: Test simplest possible commmand service
 >RUNIMAGE
 <first output
+<queueing 'READY=1'
+<info: STOP notification

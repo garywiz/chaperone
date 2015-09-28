@@ -5,9 +5,16 @@ function RUNTASK() {
 }
 
 function RUNIMAGE() { 
+    export CHTEST_DOCKER_CMD="sdnotify-exec --noproxy --verbose --wait-stop docker run %{SOCKET_ARGS}"
     export CHTEST_DOCKER_OPTS=$*
     expect-lite-image-run
 }
 
-export -f RUNTASK RUNIMAGE
+function RUNIMAGE_READY() { 
+    export CHTEST_DOCKER_CMD="sdnotify-exec --noproxy --verbose --wait-ready docker run %{SOCKET_ARGS}"
+    export CHTEST_DOCKER_OPTS=$*
+    expect-lite-image-run
+}
+
+export -f RUNTASK RUNIMAGE RUNIMAGE_READY
 bash -i

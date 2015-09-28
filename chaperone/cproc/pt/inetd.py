@@ -34,6 +34,10 @@ class InetdServiceProtocol(ServerProtocol):
         process = self.process
         service = process.service
 
+        if not process.family.system_alive:
+            process.logdebug("{0} received connection on port {1}; ignored, system no longer alive".format(service.name, service.port))
+            return
+
         process.logdebug("{0} received connection on port {2}; attempting start '{1}'... ".format(service.name, " ".join(service.exec_args),
                          service.port))
 

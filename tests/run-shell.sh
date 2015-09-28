@@ -7,6 +7,4 @@ fi
 
 export PATH=$PWD/bin:$PATH
 
-#export CHTEST_DOCKER_CMD="$PWD/bin/sdnotify-exec --verbose docker run %{SOCKET_ARGS}"
-
 test-driver --shell el-tests/$1
