@@ -3,5 +3,5 @@
 
 >RUNIMAGE -e ENABLE_EXIT1B=true
 <echo daemon running
-<test1-exit1b.service failed on start-up with result
+<test1-exit1b.service failed on start-up with result '<ProcStatus exit_status=3>'
 <Final termination phase

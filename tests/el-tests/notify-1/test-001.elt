@@ -1,5 +1,5 @@
 #!/usr/bin/env expect-test-command
-#TITLE: Notify service - spawn daemon normally
+#TITLE: Notify service - spawn daemon normally - never gets notified
 
 >RUNIMAGE -e ENABLE_EXIT1=true
 <test1-exit1.service attempting start

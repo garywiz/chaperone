@@ -15,6 +15,8 @@ from docopt import docopt
 
 import os
 
+from daemonutil import Daemon
+
 options = docopt(__doc__, options_first=True)
 
 if options['--ignore-signals']:
@@ -32,9 +34,16 @@ if options['--wait']:
 
 args = [options['COMMAND']] + options['ARGS']
 
-print("Launching {0} ...".format(args))
+print("{1}:Launching {0} ...".format(args, os.getpid()))
 
-subprocess.Popen(args, start_new_session=True)
+class mydaemon(Daemon):
+
+    def run(self):
+        subprocess.Popen(args, start_new_session=True)
+
+d = mydaemon()
 
 if options['--exit']:
-    exit(int(options['--exit']))
+    d.start(int(options['--exit']))
+else:
+    d.start()

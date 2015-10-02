@@ -4,5 +4,6 @@
 >RUNIMAGE -e ENABLE_EXIT1E=true
 <: daemon running
 <test1-exit1e.service changing PID to
+@15
 <test1-exit1e.service got explicit return code
 <Final termination phase
