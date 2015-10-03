@@ -13,8 +13,10 @@ if [ "$CHTEST_DOCKER_CMD" == "" ]; then
   CHTEST_DOCKER_CMD="docker run"
 fi
 
+SELINUX_FLAG=$(sestatus 2>/dev/null | fgrep -q enabled && echo :z)
+
 exec $CHTEST_DOCKER_CMD $options \
-    -v /home:/home \
+    -v /home:/home$SELINUX_FLAG \
     -e TESTHOME=$TESTHOME \
     -e TESTDIR=$TESTDIR \
     -e CHTEST_HOME=$CHTEST_HOME \

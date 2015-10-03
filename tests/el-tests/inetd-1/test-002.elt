@@ -13,12 +13,12 @@
 
 # Fire up an inetd connection inside the container and verify it works (ready assured)
 
->nc localhost $ourport
+>read_from_port localhost $ourport
 <hello from port 8080
 
 # Second call causes container termination
 >sleep 2
->nc localhost $otherport
+>read_from_port localhost $otherport
 
 # Kill and inspect logs
 

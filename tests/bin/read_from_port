@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if nc --version >/dev/null 2>&1; then
+   # nmap.org accepts --version and has different syntax (lovely eh)
+   nc --recv-only $*
+else
+   # bsd version
+   nc $*
+fi

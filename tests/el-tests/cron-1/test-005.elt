@@ -4,7 +4,7 @@
 @40
 >(sleep 25; echo "K""ILL ME NOW")&
 >RUNIMAGE -e ENABLE_APACHE5=true
-<test5-apache.service successfully started
+<Starting web server apache2
 <info: READY=1
 <ROTATE SERIAL NUMBER: 1
 <apache is running

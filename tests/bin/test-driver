@@ -13,6 +13,7 @@ function extract_title() {
 export CHTEST_CONTAINER_NAME=CHAP-TEST-CONTAINER-$$
 
 function kill_test_container() {
+    sleep 1  # Sometimes it takes docker a while to actually kill the container.
     if docker inspect $CHTEST_CONTAINER_NAME >/dev/null 2>&1; then
       echo Container still running: Forcing removal
       docker kill $CHTEST_CONTAINER_NAME >/dev/null

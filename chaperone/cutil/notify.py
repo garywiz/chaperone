@@ -162,6 +162,11 @@ class NotifySink:
 
     @asyncio.coroutine
     def connect(self, socket = None):
+        """
+        Connects to the notify socket.  However, if we can't, it's not considered an error.
+        We just return False.
+        """
+
         self.close()
 
         if socket is None:
@@ -173,7 +178,12 @@ class NotifySink:
                                     onClose = lambda which,exc: self.close(),
                                     onError = lambda which,exc: debug("{0} error, notifications disabled".format(socket)))
 
-        yield from self._client.run()
+        try:
+            yield from self._client.run()
+        except OSError as ex:
+            debug("could not connect to notify socket '{0} ({1})".format(socket, ex))
+            self.close()
+            return False
 
         return True
         
