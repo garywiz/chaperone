@@ -7,6 +7,7 @@ from docopt import docopt
 
 from chaperone.cutil.servers import Server, ServerProtocol
 from chaperone.cutil.misc import maybe_remove
+from chaperone.cutil.logging import debug, warn, info
 import chaperone.cutil.syslog_info as syslog_info
 
 COMMAND_DOC = """
@@ -18,6 +19,7 @@ Usage: telchap status
        telchap enable [<servname> ...]
        telchap disable [<servname> ...]
        telchap dependencies
+       telchap shutdown [<delay>]
 """
 
 CHAP_FIFO = "/dev/chaperone"
@@ -151,12 +153,36 @@ class loglevelCommand(_BaseCommand):
         controller.force_log_level(lev)
         return "All logging set to include priorities >= *." + lev.lower()
             
+class shutdownCommand(_BaseCommand):
+
+    command_name = "shutdown"
+
+    @asyncio.coroutine
+    def do_exec(self, opts, controller):
+        delay = opts['<delay>']
+
+        if delay is None or delay.lower() == "now":
+            delay = 0.1
+            message = "Shutting down now"
+        else:
+            try:
+                delay = float(delay)
+            except ValueError:
+                return "Specified delay is not a valid decimal number: " + str(delay)
+            message = "Shutting down in {0} seconds".format(delay)
+
+        info("requested shutdown scheduled to occur in {0} seconds".format(delay))
+        asyncio.get_event_loop().call_later(delay, controller.kill_system)
+
+        return message
+            
 ##
 ## Register all commands here
 ##
 
 COMMANDS = (
     loglevelCommand(),
+    shutdownCommand(),
     statusCommand(),
     serviceStop(),
     serviceStart(),
