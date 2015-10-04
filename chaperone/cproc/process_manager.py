@@ -174,7 +174,7 @@ class TopLevelProcess(objectplus):
         self._services_started = False
         if self._kill_future and not self._kill_future.cancelled():
             self._kill_future.cancel()
-        asyncio.async(self._final_system_stop())
+        self.activate(self._final_system_stop())
 
     @asyncio.coroutine
     def _final_system_stop(self):
