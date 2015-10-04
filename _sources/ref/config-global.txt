@@ -49,6 +49,8 @@ Entries below marked with |ENV| support :ref:`environment variable expansion <en
    :ref:`shutdown_timeout <settings.shutdown_timeout>` The amount of time Chaperone will wait for services to complete shutdown
 						       before forcing a kill with SIGKILL.  Default is 8 seconds.
    :ref:`startup_pause <settings.startup_pause>`       Specifies the ``startup_pause`` default for services.
+   :ref:`detect_exit <settings.detect_exit>`           If true (the default), then Chaperone tries to intelligently detect
+   		     				       when all processes have exit and none are schedule, then terminates.
    :ref:`uid <settings.uid>`                           The default uid (name or number) for all services and logging tasks.
 						       Overrides the value specified by :ref:`--user <option.user>` or
 						       :ref:`--create-user <option.create-user>`. |ENV|
@@ -155,6 +157,24 @@ This delay is useful in at least two common situations:
    If not specified, the service default will be used.
 
    If a service specifies its own value, it will always take precedence over this default.
+
+.. _settings.detect_exit:
+
+.. describe:: detect_exit
+
+   When 'true' (the default), then Chaperone intelligently watches the process environment to determine
+   whether it should automatically exit.   Chaperone will exit when:
+
+   * All processes have exited, and ...
+   * There are no pending ``inetd`` or ``cron`` services which are configured and active.
+
+   Generally, this behavior is desirable, but there are situations where disabling this can be useful.
+   For example, if a container contains a set of dormant (disabled) services, and they are manually
+   enabled or disabled during runtime, setting this to 'false' will cause Chaperone to remain running
+   even if there are no active services and all work has completed.
+
+   If set to 'false', then Chaperone will only exit whenever it is explicitly killed with ``SIGTERM``,
+   or when a service exits whose :ref:`exit_kills <service.exit_kills>` configuration value is set to 'true'.
 
 .. _settings.uid:
 

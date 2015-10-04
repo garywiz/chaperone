@@ -254,12 +254,16 @@ before forcing a kill with SIGKILL.  Default is 8 seconds.</td>
 <tr class="row-odd"><td><a class="reference internal" href="#settings-startup-pause"><span>startup_pause</span></a></td>
 <td>Specifies the <code class="docutils literal"><span class="pre">startup_pause</span></code> default for services.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#settings-uid"><span>uid</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#settings-detect-exit"><span>detect_exit</span></a></td>
+<td>If true (the default), then Chaperone tries to intelligently detect
+when all processes have exit and none are schedule, then terminates.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#settings-uid"><span>uid</span></a></td>
 <td>The default uid (name or number) for all services and logging tasks.
 Overrides the value specified by <a class="reference internal" href="command-line.html#option-user"><span>&#8211;user</span></a> or
 <a class="reference internal" href="command-line.html#option-create-user"><span>&#8211;create-user</span></a>. <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#settings-gid"><span>gid</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#settings-gid"><span>gid</span></a></td>
 <td>The default gid (name or number) for all services and logging tasks.
 <code class="kbd docutils literal"><span class="pre">$ENV</span></code></td>
 </tr>
@@ -358,6 +362,23 @@ Chaperone will force all processes to quit using <code class="docutils literal">
 <dd><p>This allows you to set the global default for the service <a class="reference internal" href="config-service.html#service-startup-pause"><span>startup_pause</span></a> value.
 If not specified, the service default will be used.</p>
 <p>If a service specifies its own value, it will always take precedence over this default.</p>
+</dd></dl>
+
+<span class="target" id="settings-detect-exit"></span><dl class="describe">
+<dt>
+<code class="descname">detect_exit</code></dt>
+<dd><p>When &#8216;true&#8217; (the default), then Chaperone intelligently watches the process environment to determine
+whether it should automatically exit.   Chaperone will exit when:</p>
+<ul class="simple">
+<li>All processes have exited, and ...</li>
+<li>There are no pending <code class="docutils literal"><span class="pre">inetd</span></code> or <code class="docutils literal"><span class="pre">cron</span></code> services which are configured and active.</li>
+</ul>
+<p>Generally, this behavior is desirable, but there are situations where disabling this can be useful.
+For example, if a container contains a set of dormant (disabled) services, and they are manually
+enabled or disabled during runtime, setting this to &#8216;false&#8217; will cause Chaperone to remain running
+even if there are no active services and all work has completed.</p>
+<p>If set to &#8216;false&#8217;, then Chaperone will only exit whenever it is explicitly killed with <code class="docutils literal"><span class="pre">SIGTERM</span></code>,
+or when a service exits whose <a class="reference internal" href="config-service.html#service-exit-kills"><span>exit_kills</span></a> configuration value is set to &#8216;true&#8217;.</p>
 </dd></dl>
 
 <span class="target" id="settings-uid"></span><dl class="describe">
