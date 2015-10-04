@@ -49,9 +49,10 @@ setup(
             'telchap = chaperone.exec.telchap:main_entry',
             'envcp = chaperone.exec.envcp:main_entry',
             'sdnotify = chaperone.exec.sdnotify:main_entry',
+            'sdnotify-exec = chaperone.exec.sdnotify_exec:main_entry',
         ],
     },
-    license = "BSD 3",
+    license = "Apache Software License",
     author = "Gary Wisniewski",
     author_email = "garyw@blueseastech.com",
     url = "http://github.com/garywiz/chaperone",
@@ -60,7 +61,7 @@ setup(
     install_requires = requires_list,
 
     classifiers = [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
