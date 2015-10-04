@@ -1,3 +1,25 @@
+## 0.3.00 (2015-10-04)
+
+This is a major release that adds a number of important features and refinements.   Most importantly, a new automated test harness that simulates various process mixes has been added to the release process to assure that Chaperone manages processes in a consistent and reliable way from release to release.
+
+In addition, Chaperone now recognizes `NOTIFY_SOCKET` upon start-up, and will inform the host's `systemd` of the status of the container.   This adds to Chaperone's existing support for notify-type processes within the container.  This means that container designers can choose any of a number of methods of signalling process readiness inside the container while Chaperone will translate those actions into suitable `systemd` notifications for the host.
+
+This version is completely backward-compatible with older Chaperone versions.
+
+Enhancements:
+
+- Chaperone will recognize the `NOTIFY_SOCKET` environment variable if passed upon start-up and provide full `systemd` compatible notifications to the host.
+- The [detect_exit](http://garywiz.github.io/chaperone/ref/config-global.html#settings-detect-exit) global setting, which defaults to `true` tells Chaperone to attempt to determine when all processes have completed and automatically terminate the container.  This was the previous default behavior, but the new setting provides flexibility for containers which remain dormant until processes are started manually.
+- There is now a `telchap shutdown` command which provides orderly container shutdown from scripts.
+- Added the `sdnotify-exec` utility which is a multi-purpose wrapper which can be used to proxy `NOTIFY_SOCKET` communication to the host, or can be used to determine if a container is properly started even outside of `systemd` contexts.
+
+Refinements:
+
+- Exit detection is now smarter about `cron` and `inetd` jobs and will not cause container exit if either of those types have scheduled operations which have not yet been triggered.
+- The [--disable-services](http://garywiz.github.io/chaperone/ref/command-line.html#option-disable-services) switch now truly disables services rather than not defining them.  Therefore, containers in such containers can now be started manually.
+- Cron-type services now have more well-defined behavior for `telchap stop` which will unschedule the service, and `telchap reset` which will merely kill the current job and reschedule another.
+- If Chaperone `notify`-type services signal with `ERRNO=n`, then Chaperone will intelligently pass this error number up to `systemd` if the error was the direct cause of container termination, otherwise it is noted in the logs and `systemd` won't find out about it.
+
 ## 0.2.40 (2015-09-08)
 
 Enhancements:
@@ -62,7 +84,7 @@ Refinements:
   switch to enable them.
 - Added further documentation about shell escapes to clarify exactly how they
   work and how they should be used.
-  
+
 ## 0.2.27 (2015-08-01)
 
 Enhancements:
