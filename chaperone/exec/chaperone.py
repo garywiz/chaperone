@@ -87,7 +87,7 @@ def main_entry():
 
    if options['--task']:
       options['--disable-services'] = True
-      options['--no-console-log'] = True
+      options['--no-console-log'] = not options['--debug']
       options['--exitkills'] = True
       os.environ[ENV_TASK_MODE] = '1'
 

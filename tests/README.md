@@ -1,4 +1,6 @@
-Tests in this directory have several requirements.  They will run both on Ubuntu as well as RHEL.   Docker 1.8.1 is required, since socket mount permissions have problems with SELinux for earlier versions.
+This directory contains both Chaperone unit tests as well as more complex integration tests.  The `run-all-tests.sh` script runs them all.
+
+However, integration tests in this directory have several requirements.  They will run both on Ubuntu as well as RHEL.   Docker 1.8.1 is required, since socket mount permissions have problems with SELinux for earlier versions.
 
 For both, you'll need everything Chaperone itself requires, and may need to install them manually since Chaperone may not be installed on the development system:
 

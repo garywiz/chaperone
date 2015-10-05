@@ -53,6 +53,7 @@ class SubProcess(object):
     _returncode = None          # an alternate returncode, set with returncode property
     _exit_event = None          # an event to be fired if an exit occurs, in the case of an
                                 # attached PID
+    _orig_executable = None     # original unexpanded exec_args[0]
 
     _pwrec = None               # the pwrec looked up for execution user/group
     _cond_starting = None       # a condition which, if present, indicates that this service is starting
@@ -117,17 +118,14 @@ class SubProcess(object):
         if not service.exec_args:
             raise ChParameterError("No command or arguments provided for service")
 
-        # We translate the executable into a valid path now so we can handle optional
-        # services
+        # If the service is enabled, assure we check for the presence of the executable now.  This is
+        # to catch any start-up situations (such as cron jobs without their executables being present).
+        # However, we don't check this if a service is disabled.
 
-        try:
-            service.exec_args[0] = executable_path(service.exec_args[0], service.environment.expanded())
-        except FileNotFoundError:
-            if service.optional:
-                service.enabled = False
-                self.loginfo("optional service {0} disabled since '{1}' is not present".format(self.name, service.exec_args[0]))
-                return
-            raise ChNotFoundError("executable '{0}' not found".format(service.exec_args[0]))
+        self._orig_executable = service.exec_args[0]
+
+        if service.enabled:
+            self._try_to_enable()
 
     def __getattr__(self, name):
         "Proxies value from the service description if we don't override them."
@@ -255,7 +253,23 @@ class SubProcess(object):
         return self.service.enabled
     @enabled.setter
     def enabled(self, val):
-        self.service.enabled = bool(val)
+        if val and not self.service.enabled:
+            self._try_to_enable()
+        else:
+            self.service.enabled = False
+
+    def _try_to_enable(self):
+        service = self.service
+        if self._orig_executable:
+            try:
+                service.exec_args[0] = executable_path(self._orig_executable, service.environment.expanded())
+            except FileNotFoundError:
+                if service.optional:
+                    service.enabled = False
+                    self.loginfo("optional service {0} disabled since '{1}' is not present".format(self.name, self._orig_executable))
+                    return
+                raise ChNotFoundError("executable '{0}' not found".format(service.exec_args[0]))
+        service.enabled = True
 
     @property
     def scheduled(self):
