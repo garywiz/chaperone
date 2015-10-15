@@ -87,11 +87,16 @@ RESULT4 = "[('ANOTHER', '/usr/garyw/apps/theap'), ('APPS-DIR', '/usr/garyw/apps'
 ENV4a = {
     'PATH': '/bin',
     'THEREPATH': '/there',
+    'ADMINVAR1': 'user',
+    'ADMINVAR2': 'none',
 }
 
 CONFIG4a = {
     'env_set': {
-        'PATH': '/usr/local/bin:$(PATH)'
+        'PATH': '/usr/local/bin:$(PATH)',
+        'ADMINVAR1': '$(ADMINVAR1:|NONE||$(ADMINVAR1:-admin))',
+        'ADMINVAR2': '$(ADMINVAR2:|NONE||$(ADMINVAR2:-admin))',
+        'ADMINVAR3': '$(ADMINVAR3:|NONE||$(ADMINVAR3:-admin))',
     }
 }
 
@@ -146,9 +151,9 @@ ENV8 = {
     "SUB7": r'$(IFNOTONE:/ONE: (.+)/MODONE: \1/)',
 }
 
-RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
+RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: '), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
 
-RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: XXX: $(XXX:|is_set|$(IFNOTYYY))'), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
+RESULT8 = "[('IFNOTONE', 'ONE: is_set'), ('IFNOTXXX', 'XXX: not_set'), ('IFNOTYYY', 'XXX: '), ('IFNOTZZZ', 'XXX: XXX: not_set'), ('IFONE', 'set onlyifone'), ('MUSTBE', 'number-1'), ('ONE', 'number-1'), ('SUB1', 'noober-1'), ('SUB2', 'noob-number-2-er-1'), ('SUB3', 'noob/meyerer-1'), ('SUB4', 'noob/(slash)meyerer-1'), ('SUB5', 'noob/meyerer-1'), ('SUB6', 'number-1'), ('SUB7', 'MODONE: is_set'), ('THREE', 'number-3'), ('TRIO1', 'T1-ONE: It^s ^number-1^'), ('TRIO2', 'T2-ONE: It is not ^number-2^'), ('TRIO3a', 'T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly'), ('TRIO3b', 'T3b-IFONE: matches ^T3a-IFONE: matches ^T3b-IFONE: matches ^T3a-IFONE: $(IFNOTZZZ:|XXX: XXX: not_set|matches ^$(TRIO3b)^ correctly|Does not match correctly)^ correctly^ correctly^ correctly'), ('TRIO3c', 'T3c-IFONE: matches ^XXX: not_set^ correctly'), ('TRIO3d', 'T3d-IFONE: Does not match correctly with XXX: XXX: not_set'), ('TWO', 'number-2')]"
 
 def printdict(d, legend = "Dict:", compare = None):
     if compare and isinstance(compare, str):
@@ -213,13 +218,13 @@ class TestEnvOrder(unittest.TestCase):
         "Try self-referential expansions"
         enva = Environment(ENV4a, CONFIG4a)
         self.assertEqual(canonical(enva.expanded()),
-                         "[('PATH', '/usr/local/bin:/bin'), ('THEREPATH', '/there')]")
+"[('ADMINVAR1', 'user'), ('ADMINVAR2', ''), ('ADMINVAR3', 'admin'), ('PATH', '/usr/local/bin:/bin'), ('THEREPATH', '/there')]")
         envb = Environment(enva)
         self.assertEqual(canonical(envb.expanded()),
-                         "[('PATH', '/usr/local/bin:/bin'), ('THEREPATH', '/there')]")
+"[('ADMINVAR1', 'user'), ('ADMINVAR2', ''), ('ADMINVAR3', 'admin'), ('PATH', '/usr/local/bin:/bin'), ('THEREPATH', '/there')]")
         envc = Environment(envb, CONFIG4c)
         self.assertEqual(canonical(envc.expanded()),
-                         "[('MISCPATH', '/mislibs'), ('PATH', '/usr/python/bin:/usr/local/bin:/bin'), ('PYAGAIN', '/mislibs:/pythonlibs:'), ('PYPATH', '/pythonlibs:'), ('THEREPATH', '/mislibs:/there')]")
+"[('ADMINVAR1', 'user'), ('ADMINVAR2', ''), ('ADMINVAR3', 'admin'), ('MISCPATH', '/mislibs'), ('PATH', '/usr/python/bin:/usr/local/bin:/bin'), ('PYAGAIN', '/mislibs:/pythonlibs:'), ('PYPATH', '/pythonlibs:'), ('THEREPATH', '/mislibs:/there')]")
 
     def test_expand7(self):
         "Test some self-referential anomalies"

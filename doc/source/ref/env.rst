@@ -100,7 +100,7 @@ Environment variable directives (as well as some others), can contain bash-inspi
   Inserts ``ifpresent`` if the environment variable *is defined*, otherwise inserts the empty string.
 
 ``$(ENVVAR:_default)``
-  Inserts the empty string if the environment variable *is defined*, otherwise inserts ``ifpresent``.
+  Inserts the empty string if the environment variable *is defined*, otherwise inserts ``default``.
   (This is the opposite of the previous ``:+`` operation.)
 
 ``$(ENVVAR:?error-message)``

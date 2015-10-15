@@ -371,7 +371,7 @@ class Environment(lazydict):
 
         if oper == '?':
             if not val:
-                raise ChVariableError(self._recurse(result, repl))
+                raise ChVariableError(self._recurse(result, repl, parent))
 
         elif oper == '/':
             smatch = _RE_SLASHOP.match(repl)
@@ -380,27 +380,27 @@ class Environment(lazydict):
 
             val = self._recurse(result, re.sub((smatch.group(3) and "(?" + smatch.group(3) + ")") + smatch.group(1),
                                                smatch.group(2).replace('\/', '/'),
-                                               val))
+                                               val), parent)
 
         elif oper == '|':
             vts = _RE_BAREBAR.split(repl, 3)
             if len(vts) == 1: # same as +
-                val = '' if not val else self._recurse(result, vts[0])
+                val = '' if not val else self._recurse(result, vts[0], parent)
             elif len(vts) == 2:
-                val = self._recurse(result, vts[0] if val else vts[1])
+                val = self._recurse(result, vts[0] if val else vts[1], parent)
             elif len(vts) >= 3:
                 editval = vts[1] if fnmatch(val.replace(r'\|', '|').lower(), vts[0].lower()) else vts[2]
-                val = self._recurse(result, editval.replace(r'\|', '|'))
+                val = self._recurse(result, editval.replace(r'\|', '|'), parent)
 
         elif oper == "+":
-            val = '' if not val else self._recurse(result, repl)
+            val = '' if not val else self._recurse(result, repl, parent)
 
         elif oper == "_":       # strict opposite of +
-            val = '' if val else self._recurse(result, repl)
+            val = '' if val else self._recurse(result, repl, parent)
 
         elif oper == "-":       # bash :-
             if not val:
-                val = self._recurse(result, repl)
+                val = self._recurse(result, repl, parent)
 
         return val
     

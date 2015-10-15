@@ -34,7 +34,7 @@ OT3 = {
 }
 
 def printlist(title, d):
-    #return
+    return
     print(title)
     for item in d:
         print("  ", item)
@@ -60,15 +60,15 @@ class TestServiceOrder(unittest.TestCase):
         self.assertTrue(checkorder(slist, 'three', 'one', 'two'))
         self.assertTrue(checkorder(slist, 'eight', 'one', 'two'))
 
-    def xtest_order2(self):
+    def test_order2(self):
         sc = ServiceDict(OT2.items())
         slist = sc.get_startup_list()
         printlist("startup list: ", slist)
         self.assertTrue(checkorder(slist, 'four', 'three', 'two'))
 
-    def xtest_order3(self):
+    def test_order3(self):
         sc = ServiceDict(OT3.items())
-        self.assertRaisesRegex(Exception, '^Circular', lambda: sc.get_startup_list())
+        self.assertRaisesRegex(Exception, '^circular', lambda: sc.get_startup_list())
 
 if __name__ == '__main__':
     unittest.main()

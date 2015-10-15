@@ -19,9 +19,10 @@ overhead container technologies are designed to eliminate.
 Chaperone is designed to solve this problem by providing a single, self-contained
 "caretaker" process which provides the following capabilities within the container:
 
-* A robust process manager with service types for forking, oneshot, simple, and
-  notify service types modelled after systemd.
 * Dependency-based parallel start-up of services.
+* A robust process manager with service types for forking, oneshot, simple,
+  and notify service types modelled after systemd.
+* Port-triggered services inside the container using the inetd service type.
 * A "cron" service type to schedule periodic tasks.
 * A built-in highly configurable syslog service which can direct syslog
   messages to multiple output files and duplicate selected streams or severities
@@ -30,7 +31,8 @@ Chaperone is designed to solve this problem by providing a single, self-containe
   at the command line or within application programs.
 * Emulation of systemd's ``sd_notify`` capability, allocating notify sockets
   for each service so that cgroups and other privileges are not needed
-  within the container.
+  within the container.  Chaperone also recognizes a passed-in ``NOTIFY_SOCKET``
+  and will inform the host systemd of final container readiness and status.
 * Features to support the creation of "mini-systems" within a single directory
   so that system services can run in userspace, or be mounted on host shares
   to keep development processes and production processes as close to identical
