@@ -60,7 +60,7 @@ class SubProcess(object):
     _cond_exception = None      # exception which was raised during startup (for other waiters)
 
     _started = False            # true if a start has occurred, either successful or not
-    _restarts_allowed = 0       # number of starts permitted before we give up (if None then restarts allowed according to service def)
+    _restarts_allowed = None    # number of starts permitted before we give up (if None then restarts allowed according to service def)
     _prereq_cache = None
     _procenv = None             # process environment ready to be expanded
 
@@ -100,9 +100,6 @@ class SubProcess(object):
 
         if service.process_timeout is not None:
             self.process_timeout = service.process_timeout
-
-        # Allow no auto-starts
-        self._restarts_allowed = 0
 
         if not service.environment:
             self._procenv = Environment()
@@ -267,6 +264,10 @@ class SubProcess(object):
                 if service.optional:
                     service.enabled = False
                     self.loginfo("optional service {0} disabled since '{1}' is not present".format(self.name, self._orig_executable))
+                    return
+                elif service.ignore_failures:
+                    service.enabled = False
+                    self.logwarn("(ignored) service {0} executable '{1}' is not present".format(self.name, self._orig_executable))
                     return
                 raise ChNotFoundError("executable '{0}' not found".format(service.exec_args[0]))
         service.enabled = True
@@ -482,8 +483,6 @@ class SubProcess(object):
 
         yield from self.process_started_co()
 
-        self._restarts_allowed = None # allow restarts if we fail
-
         self.logdebug("{0} successfully started", service.name)
 
     @asyncio.coroutine
@@ -580,7 +579,7 @@ class SubProcess(object):
                 controller = self.family.controller
                 if controller.system_alive:
                     if service.restart_delay:
-                        self.loginfo("{0} pausing between restart retries", service.name)
+                        self.loginfo("{0} pausing between restart retries ({1} left)", service.name, self._restarts_allowed)
                         yield from asyncio.sleep(service.restart_delay)
                 if controller.system_alive:
                     yield from self.reset()
@@ -601,7 +600,7 @@ class SubProcess(object):
         # or accepting glorious success.
         ex = fut.exception()
         if not ex:
-            self._restarts_allowed = None
+            self.logdebug("{0} restart succeeded", self.name)
         else:
             self.logwarn("{0} restart failed: {1}", self.name, ex)
             asyncio.async(self._abnormal_exit(self._proc and self._proc.returncode))
@@ -614,7 +613,7 @@ class SubProcess(object):
         future.add_done_callback(lambda f: self._pending.discard(future))
 
     @asyncio.coroutine
-    def reset(self, dependents = False, enable = False):
+    def reset(self, dependents = False, enable = False, restarts_ok = False):
         self.logdebug("{0} received reset", self.name)
 
         if self._exit_event:
@@ -628,6 +627,8 @@ class SubProcess(object):
 
         self._started = False
         
+        if restarts_ok:
+            self._restarts_allowed = None
         if enable:
             self.service.enabled = True
 
@@ -644,12 +645,11 @@ class SubProcess(object):
         if dependents:
             for p in self.prerequisites:
                 if not p.ready and (enable or p.enabled):
-                    yield from p.reset(dependents, enable)
+                    yield from p.reset(dependents, enable, restarts_ok)
                 
     @asyncio.coroutine
     def stop(self):
-        self._restarts_allowed = 0
-        yield from self.reset()
+        yield from self.reset(restarts_ok = True)
         
     @asyncio.coroutine
     def final_stop(self):
@@ -866,7 +866,7 @@ class SubProcessFamily(lazydict):
             resets = [s for s in slist if (not s.ready or s.started)]
 
         for s in resets:
-            yield from s.reset(dependents=True, enable=enable)
+            yield from s.reset(dependents=True, enable=enable, restarts_ok=True)
 
         if not wait:
             asyncio.async(self._queued_start(slist, service_names))
@@ -921,13 +921,13 @@ class SubProcessFamily(lazydict):
             asyncio.async(self._queued_reset(slist, service_names))
         else:
             for s in slist:
-                yield from s.reset()
+                yield from s.reset(restarts_ok = True)
 
     @asyncio.coroutine
     def _queued_reset(self, slist, names):
         try:
             for s in slist:
-                yield from s.reset()
+                yield from s.reset(restarts_ok = True)
         except Exception as ex:
             error("queued reset (for {0}) failed: {1}", names, ex)
 

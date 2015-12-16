@@ -130,7 +130,7 @@ class InetdProcess(SubProcess):
         self.loginfo("inetd service {0} listening on port {1}".format(self.name, self.port))
 
     @asyncio.coroutine
-    def reset(self, dependents = False, enable = False):
+    def reset(self, dependents = False, enable = False, restarts_ok = False):
         if self.server:
             self.server.close()
             self.server = None
@@ -139,7 +139,7 @@ class InetdProcess(SubProcess):
             self.logwarn("{0} terminating {1} processes on port {2} that are still running".format(self.name, len(plist), self.port))
             for p in plist:
                 p.terminate()
-        yield from super().reset(dependents, enable)
+        yield from super().reset(dependents, enable, restarts_ok)
 
     @asyncio.coroutine
     def final_stop(self):

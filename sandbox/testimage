@@ -17,7 +17,12 @@ cd ${0%/*}
 SUFFIX=$1
 shift				# remaining arguments are for chaperone
 
+# Try with chaperone- prefix first
 IMAGE=chapdev/chaperone-$SUFFIX
+if ! docker inspect $IMAGE >/dev/null 2>&1; then
+  IMAGE=chapdev/$SUFFIX
+fi
+
 SANDBOX=$PWD
 APPSDIR=$SANDBOX/apps-$SUFFIX
 
