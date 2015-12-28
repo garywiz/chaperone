@@ -5,7 +5,20 @@ class ChError(Exception):
     # Named the same as OSError so that exception code can detect the presence
     # of an errno for reporting purposes
     errno = None
+    annotation = None
 
+    def annotate(self, text):
+        if self.annotation:
+            self.annotation += ' ' + text
+        else:
+            self.annotation = text
+
+    def __str__(self):
+        supmsg = super().__str__()
+        if self.annotation:
+            supmsg += ' ' + self.annotation
+        return supmsg
+        
     def __init__(self, message = None, errno = None):
         super().__init__(message)
         if errno is not None:

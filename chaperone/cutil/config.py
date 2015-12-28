@@ -175,9 +175,10 @@ class _BaseConfig(object):
         if gid is not None and uid is None:
             raise Exception("cannot specify 'gid' without 'uid'")
 
-        # We can now use 'self' as our config, with all defaults
+        # We can now use 'self' as our config, with all defaults. 
 
-        env = self.environment = Environment(env, uid=uid, gid=gid, config=self)
+        env = self.environment = Environment(env, uid=uid, gid=gid, config=self, 
+                                             resolve_xid = not self.get('optional', False))
         self.augment_environment(env)
 
         if self._expand_these:

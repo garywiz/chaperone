@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 
 from chaperone.cutil.logging import error, debug, warn
 from chaperone.cutil.misc import lookup_user, lazydict
-from chaperone.cutil.errors import ChVariableError, ChParameterError
+from chaperone.cutil.errors import ChVariableError, ChParameterError, ChNotFoundError
 
 ##
 ## ALL chaperone configuration variables defined here for easy reference
@@ -162,11 +162,22 @@ class Environment(lazydict):
         cls._cls_backtick = enabled
         cls._cls_use_btcache = cache
 
-    def __init__(self, from_env = os.environ, config = None, uid = None, gid = None):
+    def __init__(self, from_env = os.environ, config = None, uid = None, gid = None, resolve_xid = True):
         """
         Create a new environment.  An environment may have a user associated with it.  If so,
         then it will be pre-populated with the user's HOME, USER and LOGNAME so that expansions
         can reference these.
+        
+        Note that if resolve_xid is False, then credentials if they do not exist, but leave the uid/gid the same.  
+        This means that certain features, like HOME variables, will not be properly set, leading to possible
+        interactions between the optional components and their actual specification.  However, this is better
+        than having optional components trigger errors because uninstalled software did not create uid's
+        needed for operation.  The onus is on the service itself (in cproc) to assure that checking
+        is performed.
+
+        Note also that environments which use backtick expansions will *still* fail, because the backticks
+        must occur within the context of the specified user, and it would be a security violation to
+        allow a default.
         """
         super().__init__()
 
@@ -182,11 +193,20 @@ class Environment(lazydict):
             self.uid = getattr(from_env, 'uid', self.uid)
             self.gid = getattr(from_env, 'gid', self.gid)
         else:
-            pwrec = lookup_user(uid, gid)
-            self.uid = pwrec.pw_uid
-            self.gid = pwrec.pw_gid
-            userenv['HOME'] = pwrec.pw_dir
-            userenv['USER'] = userenv['LOGNAME'] = pwrec.pw_name
+            pwrec = None
+            try:
+                pwrec = lookup_user(uid, gid)
+            except ChNotFoundError:
+                if resolve_xid:
+                    raise
+                self.uid = uid
+                self.gid = gid
+
+            if pwrec:
+                self.uid = pwrec.pw_uid
+                self.gid = pwrec.pw_gid
+                userenv['HOME'] = pwrec.pw_dir
+                userenv['USER'] = userenv['LOGNAME'] = pwrec.pw_name
 
         if not config:
             if from_env:
@@ -429,7 +449,11 @@ class Environment(lazydict):
 
         if result is None:
             if self.uid:
-                pwrec = lookup_user(self.uid, self.gid)
+                try:
+                    pwrec = lookup_user(self.uid, self.gid)
+                except ChNotFoundError as ex:
+                    ex.annotate('(required for backtick expansion `{0}`)'.format(cmd))
+                    raise ex
             else:
                 pwrec = None
 

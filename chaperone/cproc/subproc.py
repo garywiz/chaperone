@@ -106,12 +106,6 @@ class SubProcess(object):
         else:
             self._procenv = service.environment
 
-            uid = service.environment.uid
-            gid = service.environment.gid
-
-            if uid is not None:
-                self._pwrec = lookup_user(uid, gid)
-
         if not service.exec_args:
             raise ChParameterError("No command or arguments provided for service")
 
@@ -270,6 +264,15 @@ class SubProcess(object):
                     self.logwarn("(ignored) service {0} executable '{1}' is not present".format(self.name, self._orig_executable))
                     return
                 raise ChNotFoundError("executable '{0}' not found".format(service.exec_args[0]))
+
+        # Now we know this service is truly enabled, we need to assure its credentials
+        # are correct.
+
+        senv = service.environment
+
+        if senv and senv.uid is not None and not self._pwrec:
+            self._pwrec = lookup_user(senv.uid, senv.gid)
+
         service.enabled = True
 
     @property
@@ -533,7 +536,7 @@ class SubProcess(object):
             raise last_ex
 
         raise ChProcessError("{0} did not find pid file '{1}' before {2}sec process_timeout expired".format(
-                             self.name, self.pidfile, self.process_timeout), errno = error.ENOENT)
+                             self.name, self.pidfile, self.process_timeout), errno = errno.ENOENT)
         
     @asyncio.coroutine
     def _wait_kill_on_exit(self):
