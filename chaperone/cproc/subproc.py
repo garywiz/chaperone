@@ -508,6 +508,7 @@ class SubProcess(object):
         pidsleep = 0.02         # work incrementally up to no more than process_timeout
         minsleep = 3
         expires = time() + self.process_timeout
+        last_ex = None
 
         while time() < expires:
             if not self.family.system_alive:
@@ -520,10 +521,16 @@ class SubProcess(object):
             except FileNotFoundError:
                 continue
             except Exception as ex:
-                raise ChProcessErrorr("{0} found pid file '{1}' but contents did not contain an integer".format(
-                                      self.name, self.pidfile), errno = errno.EINVAL)
+                # Don't raise this immediately.  The service may create the file before writing the PID.
+                last_ex = ChProcessError("{0} found pid file '{1}' but contents did not contain an integer".format(
+                                         self.name, self.pidfile), errno = errno.EINVAL)
+                continue
+
             self.pid = newpid
             return
+
+        if last_ex is not None:
+            raise last_ex
 
         raise ChProcessError("{0} did not find pid file '{1}' before {2}sec process_timeout expired".format(
                              self.name, self.pidfile, self.process_timeout), errno = error.ENOENT)
