@@ -1,8 +1,9 @@
-Chaperone: A lean init-style startup manager for Docker-like containers
------------------------------------------------------------------------
 
-This is a lean, full-featured process which runs at the root of a docker
-container tree.
+# ![](https://s.gravatar.com/avatar/62c4c783c4d7233c73f3a114578df650.jpg?s=50) Chaperone
+
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/garywiz/chaperone?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+Chaperone is a lean init-style startup manager for Docker-like containers.  It runs as a single lightweight full-featured process which runs at the root of a docker container tree and provides all of the following functionality, plus much more:
 
 * Monitoring for all processes in the container, automatically shutting down the
   container when the last process exits.
@@ -11,8 +12,8 @@ container tree.
   to handle log-file rotation, duplication to stdout/stderr, and full Linux
   logging facility, severity support.  No syslog daemon is required in your
   container.
-* The ability to start up system services, with options for per-service
-  environment variables, restart options, and stdout/stderr capture either
+* The ability to start up system services in dependency order, with options
+  for per-service environment variables, restart options, and stdout/stderr capture either
   to the log service or stdout.
 * A built-in cron scheduling service.
 * Emulation of systemd notifications (sd_notify) so services can post
