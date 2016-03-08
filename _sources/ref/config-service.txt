@@ -575,10 +575,11 @@ Patterns are standard filename 'glob' patterns.
    When Chaperone starts a service, it waits a short time to determine whether the service fails immediately.  This
    is the "startup_pause" and defaults to 0.5 seconds.
 
-   Currently, Chaperone only uses this technique for ``type=simple`` services, so it will have no impact on other
-   service types.  Because "simple" services are considered started as soon as process execution begins, the
-   this short pause catches errors which occur within the first few moments of process initialization (such as
-   unexpected permission problems) rather than allowing dependent services to start immediately.
+   Currently, Chaperone only uses this technique for ``type=simple`` and ``type=notify`` services, so
+   it will have no impact on other service types.  Because "simple" services are considered started as soon as 
+   process execution begins, the this short pause catches errors which occur within the first few moments of 
+   process initialization (such as unexpected permission problems) rather than allowing dependent 
+   services to start immediately.
 
 .. _service.uid:
 

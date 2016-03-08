@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Configuration: Service Declarations &mdash; chaperone 0.2.0 documentation</title>
+  <title>Configuration: Service Declarations &mdash; chaperone 0.3.0 documentation</title>
   
 
   
@@ -32,7 +32,7 @@
   
 
   
-    <link rel="top" title="chaperone 0.2.0 documentation" href="../index.html"/>
+    <link rel="top" title="chaperone 0.3.0 documentation" href="../index.html"/>
         <link rel="up" title="Chaperone Configuration" href="config.html"/>
         <link rel="next" title="Configuration: Logging Declarations" href="config-logging.html"/>
         <link rel="prev" title="Configuration: Global Settings" href="config-global.html"/> 
@@ -852,10 +852,11 @@ according to their job control strategy.</p>
 <code class="descname">startup_pause seconds</code></dt>
 <dd><p>When Chaperone starts a service, it waits a short time to determine whether the service fails immediately.  This
 is the &#8220;startup_pause&#8221; and defaults to 0.5 seconds.</p>
-<p>Currently, Chaperone only uses this technique for <code class="docutils literal"><span class="pre">type=simple</span></code> services, so it will have no impact on other
-service types.  Because &#8220;simple&#8221; services are considered started as soon as process execution begins, the
-this short pause catches errors which occur within the first few moments of process initialization (such as
-unexpected permission problems) rather than allowing dependent services to start immediately.</p>
+<p>Currently, Chaperone only uses this technique for <code class="docutils literal"><span class="pre">type=simple</span></code> and <code class="docutils literal"><span class="pre">type=notify</span></code> services, so
+it will have no impact on other service types.  Because &#8220;simple&#8221; services are considered started as soon as
+process execution begins, the this short pause catches errors which occur within the first few moments of
+process initialization (such as unexpected permission problems) rather than allowing dependent
+services to start immediately.</p>
 </dd></dl>
 
 <span class="target" id="service-uid"></span><dl class="describe">
@@ -990,7 +991,7 @@ keep Chaperone a more useful and simple accessory.</td></tr>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.2.0',
+            VERSION:'0.3.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

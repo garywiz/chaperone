@@ -42,7 +42,7 @@ one of the internal variables::
    :ref:`_CHAP_SERVICE_SERIAL <env._CHAP_SERVICE_SERIAL>`  Contains a monotonically-increasing serial number which starts at
 			    				   1 and increases each time a service command is invoked.
    :ref:`_CHAP_SERVICE_TIME <env._CHAP_SERVICE_TIME>`	   Contains the Unix timestamp of the start-time of the service.
-   :ref:`_CHAP_TASK_MODE <env._CHAP_TASK_MODE>`      	   Will be set to "`" if chaperone was invoked with the
+   :ref:`_CHAP_TASK_MODE <env._CHAP_TASK_MODE>`      	   Will be set to "1" if chaperone was invoked with the
    			 			     	   :ref:`--task <option.task>` option.
    :ref:`NOTIFY_SOCKET <env.NOTIFY_SOCKET>`          	   Set to the per-service systemd-compatible notify socket for
 		       				     	   service started with :ref:`type=notify <service.type>`.
