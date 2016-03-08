@@ -52,9 +52,8 @@ system services (such as runit).  Chaperone is designed to be self-contained.
 Status
 ------
 
-This project is stable and ready for beta users.  We don't recommend using
-in production yet, however if you are currently starting up your container
-services with Bash scripts, Chaperone is probably a much better choice. 
+Chaperone is now stable and ready for production.  If you are currently starting up your
+container services with Bash scripts, Chaperone is probably a much better choice. 
 
 Full status is [now part of the documentation](http://garywiz.github.io/chaperone/status.html).
 
