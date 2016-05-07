@@ -77,6 +77,7 @@ class TopLevelProcess(objectplus):
         self._shutdown_timeout = settings.get('shutdown_timeout', 8) or 0.5
 
         self.detect_exit = settings.get('detect_exit', True)
+        self.enable_syslog = settings.get('enable_syslog', True)
 
         policy = asyncio.get_event_loop_policy()
         w = self._watcher = InitChildWatcher(onNoProcesses = self._queue_no_processes)
@@ -312,17 +313,18 @@ class TopLevelProcess(objectplus):
 
         self._notify_enabled = yield from self.notify.connect()
 
-        self._syslog = SyslogServer()
-        self._syslog.configure(self._config, self._minimum_syslog_level)
+        if self.enable_syslog:
+            self._syslog = SyslogServer()
+            self._syslog.configure(self._config, self._minimum_syslog_level)
 
-        try:
-            yield from self._syslog.run()
-        except PermissionError as ex:
-            self._syslog = None
-            warn("syslog service cannot be started: {0}", ex)
-        else:
-            self._syslog.capture_python_logging()
-            info("Switching all chaperone logging to /dev/log")
+            try:
+                yield from self._syslog.run()
+            except PermissionError as ex:
+                self._syslog = None
+                warn("syslog service cannot be started: {0}", ex)
+            else:
+                self._syslog.capture_python_logging()
+                info("Switching all chaperone logging to /dev/log")
 
         self._command = CommandServer(self)
 

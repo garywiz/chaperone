@@ -64,6 +64,7 @@ _config_schema = V.Any(
         'shutdown_timeout': V.Any(float, int),
         'uid': V.Any(str, int),
         'logrec_hostname': str,
+        'enable_syslog': bool,
         'status_interval': V.Any(float, int),
       },
       V.Match('^.+\.logging'): {

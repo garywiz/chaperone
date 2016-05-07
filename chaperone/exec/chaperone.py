@@ -5,7 +5,8 @@ Usage:
     chaperone [--config=<file_or_dir>]
               [--user=<name> | --create-user=<newuser>] [--default-home=<dir>]
               [--exitkills | --no-exitkills] [--ignore-failures] [--log-level=<level>] [--no-console-log]
-              [--debug] [--force] [--disable-services] [--no-defaults] [--version] [--show-dependencies]
+              [--debug] [--force] [--disable-services] [--no-defaults] [--no-syslog]
+              [--version] [--show-dependencies]
               [--task]
               [<command> [<args> ...]]
 
@@ -24,6 +25,8 @@ Options:
     --no-console-log         Disable all logging to stdout and stderr (useful when the container produces non-log output)
     --no-exitkills           When givencommand exits, don't kill the system (default if container running daemon)
     --no-defaults            Ignores any default options in the CHAPERONE_OPTIONS environment variable
+    --no-syslog              The internal syslog server will not be started (useful when a separate syslog
+                             daemon is started later).
     --user=<name>            Start first process as user (else root)
     --show-dependencies      Shows a list of service dependencies then exits
     --task                   Run in task mode (see below).
@@ -148,9 +151,11 @@ def main_entry():
         exit(1)
      user = udata['user']
 
-   extras = None
+   extras = dict()
    if options['--ignore-failures']:
-      extras = {'ignore_failures': True}
+      extras['ignore_failures'] =  True
+   if options['--no-syslog']:
+      extras['enable_syslog'] = False
       
    try:
       config = Configuration.configFromCommandSpec(options['--config'], user=user, extra_settings=extras,

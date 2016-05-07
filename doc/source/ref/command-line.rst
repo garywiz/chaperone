@@ -38,6 +38,7 @@ command-line switch                	       		       function
 :ref:`--no-console-log <option.no-console-log>`                Forces 'stderr' and 'stdout' to *false* for all logging services.
 :ref:`--no-defaults <option.no-defaults>`		       Ignore the :ref:`_CHAP_OPTIONS <env._CHAP_OPTIONS>` environment variable,
                                    	       		       if present.
+:ref:`--no-syslog <option.no-syslog>`			       Disable the syslog service at start-up and do not create ``/dev/log``.
 :ref:`--user=username <option.user>`			       Run all processes as ``user`` (uid number or name).  The user must exist.
                                    	       		       By default, all processes run as ``root``.
 :ref:`--create-user=newuser[:uid:gid] <option.create-user>`    Create a new user upon start-up with optional ``uid`` and ``gid``.  Then
@@ -254,6 +255,18 @@ Option Reference Information
    Disabling console output can be useful in special-case situations, such as when a command-line command wishes to dump
    container internals to ``stdout`` in some format (such as ``gzip``) which may be corrupted if inadvertent console
    messages are produced.
+
+.. _option.no-syslog:
+
+.. option:: --no-syslog
+
+   This switch tells Chaperone to disable the normal creation of ``/dev/log`` and to perform all of its own logging to the
+   console.  Chaperone defaults to automatically starting its own internal logging service.   Disabling syslog can be useful in cases
+   where a container has some other method of logging, or wants to start a standard
+   syslog deamon itself.   
+
+   This switch is equivalent to setting the global setting :ref:`enable_syslog <settings.enable_syslog>` to `false` and will
+   override any settings in Chaperone's configuration files.
 
 .. _option.no-defaults:
 
