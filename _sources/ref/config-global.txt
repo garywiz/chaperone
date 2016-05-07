@@ -49,6 +49,8 @@ Entries below marked with |ENV| support :ref:`environment variable expansion <en
    :ref:`shutdown_timeout <settings.shutdown_timeout>` The amount of time Chaperone will wait for services to complete shutdown
 						       before forcing a kill with SIGKILL.  Default is 8 seconds.
    :ref:`startup_pause <settings.startup_pause>`       Specifies the ``startup_pause`` default for services.
+   :ref:`enable_syslog <settings.enable_syslog>`       Specifies whether Chaperone will start its own internal syslog service
+		       				       at start-up.  Defaults to ``true``.
    :ref:`detect_exit <settings.detect_exit>`           If true (the default), then Chaperone tries to intelligently detect
    		     				       when all processes have exit and none are schedule, then terminates.
    :ref:`uid <settings.uid>`                           The default uid (name or number) for all services and logging tasks.
@@ -157,6 +159,19 @@ This delay is useful in at least two common situations:
    If not specified, the service default will be used.
 
    If a service specifies its own value, it will always take precedence over this default.
+
+.. _settings.enable_syslog:
+
+.. describe:: enable_syslog
+
+   This setting allows you to enable or disable Chaperone's internal syslog service.  If set to ``false`` then
+   the ``/dev/log`` file will not be created, and Chaperone will not intercept and redirect logging from running
+   applications.  Note that applications which write to ``stdout`` and ``stderr`` will still be intercepted
+   and processed by Chaperone's logging directives.
+
+   If omitted, this setting defaults to `true`.
+
+   Syslog can also be disabled by using the Chaperone command line option :ref:`--no-syslog <option.no-syslog>`.
 
 .. _settings.detect_exit:
 

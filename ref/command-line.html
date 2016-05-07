@@ -252,29 +252,32 @@ services.</td>
 <td>Ignore the <a class="reference internal" href="env.html#env-chap-options"><span>_CHAP_OPTIONS</span></a> environment variable,
 if present.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-user"><span>&#8211;user=username</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-no-syslog"><span>&#8211;no-syslog</span></a></td>
+<td>Disable the syslog service at start-up and do not create <code class="docutils literal"><span class="pre">/dev/log</span></code>.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#option-user"><span>&#8211;user=username</span></a></td>
 <td>Run all processes as <code class="docutils literal"><span class="pre">user</span></code> (uid number or name).  The user must exist.
 By default, all processes run as <code class="docutils literal"><span class="pre">root</span></code>.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#option-create-user"><span>&#8211;create-user=newuser[:uid:gid]</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-create-user"><span>&#8211;create-user=newuser[:uid:gid]</span></a></td>
 <td>Create a new user upon start-up with optional <code class="docutils literal"><span class="pre">uid</span></code> and <code class="docutils literal"><span class="pre">gid</span></code>.  Then
 run as if <code class="docutils literal"><span class="pre">--user=&lt;user&gt;</span></code> was specified.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-default-home"><span>&#8211;default-home=directory</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#option-default-home"><span>&#8211;default-home=directory</span></a></td>
 <td>If <a class="reference internal" href="#option-create-user"><span>&#8211;create-user</span></a> specifies a user whose
 home directory does not exist, then create the new user account with this
 directory as the user&#8217;s home directory.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#option-show-dependencies"><span>&#8211;show-dependencies</span></a></td>
 <td>Display service dependency graph, then exit.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#option-task"><span>&#8211;task</span></a></td>
 <td>Run in &#8220;task mode&#8221;.  This implies <code class="docutils literal"><span class="pre">--log-level=err</span></code>, <code class="docutils literal"><span class="pre">--disable-services</span></code>,
 and <code class="docutils literal"><span class="pre">--exitkills</span></code>.  This switch is useful when the container publishes
 commands which must run in isolation, such as displaying container internal
 information such as version information.</td>
 </tr>
-<tr class="row-even"><td>&#8211;version</td>
+<tr class="row-odd"><td>&#8211;version</td>
 <td>Displays the chaperone version number.</td>
 </tr>
 </tbody>
@@ -460,6 +463,17 @@ any logging to the console.</p>
 <p>Disabling console output can be useful in special-case situations, such as when a command-line command wishes to dump
 container internals to <code class="docutils literal"><span class="pre">stdout</span></code> in some format (such as <code class="docutils literal"><span class="pre">gzip</span></code>) which may be corrupted if inadvertent console
 messages are produced.</p>
+</dd></dl>
+
+<span class="target" id="option-no-syslog"></span><dl class="option">
+<dt id="cmdoption-chaperone--no-syslog">
+<code class="descname">--no-syslog</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-chaperone--no-syslog" title="Permalink to this definition">¶</a></dt>
+<dd><p>This switch tells Chaperone to disable the normal creation of <code class="docutils literal"><span class="pre">/dev/log</span></code> and to perform all of its own logging to the
+console.  Chaperone defaults to automatically starting its own internal logging service.   Disabling syslog can be useful in cases
+where a container has some other method of logging, or wants to start a standard
+syslog deamon itself.</p>
+<p>This switch is equivalent to setting the global setting <a class="reference internal" href="config-global.html#settings-enable-syslog"><span>enable_syslog</span></a> to <cite>false</cite> and will
+override any settings in Chaperone&#8217;s configuration files.</p>
 </dd></dl>
 
 <span class="target" id="option-no-defaults"></span><dl class="option">
