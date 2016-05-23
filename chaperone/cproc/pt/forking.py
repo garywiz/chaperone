@@ -4,6 +4,8 @@ from chaperone.cutil.errors import ChProcessError
 
 class ForkingProcess(SubProcess):
 
+    defer_exit_kills = True
+
     @asyncio.coroutine
     def process_started_co(self):
         result = yield from self.timed_wait(self.process_timeout, self._exit_timeout)

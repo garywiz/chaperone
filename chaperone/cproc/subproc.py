@@ -44,7 +44,8 @@ class SubProcess(object):
     syslog_facility = None      # specifies any additional syslog facility to use when using
                                 # logerror, logdebug, logwarn, etc...
     start_attempted = False     # used to determine if a service is truly dormant
-
+    defer_exit_kills = False    # if true, then exit_kills will wait until a proper PID is returned
+                                # from a subprocess, then will kill when the real process exits
     error_count = 0             # counts errors for informational purposes
 
     _proc = None
@@ -481,7 +482,7 @@ class SubProcess(object):
         if service.stderr == 'log':
             self.add_pending(asyncio.async(_process_logger(proc.stderr, 'stderr', self)))
 
-        if service.exit_kills:
+        if service.exit_kills and not self.defer_exit_kills:
             self.add_pending(asyncio.async(self._wait_kill_on_exit()))
 
         yield from self.process_started_co()
@@ -562,6 +563,13 @@ class SubProcess(object):
         if self._exit_event:
             self._exit_event.set()
             self._exit_event = None
+
+        if self.exit_kills:
+            self.logwarn("{0} terminated with exit_kills enabled", self.service.name);
+            # Since we're dead, and the system is going away, disable any process management
+            self._proc = None
+            self.pid = None
+            self._kill_system();
 
         if code.normal_exit or self.kill_signal == code.signal:
             return

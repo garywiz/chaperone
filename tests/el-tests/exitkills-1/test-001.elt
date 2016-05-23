@@ -1,0 +1,10 @@
+#!/usr/bin/env expect-test-command
+#TITLE: Forking service - combined with exit_kills
+
+@20
+>RUNIMAGE
+<: daemon running
+<kills.service changing PID to
+<: daemon exiting
+<terminated with exit_kills enabled
+<Final termination phase

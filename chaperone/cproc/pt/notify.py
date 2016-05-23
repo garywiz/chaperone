@@ -11,6 +11,7 @@ from chaperone.cproc.subproc import SubProcess
 class NotifyProcess(SubProcess):
 
     process_timeout = 300
+    defer_exit_kills = True
 
     _fut_monitor = None
     _listener = None

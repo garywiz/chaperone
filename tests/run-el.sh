@@ -26,3 +26,4 @@ test-driver el-tests/cron-1
 test-driver el-tests/fork-1
 test-driver el-tests/inetd-1
 test-driver el-tests/notify-1
+test-driver el-tests/exitkills-1
