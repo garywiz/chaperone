@@ -648,7 +648,7 @@ class SubProcess(object):
         if restarts_ok:
             self._restarts_allowed = None
         if enable:
-            self.service.enabled = True
+            self.enabled = True
 
         # If there is a pidfile, then remove it
 
