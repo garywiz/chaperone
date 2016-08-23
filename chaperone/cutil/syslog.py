@@ -280,7 +280,8 @@ class SyslogServer(Server):
         else:
             logattrs = match.groupdict()
             pri = int(logattrs['pri'])
-            logattrs['tag'] = os.path.basename(logattrs['tag'])
+            if logattrs['tag'][0] == '/':
+                logattrs['tag'] = os.path.basename(logattrs['tag'])
 
         logattrs['raw'] = msg
 
