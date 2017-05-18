@@ -1,7 +1,7 @@
 
 # ![](https://s.gravatar.com/avatar/62c4c783c4d7233c73f3a114578df650.jpg?s=50) Chaperone
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/garywiz/chaperone?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![PyPI version](https://badge.fury.io/py/chaperone.svg)](https://badge.fury.io/py/chaperone)
+[![Gitter](https://badges.gitter.im/Join_Chat.svg)](https://gitter.im/garywiz/chaperone?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![PyPI version](https://badge.fury.io/py/chaperone.svg)](https://badge.fury.io/py/chaperone)
 
 Chaperone is a lean init-style startup manager for Docker-like containers.  It runs as a single lightweight full-featured process which runs at the root of a docker container tree and provides all of the following functionality, plus much more:
 
